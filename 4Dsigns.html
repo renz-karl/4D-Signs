@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4D signs - Custom Signage & Souvenirs</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>     
+    <header class="main-header">
+        <div class="header-content">
+            <h1>4D signs</h1>
+            <nav class="nav-bar">
+                <a class="nav-link active" href="Homepage.html">
+                    <i class="fa fa-home"></i>
+                    
+                    <span>Home</span>
+                </a>
+                <a class="nav-link" href="review.html">
+                    <i class="fa fa-star"></i>
+                    <span>Reviews</span>
+                </a>
+                <a class="nav-link cart-link" href="cart.html" aria-label="View cart">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Cart</span>
+                    <span class="cart-badge" id="cart-count">2</span>
+                </a>
+            </nav>
+        </div>
+    </header>
+    <section class="hero">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <h2 class="hero-title">Your Vision, <span class="highlight">Our Signs</span></h2>
+            <div class="hero-features">
+                <div class="feature">
+                    <i class="fas fa-paint-brush"></i>
+                    <span>Custom Designs</span>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-star"></i>
+                    <span>Premium Quality</span>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-store"></i>
+                    <span>Store Pickup</span>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-truck"></i>
+                    <span>Fast Delivery</span>
+                </div>
+            </div>
+            <p class="hero-description">Transform your business or event with custom, high-impact signage and souvenirs. 
+            We bring your ideas to life with premium materials and expert craftsmanship.</p>
+            <div class="hero-buttons">
+                <a href="#products" class="cta-button primary">Explore Products</a>
+                <a href="customize.html" class="cta-button secondary">Start Designing</a>
+            </div>
+        </div>
+        <div class="hero-scroll">
+            <span>Scroll Down</span>
+            <i class="fas fa-chevron-down"></i>
+        </div>
+    </section>
+    <main>
+        <div id="products"></div>
+        <br>
+        <div class="product-list">
+                <div class="product-item">
+                    <div class="product-image-container">
+                        <img src="https://placehold.co/200x200/d1d5db/374151?text=Souvenir" class="product-image" id="souvenir-img">
+                    </div>
+                    <div class="product-details">
+                        <h3>Souvenirs</h3>
+                        <p>Perfect for events and giveaways. Bulk packages available.</p>
+                        <div class="product-price">₱150.00 - ₱500.00</div>
+                        <div class="product-rating">
+                            <span>⭐⭐⭐⭐☆</span>
+                            <span class="reviews">(120 reviews)</span>
+                        </div>
+                        <div class="product-stock">Items left: <span class="stock-count">25</span></div>
+                        <button class="add-to-cart-btn" data-product="Souvenirs" type="button">Add to Cart</button>
+                    </div>
+                </div>
+                <div class="product-item">
+                    <div class="product-image-container">
+                        <img src="https://placehold.co/200x200/e5e7eb/4b5563?text=Giveaway" class="product-image" id="giveaway-img">
+                    </div>
+                    <div class="product-details">
+                        <h3>Giveaways</h3>
+                        <p>Customizable items for promotions and celebrations.</p>
+                        <div class="product-price">₱100.00 - ₱400.00</div>
+                        <div class="product-rating">
+                            <span>⭐⭐⭐⭐⭐</span>
+                            <span class="reviews">(98 reviews)</span>
+                        </div>
+                        <div class="product-stock">Items left: <span class="stock-count">30</span></div>
+                        <button class="add-to-cart-btn" data-product="Giveaways" type="button">Add to Cart</button>
+                    </div>
+                </div>
+                <div class="product-item">
+                    <div class="product-image-container">
+                        <img src="https://placehold.co/200x200/f3f4f6/6b7280?text=Bulk" class="product-image" id="bulk-img">
+                    </div>
+                    <div class="product-details">
+                        <h3>Bulk Packages</h3>
+                        <p>Order in bulk for corporate or large events.</p>
+                        <div class="product-price">₱1,000.00 - ₱5,000.00</div>
+                        <div class="product-rating">
+                            <span>⭐⭐⭐⭐☆</span>
+                            <span class="reviews">(54 reviews)</span>
+                        </div>
+                        <div class="product-stock">Items left: <span class="stock-count">15</span></div>
+                        <button class="add-to-cart-btn" data-product="Bulk Packages" type="button">Add to Cart</button>
+                    </div>
+                </div>
+                <div class="product-item">
+                    <div class="product-image-container">
+                        <img src="https://placehold.co/200x200/fee2e2/991b1b?text=Signage" class="product-image">
+                    </div>
+                    <div class="product-details">
+                        <h3>Custom Signage</h3>
+                        <p>Design your own signs for business, events, or personal use.</p>
+                        <div class="product-price">₱500.00 - ₱2,500.00</div>
+                        <div class="product-rating">
+                            <span>⭐⭐⭐⭐⭐</span>
+                            <span class="reviews">(76 reviews)</span>
+                        </div>
+                        <div class="product-stock">Items left: <span class="stock-count">22</span></div>
+                        <button class="add-to-cart-btn" data-product="Custom Signage" type="button">Add to Cart</button>
+                    </div>
+                </div>
+                <div class="product-item">
+                    <div class="product-image-container">
+                        <img src="https://placehold.co/200x200/dbeafe/1e40af?text=Banners" class="product-image">
+                    </div>
+                    <div class="product-details">
+                        <h3>Banners</h3>
+                        <p>High-quality banners for indoor and outdoor advertising.</p>
+                        <div class="product-price">₱300.00 - ₱1,200.00</div>
+                        <div class="product-rating">
+                            <span>⭐⭐⭐⭐☆</span>
+                            <span class="reviews">(63 reviews)</span>
+                        </div>
+                        <div class="product-stock">Items left: <span class="stock-count">40</span></div>
+                        <button class="add-to-cart-btn" data-product="Banners" type="button">Add to Cart</button>
+                    </div>
+                </div>
+                <div class="product-item">
+                    <div class="product-image-container">
+                        <img src="https://placehold.co/200x200/d1fae5/065f46?text=Stickers" class="product-image">
+                    </div>
+                    <div class="product-details">
+                        <h3>Stickers & Decals</h3>
+                        <p>Custom stickers and decals for branding and decoration.</p>
+                        <div class="product-price">₱50.00 - ₱300.00</div>
+                        <div class="product-rating">
+                            <span>⭐⭐⭐⭐⭐</span>
+                            <span class="reviews">(142 reviews)</span>
+                        </div>
+                        <div class="product-stock">Items left: <span class="stock-count">150</span></div>
+                        <button class="add-to-cart-btn" data-product="Stickers & Decals" type="button">Add to Cart</button>
+                    </div>
+                </div>
+                <div class="product-item">
+                    <div class="product-image-container">
+                        <img src="https://placehold.co/200x200/fef3c7/92400e?text=Mugs" class="product-image">
+                    </div>
+                    <div class="product-details">
+                        <h3>Custom Mugs</h3>
+                        <p>Personalized mugs for gifts and corporate branding.</p>
+                        <div class="product-price">₱250.00 - ₱600.00</div>
+                        <div class="product-rating">
+                            <span>⭐⭐⭐⭐⭐</span>
+                            <span class="reviews">(88 reviews)</span>
+                        </div>
+                        <div class="product-stock">Items left: <span class="stock-count">60</span></div>
+                        <button class="add-to-cart-btn" data-product="Custom Mugs" type="button">Add to Cart</button>
+                    </div>
+                </div>
+                <div class="product-item">
+                    <div class="product-image-container">
+                        <img src="https://placehold.co/200x200/e0e7ff/3730a3?text=T-Shirts" class="product-image">
+                    </div>
+                    <div class="product-details">
+                        <h3>T-Shirt Printing</h3>
+                        <p>Custom printed t-shirts for teams, events, and fashion.</p>
+                        <div class="product-price">₱350.00 - ₱800.00</div>
+                        <div class="product-rating">
+                            <span>⭐⭐⭐⭐☆</span>
+                            <span class="reviews">(110 reviews)</span>
+                        </div>
+                        <div class="product-stock">Items left: <span class="stock-count">75</span></div>
+                        <button class="add-to-cart-btn" data-product="T-Shirt Printing" type="button">Add to Cart</button>
+                    </div>
+                </div>
+                <div class="product-item">
+                    <div class="product-image-container">
+                        <img src="https://placehold.co/200x200/fce7f3/9d2667?text=Keychains" class="product-image">
+                    </div>
+                    <div class="product-details">
+                        <h3>Keychains</h3>
+                        <p>Acrylic and metal keychains, perfect for souvenirs.</p>
+                        <div class="product-price">₱80.00 - ₱250.00</div>
+                        <div class="product-rating">
+                            <span>⭐⭐⭐⭐⭐</span>
+                            <span class="reviews">(201 reviews)</span>
+                        </div>
+                        <div class="product-stock">Items left: <span class="stock-count">200</span></div>
+                        <button class="add-to-cart-btn" data-product="Keychains" type="button">Add to Cart</button>
+                    </div>
+                </div>
+                <div class="product-item">
+                    <div class="product-image-container">
+                        <img src="https://placehold.co/200x200/ecfdf5/047857?text=Invitations" class="product-image">
+                    </div>
+                    <div class="product-details">
+                        <h3>Invitations</h3>
+                        <p>Beautifully designed invitations for any occasion.</p>
+                        <div class="product-price">₱150.00 - ₱500.00</div>
+                        <div class="product-rating">
+                            <span>⭐⭐⭐⭐⭐</span>
+                            <span class="reviews">(95 reviews)</span>
+                        </div>
+                        <div class="product-stock">Items left: <span class="stock-count">85</span></div>
+                        <button class="add-to-cart-btn" data-product="Invitations" type="button">Add to Cart</button>
+                    </div>
+                </div>
+                <div class="product-item">
+                    <div class="product-image-container">
+                        <img src="https://placehold.co/200x200/f0f9ff/0891b2?text=Cards" class="product-image">
+                    </div>
+                    <div class="product-details">
+                        <h3>Calling Cards</h3>
+                        <p>Professional calling cards to make a lasting impression.</p>
+                        <div class="product-price">₱200.00 - ₱700.00</div>
+                        <div class="product-rating">
+                            <span>⭐⭐⭐⭐☆</span>
+                            <span class="reviews">(45 reviews)</span>
+                        </div>
+                        <div class="product-stock">Items left: <span class="stock-count">120</span></div>
+                        <button class="add-to-cart-btn" data-product="Calling Cards" type="button">Add to Cart</button>
+                    </div>
+                </div>
+            </div>
+        <script>
+        </script>
+        </section>
+    </main>
+
+        <div id="add-to-cart-modal" class="modal-backdrop">
+            <div class="modal-content">
+                <button class="modal-close-btn">&times;</button>
+                <div class="modal-body">
+                    <img src="" alt="Product Image" class="modal-product-img">
+                    <div class="modal-product-details">
+                        <h3 class="modal-product-title"></h3>
+                        <div class="modal-product-price"></div>
+                        <div class="modal-product-reviews"></div>
+                        <div class="modal-product-stock"></div>
+                        <div class="quantity-selector">
+                            <button class="quantity-btn minus-btn">-</button>
+                            <input type="text" class="quantity-input" value="1" readonly>
+                            <button class="quantity-btn plus-btn">+</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="add-to-cart-confirm-btn">Add to Cart</button>
+                </div>
+            </div>
+        </div>
+
+
+
+<a href="cart.html" class="floating-cart" id="floating-cart" aria-label="View cart">
+  <i class="fas fa-shopping-cart"></i> <span id="floating-cart-count">0</span>
+</a>
+    <script>
+    (function(){
+      const ITEMS_KEY = 'cartItems';
+      const COUNT_KEY = 'cartCount';
+      const badgeEls = Array.from(document.querySelectorAll('#cart-count, #floating-cart-count'));
+
+      function getItems() {
+        try { return JSON.parse(localStorage.getItem(ITEMS_KEY) || '[]'); } catch(e){ return []; }
+      }
+      function renderBadge(n){ badgeEls.forEach(el => el && (el.textContent = n)); }
+      function setItems(items) {
+        localStorage.setItem(ITEMS_KEY, JSON.stringify(items));
+        const count = items.reduce((s,it)=> s + (parseInt(it.qty,10) || 0), 0);
+        localStorage.setItem(COUNT_KEY, String(count));
+        renderBadge(count);
+        window.dispatchEvent(new CustomEvent('cart:updated', { detail: { count, items } }));
+      }
+      function addItem(name, qty = 1) {
+        if (!name) name = 'Item';
+        qty = Math.max(1, parseInt(qty,10) || 1);
+        const id = name.trim().toLowerCase();
+        const items = getItems();
+        const idx = items.findIndex(i => i.id === id);
+        if (idx >= 0) items[idx].qty += qty; else items.push({ id, name, qty });
+        setItems(items);
+      }
+      function updateQty(id, qty) {
+        const items = getItems();
+        const idx = items.findIndex(i => i.id === id);
+        if (idx === -1) return;
+        qty = parseInt(qty,10) || 0;
+        if (qty <= 0) items.splice(idx,1); else items[idx].qty = qty;
+        setItems(items);
+      }
+      function removeItem(id) {
+        const items = getItems().filter(i => i.id !== id);
+        setItems(items);
+      }
+
+      window.getCartItems = getItems;
+      window.setCartItems = setItems;
+      window.addItemToCart = addItem;
+      window.updateCartItemQty = updateQty;
+      window.removeCartItem = removeItem;
+
+
+      window.addToCart = function(qty = 1){ addItem('Item', qty); };
+
+
+      renderBadge(parseInt(localStorage.getItem(COUNT_KEY) || '0', 10));
+    })();
+    </script>
+<script>
+(function(){
+  const floatBtn = document.getElementById('floating-cart');
+  if (!floatBtn) return;
+  const toggle = () => {
+    if (window.scrollY > 150) floatBtn.classList.add('show');
+    else floatBtn.classList.remove('show');
+  };
+  window.addEventListener('scroll', toggle, { passive: true });
+  window.addEventListener('load', toggle);
+})();
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('add-to-cart-modal');
+    const closeBtn = modal.querySelector('.modal-close-btn');
+    const confirmBtn = modal.querySelector('.add-to-cart-confirm-btn');
+    const minusBtn = modal.querySelector('.minus-btn');
+    const plusBtn = modal.querySelector('.plus-btn');
+    const quantityInput = modal.querySelector('.quantity-input');
+
+    let currentProduct = null;
+
+    document.querySelectorAll('.add-to-cart-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            const productItem = button.closest('.product-item');
+            currentProduct = {
+                name: productItem.querySelector('h3').textContent,
+                image: productItem.querySelector('.product-image').src,
+                reviews: productItem.querySelector('.reviews').textContent,
+                stock: productItem.querySelector('.stock-count').textContent,
+                price: productItem.querySelector('.product-price').textContent
+            };
+            openModal(currentProduct);
+        });
+    });
+
+    function openModal(product) {
+        console.log('Opening modal for product:', product.name); // Added console log
+        modal.querySelector('.modal-product-img').src = product.image;
+        modal.querySelector('.modal-product-title').textContent = product.name;
+        modal.querySelector('.modal-product-price').textContent = product.price;
+        modal.querySelector('.modal-product-reviews').textContent = product.reviews;
+        modal.querySelector('.modal-product-stock').textContent = `Items left: ${product.stock}`;
+        quantityInput.value = 1;
+        modal.classList.add('show');
+    }
+
+    function closeModal() {
+        modal.classList.remove('show');
+    }
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+
+    minusBtn.addEventListener('click', () => {
+        let quantity = parseInt(quantityInput.value);
+        if (quantity > 1) {
+            quantityInput.value = quantity - 1;
+        }
+    });
+
+    plusBtn.addEventListener('click', () => {
+        let quantity = parseInt(quantityInput.value);
+        quantityInput.value = quantity + 1;
+    });
+
+    confirmBtn.addEventListener('click', () => {
+        const quantity = parseInt(quantityInput.value);
+        if (typeof addItemToCart === 'function') {
+            addItemToCart(currentProduct.name, quantity);
+        }
+        closeModal();
+    });
+});
+</script>
+</body>
+</script>
+<footer class="site-footer">
+    <div class="footer-wrap">
+        <div class="footer-col brand">
+            <h3>4D signs</h3>
+            <p>Your vision, our signs. Premium custom signage and souvenirs.</p>
+            <div class="footer-social">
+                <a href="https://www.facebook.com/FourDsigns" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+            </div>
+        </div>
+        <nav class="footer-col links" aria-label="Footer navigation">
+            <h4>Explore</h4>
+            <ul>
+                <li><a href="Homepage.html">Home</a></li>
+                <li><a href="customize.html">Customize</a></li>
+                <li><a href="review.html">Reviews</a></li>
+                <li><a href="cart.html">Cart</a></li>
+            </ul>
+        </nav>
+        <div class="footer-col contact">
+            <h4>Contact</h4>
+            <ul>
+                <li><i class="fa fa-map-marker-alt"></i> 352 Zone 4 Tangos, Baliuag, Philippines, 3006</li>
+                <li><i class="fa fa-envelope"></i>cheriz20domingo@gmail.com</li>
+                <li><i class="fa fa-phone"></i> +63 917 582 5483</li>
+            </ul>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>© <span id="footer-year"></span> 4D signs · All rights reserved</p>
+    </div>
+</footer>
+<script>document.getElementById('footer-year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

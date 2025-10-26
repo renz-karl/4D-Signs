@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders & Reviews</title>
+    <link rel="stylesheet" href="review.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="orders-container">
+        <a href="4Dsigns.html" class="back-button">
+            <i class="fas fa-arrow-left"></i>
+            Back to Shop
+        </a>
+        <h1>My Orders</h1>
+        <div id="orders-list">
+            
+        </div>
+    </div>
+
+    
+    <div id="review-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Leave a Review</h2>
+            <div class="product-info">
+                <img id="modal-product-image" src="" alt="Product">
+                <h3 id="modal-product-name"></h3>
+            </div>
+            <div class="rating-stars">
+                <span class="star" data-value="1">&#9733;</span>
+                <span class="star" data-value="2">&#9733;</span>
+                <span class="star" data-value="3">&#9733;</span>
+                <span class="star" data-value="4">&#9733;</span>
+                <span class="star" data-value="5">&#9733;</span>
+            </div>
+            <textarea id="review-comment" placeholder="Write your review here..."></textarea>
+            <button id="submit-review">Submit Review</button>
+        </div>
+    </div>
+    <script src="review.js"></script>
+</body>
+</html>

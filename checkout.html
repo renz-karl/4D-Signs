@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - 4D signs</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="checkout.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <a href="cart.html" class="back-button">
+                <i class="fas fa-arrow-left"></i>
+                Back to Cart
+            </a>
+            <h1>Checkout</h1>
+            <div style="width: 100px;"></div>
+        </div>
+    </header>
+
+    <main class="checkout-container">
+        <div class="checkout-grid">
+            <!-- Left Column -->
+            <div class="checkout-details">
+                <section class="checkout-section shipping-section">
+                    <h2>
+                        <i class="fas fa-map-marker-alt"></i>
+                        Shipping Address
+                    </h2>
+                    <div class="address-form">
+                        <div class="form-group">
+                            <label for="name">Full Name</label>
+                            <input type="text" id="name" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Phone Number</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-phone"></i>
+                                <input type="tel" id="phone" name="phone" pattern="[0-9]{11}" maxlength="11" placeholder="e.g., 09123456789" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-envelope"></i>
+                                <input type="email" id="email" name="email" placeholder="example@email.com" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="street">Street Address</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-home"></i>
+                                <input type="text" id="street" name="street" placeholder="House/Unit No., Building, Street Name" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="barangay">Barangay</label>
+                                <input type="text" id="barangay" name="barangay" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="city">City/Municipality</label>
+                                <input type="text" id="city" name="city" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="province">Province</label>
+                                <input type="text" id="province" name="province" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="zipCode">ZIP Code</label>
+                                <input type="text" id="zipCode" name="zipCode" pattern="[0-9]*" maxlength="4" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="landmark">Landmark (Optional)</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-map-signs"></i>
+                                <input type="text" id="landmark" name="landmark" placeholder="Nearby landmark or additional directions">
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="checkout-section">
+                    <h2>Delivery Method</h2>
+                    <div class="delivery-options">
+                        <div class="delivery-option">
+                            <input type="radio" id="delivery" name="deliveryMethod" value="delivery" checked>
+                            <label for="delivery">
+                                <i class="fas fa-truck"></i>
+                                <div>
+                                    <h3>Home Delivery</h3>
+                                    <p>2-3 business days</p>
+                                </div>
+                            </label>
+                        </div>
+                        <div class="delivery-option">
+                            <input type="radio" id="pickup" name="deliveryMethod" value="pickup">
+                            <label for="pickup">
+                                <i class="fas fa-store"></i>
+                                <div>
+                                    <h3>Store Pickup</h3>
+                                    <p>Available within 24 hours</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="checkout-section">
+                    <h2>Payment Method</h2>
+                    <div class="payment-options">
+                        <!-- For Home Delivery -->
+                        <div class="payment-option" id="cod-option">
+                            <input type="radio" id="cod" name="paymentMethod" value="cod" checked>
+                            <label for="cod">
+                                <i class="fas fa-money-bill-wave"></i>
+                                <div>
+                                    <h3>Cash on Delivery</h3>
+                                    <p>Pay when you receive</p>
+                                </div>
+                            </label>
+                        </div>
+                        <!-- For Store Pickup -->
+                        <div class="payment-option" id="cash-option" style="display: none;">
+                            <input type="radio" id="cash" name="paymentMethod" value="cash">
+                            <label for="cash">
+                                <i class="fas fa-money-bill"></i>
+                                <div>
+                                    <h3>Cash</h3>
+                                    <p>Pay at store pickup</p>
+                                </div>
+                            </label>
+                        </div>
+                        <!-- Available for both -->
+                        <div class="payment-option" id="gcash-option">
+                            <input type="radio" id="gcash" name="paymentMethod" value="gcash">
+                            <label for="gcash">
+                                <i class="fas fa-wallet"></i>
+                                <div>
+                                    <h3>GCash</h3>
+                                    <p>Pay via GCash</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="checkout-section">
+                    <h2>Message to Seller</h2>
+                    <div class="message-form">
+                        <textarea name="message" rows="3" placeholder="Any special instructions? Let us know here..."></textarea>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Right Column -->
+            <div class="order-summary">
+                <div class="summary-content">
+                    <h2>Order Summary</h2>
+                    <div id="checkout-items" class="checkout-items">
+                        <!-- Items will be inserted here by JavaScript -->
+                    </div>
+                    <div class="summary-totals">
+                        <div class="summary-row">
+                            <span>Subtotal</span>
+                            <span id="subtotal">₱0.00</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Shipping</span>
+                            <span id="shipping">₱0.00</span>
+                        </div>
+                        <div class="summary-row total">
+                            <span>Total</span>
+                            <span id="total">₱0.00</span>
+                        </div>
+                    </div>
+                    <button type="button" class="place-order-btn">
+                        <i class="fas fa-lock"></i>
+                        Place Order
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+
+
+
+    </div>
+
+    </div>
+
+
+    <!-- <div class="checkout-form">
+        <div class="address-bar" onclick="togglePopup(this, event)">
+        Click for Address
+        <div class="address-popup" onclick="event.stopPropagation()">
+            <form onclick="event.stopPropagation()">
+                <input type="text" placeholder="Street Address" /><br>
+                <input type="text" placeholder="City" /><br>
+                <input type="text" placeholder="State" /><br>
+                <input type="text" placeholder="Zip Code" /><br>
+                <button type="button" onclick="saveAddress(this, event)">Save</button> 
+            </form>
+        </div>
+    </div>
+
+    <div class="item">
+        <div class="item-details">
+            <p>*item details here*</p>
+        </div>
+        <div class="item-message">
+            <p>Message for seller</p>
+            <div class="leave-message" onclick="toggleMessagePopup(event)">
+                <p>Please leave a message -></p>
+                <div class="message-popup" id="messagePopup">
+                    <form onclick="event.stopPropagation()">
+                        <textarea placeholder="Enter your message here..." rows="4"></textarea>
+                        <button type="button" onclick="saveMessage(event)">Save Message</button>
+                        <button type="button" onclick="closeMessagePopup()">Cancel</button>
+                    </form>
+                </div>
+            </div>
+        </div> 
+        <div class="item-receipt">
+            <p>E-receipt</p>
+        </div>
+        
+    </div>
+
+    <div class="payment-method">
+        <p>Payment Method</p>
+    </div>
+
+    <div class="place-order-btn">
+        <button type="button" class="PlaceOrder">Place Order</button>
+    </div>
+
+
+
+
+    </div> -->
+
+    <script src="checkout.js"></script>
+
+</body>
+</html>

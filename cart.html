@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart - 4D signs</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(rgba(40, 38, 58, 0.85), rgba(40, 38, 58, 0.85)), url('afce65d8-7606-4689-8ab3-9e76f7c22551.png') no-repeat center center fixed;
+            background-size: cover;
+            color: #fff;
+        }
+
+        .header {
+            background: rgba(40, 38, 58, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #ffd700;
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.8rem;
+            color: #fff;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.6rem 1.2rem;
+            border-radius: 30px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            background: rgba(255, 215, 0, 0.1);
+        }
+
+        .back-btn i {
+            font-size: 0.9rem;
+            transition: transform 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 215, 0, 0.2);
+            color: #ffd700;
+            border-color: rgba(255, 215, 0, 0.4);
+        }
+
+        .back-btn:hover i {
+            transform: translateX(-4px);
+        }
+
+        .cart-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .cart-empty {
+            text-align: center;
+            padding: 3rem;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .cart-empty i {
+            color: #ffd700;
+            margin-bottom: 1.5rem;
+        }
+
+        .cart-empty h2 {
+            color: #ffd700;
+            margin-bottom: 1rem;
+        }
+
+        .cart-empty p {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .cart-items-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .cart-item {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 1.5rem;
+            align-items: center;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .cart-item:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 215, 0, 0.3);
+        }
+
+        .item-thumb {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+        }
+
+        .item-details {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .item-name {
+            font-weight: 600;
+            font-size: 1.2rem;
+            color: #ffd700;
+        }
+
+        .item-category {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+        }
+
+        .item-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .qty-btn {
+            width: 36px;
+            height: 36px;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            background: rgba(255, 215, 0, 0.1);
+            color: #ffd700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .qty-btn:hover {
+            background: rgba(255, 215, 0, 0.2);
+            border-color: #ffd700;
+        }
+
+        .qty-input {
+            width: 60px;
+            text-align: center;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-radius: 8px;
+            padding: 0.5rem;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+        }
+
+        .qty-input:focus {
+            outline: none;
+            border-color: #ffd700;
+        }
+
+        .delete-btn {
+            width: 36px;
+            height: 36px;
+            border: 1px solid rgba(255, 99, 99, 0.3);
+            background: rgba(255, 99, 99, 0.1);
+            color: #ff6b6b;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .delete-btn:hover {
+            background: rgba(255, 99, 99, 0.2);
+            border-color: #ff6b6b;
+        }
+
+        .cart-summary {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-top: 1.5rem;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+
+        .cart-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .cart-action {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 600;
+            text-align: center;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .cart-action.primary {
+            background: #ffd700;
+            color: #28263A;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+        }
+
+        .cart-action.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+        }
+
+        .cart-action:not(.primary) {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .cart-action:not(.primary):hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .cart-item {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .item-thumb {
+                margin: 0 auto;
+            }
+
+            .item-controls {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <a href="4Dsigns.html" class="back-btn">
+                <i class="fas fa-arrow-left"></i>
+                Back to Shop
+            </a>
+            <h1>Your Cart</h1>
+            <div style="width: 100px;"></div> <!-- For balance -->
+        </div>
+    </header>
+
+    <main class="cart-container">
+        <div id="page-cart-empty" class="cart-empty">
+            <i class="fas fa-shopping-bag fa-3x"></i>
+            <h2>Your Shopping Cart is Empty</h2>
+            <p>Discover our amazing custom products and add some to your cart!</p>
+            <a href="4Dsigns.html" class="cart-action primary" style="display: inline-block; margin-top: 2rem;">
+                <i class="fas fa-store"></i>
+                Browse Products
+            </a>
+        </div>
+
+        <ul id="page-cart-items" class="cart-items-list"></ul>
+
+        <div id="page-cart-summary" class="cart-summary" style="display:none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <span>Items in Cart:</span>
+                <span id="page-cart-count" style="color: #ffd700; font-size: 1.2rem; font-weight: 600;">0</span>
+            </div>
+        </div>
+
+        <div class="cart-actions">
+            <a href="4Dsigns.html" class="cart-action">
+                <i class="fas fa-arrow-left"></i>
+                Continue Shopping
+            </a>
+            <button id="page-clear-cart" class="cart-action">
+                <i class="fas fa-trash-alt"></i>
+                Clear Cart
+            </button>
+            <button id="page-checkout" class="cart-action primary">
+                <i class="fas fa-check"></i>
+                Proceed to Checkout
+            </button>
+        </div>
+    </main>
+
+
+
+  <script>
+  (function(){
+    const ITEMS_KEY = 'cartItems';
+    const COUNT_KEY = 'cartCount';
+    const badgeEl = document.getElementById('cart-count');
+
+    function getItems() {
+      try { return JSON.parse(localStorage.getItem(ITEMS_KEY) || '[]'); } catch(e){ return []; }
+    }
+    function renderBadge(n){ if (badgeEl) badgeEl.textContent = n; }
+    function setItems(items) {
+      localStorage.setItem(ITEMS_KEY, JSON.stringify(items));
+      const count = items.reduce((s,it)=> s + (parseInt(it.qty,10) || 0), 0);
+      localStorage.setItem(COUNT_KEY, String(count));
+      renderBadge(count);
+      window.dispatchEvent(new CustomEvent('cart:updated', { detail: { count, items } }));
+    }
+    function addItem(name, qty = 1) {
+      if (!name) name = 'Item';
+      qty = Math.max(1, parseInt(qty,10) || 1);
+      const id = name.trim().toLowerCase();
+      const items = getItems();
+      const idx = items.findIndex(i => i.id === id);
+      if (idx >= 0) items[idx].qty += qty; else items.push({ id, name, qty });
+      setItems(items);
+    }
+    function updateQty(id, qty) {
+      const items = getItems();
+      const idx = items.findIndex(i => i.id === id);
+      if (idx === -1) return;
+      qty = parseInt(qty,10) || 0;
+      if (qty <= 0) items.splice(idx,1); else items[idx].qty = qty;
+      setItems(items);
+    }
+    function removeItem(id) {
+      const items = getItems().filter(i => i.id !== id);
+      setItems(items);
+    }
+
+  
+    window.getCartItems = getItems;
+    window.setCartItems = setItems;
+    window.addItemToCart = addItem;
+    window.updateCartItemQty = updateQty;
+    window.removeCartItem = removeItem;
+
+    renderBadge(parseInt(localStorage.getItem(COUNT_KEY) || '0', 10));
+  })();
+  </script>
+
+  <script>
+  (function(){
+    const list = document.getElementById('page-cart-items');
+    const empty = document.getElementById('page-cart-empty');
+    const summary = document.getElementById('page-cart-summary');
+    const countEl = document.getElementById('page-cart-count');
+    const clearBtn = document.getElementById('page-clear-cart');
+    const checkoutBtn = document.getElementById('page-checkout');
+    const editAllBtn = document.getElementById('page-edit-toggle');
+
+    let editingAll = false;
+    function resolveImage(key){
+      key = (key || '').toLowerCase();
+      const map = {
+        'souvenirs':'images/souvenir1.jpg',
+        'giveaways':'images/giveaway1.jpg',
+        'bulk packages':'images/bulk1.jpg',
+        'custom signage':'images/signage1.jpg',
+        'banners':'images/banner1.jpg',
+        'stickers & decals':'images/sticker1.jpg',
+        'custom mugs':'images/mug1.jpg',
+        't-shirt printing':'images/tshirt1.jpg',
+        'keychains':'images/keychain1.jpg',
+        'invitations':'images/invitation1.jpg',
+        'calling cards':'images/callingcard1.jpg'
+      };
+      return map[key] || 'BGDS.jpg';
+    }
+
+    function items() { return (typeof getCartItems === 'function') ? getCartItems() : []; }
+
+    function render(){
+      const its = items();
+      const count = its.reduce((s,i)=> s + (parseInt(i.qty,10) || 0), 0);
+      if (countEl) countEl.textContent = count;
+      if (!its.length) {
+        if (empty) empty.style.display = 'block';
+        if (summary) summary.style.display = 'none';
+        if (list) list.innerHTML = '';
+        return;
+      }
+      if (empty) empty.style.display = 'none';
+      if (summary) summary.style.display = 'block';
+      if (list) {
+        list.innerHTML = its.map(it => {
+          const editing = editingAll ? ' editing' : '';
+          const img = resolveImage(it.id || it.name);
+          return `
+          <li class="cart-item" data-id="${it.id}">
+            <img class="item-thumb" src="${img}" alt="${it.name}">
+            <div class="item-details">
+                <div class="item-name">${it.name}</div>
+                <div class="item-category">${it.id}</div>
+            </div>
+            <div class="item-controls">
+                <button class="qty-btn minus" aria-label="Decrease quantity">
+                    <i class="fas fa-minus"></i>
+                </button>
+                <input class="qty-input" type="number" min="1" value="${it.qty}" aria-label="Item quantity">
+                <button class="qty-btn plus" aria-label="Increase quantity">
+                    <i class="fas fa-plus"></i>
+                </button>
+                <button class="delete-btn" aria-label="Remove item">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>
+          </li>`;
+        }).join('');
+      }
+    }
+
+    if (list) {
+      list.addEventListener('click', function(e){
+        const target = e.target;
+        const itemEl = target.closest('.cart-item');
+        if (!itemEl) return;
+        const id = itemEl.getAttribute('data-id');
+        if (target.classList.contains('delete-btn')) {
+          if (typeof removeCartItem === 'function') removeCartItem(id);
+          render();
+        } else if (target.classList.contains('qty-btn')) {
+          const input = itemEl.querySelector('.qty-input');
+          let qty = parseInt(input.value,10) || 1;
+          if (target.classList.contains('minus')) qty = Math.max(1, qty - 1);
+          if (target.classList.contains('plus')) qty = qty + 1;
+          input.value = qty;
+          if (typeof updateCartItemQty === 'function') updateCartItemQty(id, qty);
+          render();
+        }
+      });
+      list.addEventListener('change', function(e){
+        const input = e.target.closest('.qty-input');
+        if (!input) return;
+        const itemEl = e.target.closest('.cart-item');
+        const id = itemEl.getAttribute('data-id');
+        let qty = Math.max(1, parseInt(input.value,10) || 1);
+        input.value = qty;
+        if (typeof updateCartItemQty === 'function') updateCartItemQty(id, qty);
+        render();
+      });
+    }
+
+    if (editAllBtn) editAllBtn.addEventListener('click', function(){
+      editingAll = !editingAll;
+      editAllBtn.setAttribute('aria-pressed', editingAll ? 'true' : 'false');
+      render();
+    });
+
+    if (clearBtn) clearBtn.addEventListener('click', function(){
+      if (typeof setCartItems === 'function') setCartItems([]);
+      render();
+    });
+
+    if (checkoutBtn) checkoutBtn.addEventListener('click', function(){
+      window.location.href = 'checkout.html';
+    });
+
+    window.addEventListener('cart:updated', render);
+    render();
+  })();
+  </script>
+</body>
+</html>
