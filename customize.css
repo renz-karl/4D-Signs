@@ -1,7 +1,7 @@
 /* Theme Integration */
 body {
     font-family: 'Poppins', sans-serif;
-    background: linear-gradient(rgba(40, 38, 58, 0.85), rgba(40, 38, 58, 0.85)), url('afce65d8-7606-4689-8ab3-9e76f7c22551.png') no-repeat center center fixed;
+    background: linear-gradient(rgba(40, 38, 58, 0.95), rgba(40, 38, 58, 0.95)), url('afce65d8-7606-4689-8ab3-9e76f7c22551.png') no-repeat center center fixed;
     background-size: cover;
     color: #fff;
     min-height: 100vh;
@@ -9,23 +9,72 @@ body {
     padding: 0;
 }
 
-/* Logo styling for header */
-.logo {
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
+/* Header Styles */
+.main-header {
+    background-color: rgba(40, 38, 58, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 1rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
 }
 
-.logo-img {
-    height: 40px;
-    width: auto;
-    border-radius: 6px;
+.header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Main Container */
+#customize {
+    max-width: 1400px;
+    margin: 2rem auto;
+    padding: 0 2rem;
+}
+
+/* Page Header */
+.page-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    padding: 2rem;
+    background: rgba(40, 38, 58, 0.8);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.page-header h1 {
+    color: #ffd700;
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.page-header .subtitle {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 1.1rem;
+}
+
+/* Logo styling for header */
+.logo {
+    color: #FFD700;
+    text-decoration: none;
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: 1px;
 }
 
 /* Navigation Bar Styles */
 .nav-bar {
     display: flex;
-    gap: 1.5rem;
+    gap: 1rem;
     align-items: center;
 }
 
@@ -33,60 +82,28 @@ body {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.75rem 1.25rem;
+    padding: 0.6rem 1rem;
     background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 12px;
-    color: #ffffff;
+    border-radius: 8px;
+    color: #fff;
     text-decoration: none;
     font-weight: 500;
-    font-size: 0.95rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    overflow: hidden;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.nav-link::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.4), transparent);
-    transition: left 0.5s;
-}
-
-.nav-link:hover::before {
-    left: 100%;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
 }
 
 .nav-link:hover {
-    transform: translateY(-2px);
     background: rgba(255, 215, 0, 0.15);
     border-color: rgba(255, 215, 0, 0.5);
-    color: #ffd700;
-    box-shadow: 0 8px 25px rgba(255, 215, 0, 0.2);
+    color: #FFD700;
+    transform: translateY(-2px);
 }
 
 .nav-link.active {
-    background: linear-gradient(135deg, #ffd700, #ffed4e);
+    background: #FFD700;
     color: #28263A;
-    border-color: #ffd700;
-    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
-    font-weight: 600;
-}
-
-.nav-link.active::before {
-    display: none;
-}
-
-.nav-link i {
-    font-size: 1.1rem;
-    transition: transform 0.3s ease;
+    border-color: #FFD700;
 }
 
 .nav-link:hover i {
@@ -188,11 +205,11 @@ body {
 }
 
 .customize-box {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(40, 38, 58, 0.8);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    box-shadow: 0 12px 40px rgba(2, 6, 23, 0.6);
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    border-radius: 16px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
     margin-bottom: 2rem;
     padding: 2rem;
     display: flex;
@@ -200,29 +217,110 @@ body {
     gap: 2rem;
 }
 
-/* Product Customize Section */
-.product-customize {
-    width: 50%;
-    height: 320px;
-    /* border-style: dashed; */
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-    padding: 1.5rem;
-    width: 260px;
-    transition: transform 0.3s;
+/* Form Sections */
+.form-section {
+    margin-bottom: 2rem;
 }
 
-.customize {
-    width: 450px;
-    height: 400px;
+.form-section h3 {
+    color: #ffd700;
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Product Selector */
+.product-selector {
+    margin-bottom: 1.5rem;
+}
+
+.product-selector label {
+    display: block;
+    color: #ffd700;
+    font-weight: 600;
+    margin-bottom: 0.8rem;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.custom-select-dropdown {
+    width: 100%;
+    padding: 0.8rem 1rem;
     background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 1rem;
+    font-family: 'Poppins', sans-serif;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.custom-select-dropdown:focus {
+    outline: none;
+    border-color: #ffd700;
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1);
+}
+
+.custom-select-dropdown option {
+    background: #28263A;
+    color: #fff;
+}
+
+/* Drag Drop Area */
+.drag-drop-box {
+    flex: 1;
+    min-height: 500px;
+}
+
+.shirt-drop-area {
+    background: rgba(0, 0, 0, 0.3);
+    border: 2px dashed rgba(255, 215, 0, 0.4);
+    border-radius: 12px;
+    height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.shirt-drop-area:hover {
+    border-color: #ffd700;
+    background: rgba(255, 215, 0, 0.05);
+}
+
+.design-area {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hint-text {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Customize Form */
+.customize {
+    flex: 1;
+    background: rgba(40, 38, 58, 0.6);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 215, 0, 0.2);
     border-radius: 12px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-    padding: 1.5rem;
-    transition: transform 0.3s;
+    padding: 2rem;
+    max-width: 500px;
 }
 
 /* Image Upload Area */
@@ -230,7 +328,7 @@ body {
     border: 2px dashed rgba(255, 215, 0, 0.5);
     background: rgba(255, 255, 255, 0.05);
     width: 100%;
-    height: 80%;
+    min-height: 200px;
     border-radius: 12px;
     text-align: center;
     display: flex;
@@ -239,11 +337,29 @@ body {
     overflow: hidden; 
     position: relative;
     transition: all 0.3s ease;
+    padding: 1.5rem;
 }
 
 .add-image:hover {
     border-color: #ffd700;
     background: rgba(255, 215, 0, 0.1);
+}
+
+.upload-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.upload-icon {
+    font-size: 3rem;
+    color: #ffd700;
+    transition: transform 0.3s ease;
+}
+
+.add-image:hover .upload-icon {
+    transform: scale(1.1);
 }
 
 .add-image p {
@@ -252,93 +368,133 @@ body {
     font-family: 'Poppins', sans-serif;
 }
 
+#drop-text {
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
 .or-text {
     color: rgba(255, 255, 255, 0.6);
-    font-size: 14px;
+    font-size: 0.9rem;
 }
 
-/* Button Styles */
-.customize-submit-btn {
-    text-align: center;
-    margin-top: 1rem;
+.preview-image {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 8px;
+    object-fit: contain;
 }
 
-.customize-submit-btn button {
-    width: 80%;
-    height: 40px;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    background-color: #0078d4;
-    cursor: pointer;
-}
-
-.customize-submit-btn button:hover {
-    background-color: #006cbd;
-}
-
-.customize-submit-btn button:active {
-    background-color: #005ba1;
-}
-
-.choose-again-btn {
-    width: 40%;
-    height: 40px;
-    color: #0078d4;
-    border: 1px solid #0078d4;
-    border-radius: 6px;
-    background-color: white;
-    cursor: pointer;
-}
-
-.choose-again-btn:hover {
-    background-color: #f0f8ff;
-}
-
-.submit-btn {
-    width: 40%;
-    height: 44px;
+/* Browse Button */
+.browse-btn {
+    padding: 0.7rem 1.5rem;
+    background: linear-gradient(135deg, #ffd700, #ffed4e);
     color: #28263A;
     border: none;
     border-radius: 8px;
-    background: linear-gradient(90deg, #ffd700, #ffed4e);
     cursor: pointer;
     font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    font-family: 'Poppins', sans-serif;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.browse-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+}
+
+/* Custom Name Input */
+.custom-name {
+    margin: 1rem 0;
+}
+
+.custom-name label {
+    display: block;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.custom-name input {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 1rem;
+    font-family: 'Poppins', sans-serif;
+    transition: all 0.3s ease;
+}
+
+.custom-name input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.custom-name input:focus {
+    outline: none;
+    border-color: #ffd700;
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1);
+}
+
+/* Customize Buttons */
+.customize-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    justify-content: space-between;
+}
+
+.submit-btn {
+    flex: 1;
+    padding: 0.9rem 1.5rem;
+    color: #28263A;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #ffd700, #ffed4e);
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1rem;
     font-family: 'Poppins', sans-serif;
     transition: all 0.3s ease;
     box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
 }
 
 .submit-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(255, 215, 0, 0.4);
-    background: linear-gradient(90deg, #ffed4e, #ffd700);
+    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
 }
 
 .choose-again-btn {
-    width: 40%;
-    height: 44px;
+    flex: 1;
+    padding: 0.9rem 1.5rem;
     color: #fff;
     border: 2px solid #ffd700;
     border-radius: 8px;
     background: transparent;
     cursor: pointer;
     font-weight: 600;
+    font-size: 1rem;
     font-family: 'Poppins', sans-serif;
     transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
 }
 
-.browse-btn {
-    padding: 12px 24px;
-    background: linear-gradient(90deg, #ffd700, #ffed4e);
-    color: #28263A;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    font-family: 'Poppins', sans-serif;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+.choose-again-btn:hover {
+    background: rgba(255, 215, 0, 0.1);
+    border-color: #ffed4e;
 }
 
 .browse-btn:hover {
@@ -440,7 +596,7 @@ body {
 /* Drag and Drop Area */
 .drag-drop-box {
     width: 550px;
-    height: 600px;
+    height: 800px;
     background: #fff;
     border: 1px solid rgba(255, 215, 0, 0.2);
     border-radius: 12px;
@@ -513,23 +669,68 @@ body {
     cursor: nwse-resize;
 }
 
-/* Upload UI Elements */
-.upload-icon {
-    width: 64px;
-    height: 64px;
-    margin-bottom: 1rem;
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .customize-box {
+        flex-direction: column;
+    }
+
+    .drag-drop-box,
+    .customize {
+        width: 100%;
+        max-width: 100%;
+    }
 }
 
-#drop-text {
-    margin-bottom: 0.5rem;
-    color: #666;
+@media (max-width: 768px) {
+    #customize {
+        margin-top: 6rem;
+        padding: 0 1rem;
+    }
+
+    .page-header h1 {
+        font-size: 2rem;
+        flex-direction: column;
+    }
+
+    .page-header .subtitle {
+        font-size: 1rem;
+    }
+
+    .customize-box {
+        padding: 1.5rem;
+    }
+
+    .shirt-drop-area {
+        min-height: 300px;
+    }
+
+    .customize-buttons {
+        flex-direction: column;
+    }
+
+    .nav-bar {
+        gap: 0.5rem;
+    }
+
+    .nav-link span:not(.cart-badge) {
+        display: none;
+    }
 }
 
-.or-text {
-    margin: 0.5rem 0;
-    color: #666;
-}
+@media (max-width: 480px) {
+    .page-header {
+        padding: 1.5rem;
+    }
 
+    .customize-box {
+        padding: 1rem;
+    }
+
+    .form-section h3 {
+        font-size: 1.1rem;
+    }
+}
 /* Custom Text */
 .draggable-custom-name {
     user-select: none;
@@ -537,5 +738,3 @@ body {
     color: #222;
     text-shadow: 1px 1px 4px #fff, 0 0 2px #000;
 }
-
-
