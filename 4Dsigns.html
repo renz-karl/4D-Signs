@@ -254,6 +254,31 @@
                         <div class="modal-product-price"></div>
                         <div class="modal-product-reviews"></div>
                         <div class="modal-product-stock"></div>
+                        
+                        <!-- Color Picker -->
+                        <div class="color-picker-section">
+                            <label class="color-picker-label">Choose Color:</label>
+                            <div class="color-options">
+                                <div class="color-option" data-color="white" style="background-color: #ffffff; border: 2px solid #ddd;" title="White"></div>
+                                <div class="color-option" data-color="black" style="background-color: #000000;" title="Black"></div>
+                                <div class="color-option" data-color="yellow" style="background-color: #FFD700;" title="Yellow"></div>
+                                <div class="color-option" data-color="blue" style="background-color: #0066FF;" title="Blue"></div>
+                                <div class="color-option" data-color="pink" style="background-color: #FF69B4;" title="Pink"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Size Selector -->
+                        <div class="size-picker-section">
+                            <label class="size-picker-label">Choose Size:</label>
+                            <div class="size-options">
+                                <div class="size-option" data-size="S">S</div>
+                                <div class="size-option" data-size="M">M</div>
+                                <div class="size-option" data-size="L">L</div>
+                                <div class="size-option" data-size="XL">XL</div>
+                                <div class="size-option" data-size="XXL">XXL</div>
+                            </div>
+                        </div>
+                        
                         <div class="quantity-selector">
                             <button class="quantity-btn minus-btn">-</button>
                             <input type="text" class="quantity-input" value="1" readonly>
@@ -278,38 +303,50 @@
       const COUNT_KEY = 'cartCount';
       const badgeEls = Array.from(document.querySelectorAll('#cart-count, #floating-cart-count'));
 
-      function getItems() {
-        try { return JSON.parse(localStorage.getItem(ITEMS_KEY) || '[]'); } catch(e){ return []; }
-      }
-      function renderBadge(n){ badgeEls.forEach(el => el && (el.textContent = n)); }
-      function setItems(items) {
-        localStorage.setItem(ITEMS_KEY, JSON.stringify(items));
-        const count = items.reduce((s,it)=> s + (parseInt(it.qty,10) || 0), 0);
-        localStorage.setItem(COUNT_KEY, String(count));
-        renderBadge(count);
-        window.dispatchEvent(new CustomEvent('cart:updated', { detail: { count, items } }));
-      }
-      function addItem(name, qty = 1) {
-        if (!name) name = 'Item';
-        qty = Math.max(1, parseInt(qty,10) || 1);
-        const id = name.trim().toLowerCase();
-        const items = getItems();
-        const idx = items.findIndex(i => i.id === id);
-        if (idx >= 0) items[idx].qty += qty; else items.push({ id, name, qty });
-        setItems(items);
-      }
-      function updateQty(id, qty) {
-        const items = getItems();
-        const idx = items.findIndex(i => i.id === id);
-        if (idx === -1) return;
-        qty = parseInt(qty,10) || 0;
-        if (qty <= 0) items.splice(idx,1); else items[idx].qty = qty;
-        setItems(items);
-      }
-      function removeItem(id) {
-        const items = getItems().filter(i => i.id !== id);
-        setItems(items);
-      }
+            function getItems() {
+                try { return JSON.parse(localStorage.getItem(ITEMS_KEY) || '[]'); } catch(e){ return []; }
+            }
+            function renderBadge(n){ badgeEls.forEach(el => el && (el.textContent = n)); }
+            function setItems(items) {
+                localStorage.setItem(ITEMS_KEY, JSON.stringify(items));
+                const count = items.reduce((s,it)=> s + (parseInt(it.qty,10) || 0), 0);
+                localStorage.setItem(COUNT_KEY, String(count));
+                renderBadge(count);
+                window.dispatchEvent(new CustomEvent('cart:updated', { detail: { count, items } }));
+            }
+
+            // accept optional color, size, price and store them on the cart item
+            function addItem(name, qty = 1, color = null, size = null, price = null) {
+                if (!name) name = 'Item';
+                qty = Math.max(1, parseInt(qty,10) || 1);
+                const id = name.trim().toLowerCase();
+                const items = getItems();
+                const idx = items.findIndex(i => i.id === id && (i.color || null) === (color || null) && (i.size || null) === (size || null));
+                if (idx >= 0) {
+                    items[idx].qty += qty;
+                    // update price if provided
+                    if (price != null) items[idx].price = Number(price);
+                } else {
+                    const item = { id, name, qty };
+                    if (color) item.color = color;
+                    if (size) item.size = size;
+                    if (price != null) item.price = Number(price);
+                    items.push(item);
+                }
+                setItems(items);
+            }
+            function updateQty(id, qty) {
+                const items = getItems();
+                const idx = items.findIndex(i => i.id === id);
+                if (idx === -1) return;
+                qty = parseInt(qty,10) || 0;
+                if (qty <= 0) items.splice(idx,1); else items[idx].qty = qty;
+                setItems(items);
+            }
+            function removeItem(id) {
+                const items = getItems().filter(i => i.id !== id);
+                setItems(items);
+            }
 
       window.getCartItems = getItems;
       window.setCartItems = setItems;
@@ -338,24 +375,62 @@
 </script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    // utility: parse a price string like "₱150.00 - ₱500.00" or "₱150.00" -> returns numeric unit price (first number)
+    function parsePriceString(priceStr){
+        if (!priceStr) return null;
+        // strip non-digit, non-dot, non-comma, then find first number
+        const match = priceStr.replace(/,/g,'').match(/(\d+(?:\.\d+)?)/);
+        if (match) return Number(match[1]);
+        return null;
+    }
     const modal = document.getElementById('add-to-cart-modal');
     const closeBtn = modal.querySelector('.modal-close-btn');
     const confirmBtn = modal.querySelector('.add-to-cart-confirm-btn');
     const minusBtn = modal.querySelector('.minus-btn');
     const plusBtn = modal.querySelector('.plus-btn');
     const quantityInput = modal.querySelector('.quantity-input');
+    const colorOptions = modal.querySelectorAll('.color-option');
+    const sizeOptions = modal.querySelectorAll('.size-option');
 
     let currentProduct = null;
+    let selectedColor = null;
+    let selectedSize = null;
+
+    // Color picker functionality
+    colorOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            // Remove selected class from all options
+            colorOptions.forEach(opt => opt.classList.remove('selected'));
+            // Add selected class to clicked option
+            option.classList.add('selected');
+            selectedColor = option.getAttribute('data-color');
+            console.log('Selected color:', selectedColor);
+        });
+    });
+
+    // Size picker functionality
+    sizeOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            // Remove selected class from all options
+            sizeOptions.forEach(opt => opt.classList.remove('selected'));
+            // Add selected class to clicked option
+            option.classList.add('selected');
+            selectedSize = option.getAttribute('data-size');
+            console.log('Selected size:', selectedSize);
+        });
+    });
 
     document.querySelectorAll('.add-to-cart-btn').forEach(button => {
         button.addEventListener('click', () => {
             const productItem = button.closest('.product-item');
+            const priceText = productItem.querySelector('.product-price').textContent;
             currentProduct = {
                 name: productItem.querySelector('h3').textContent,
                 image: productItem.querySelector('.product-image').src,
                 reviews: productItem.querySelector('.reviews').textContent,
                 stock: productItem.querySelector('.stock-count').textContent,
-                price: productItem.querySelector('.product-price').textContent
+                price: priceText,
+                unitPrice: parsePriceString(priceText) // numeric unit price (first number in range)
             };
             openModal(currentProduct);
         });
@@ -369,6 +444,13 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.querySelector('.modal-product-reviews').textContent = product.reviews;
         modal.querySelector('.modal-product-stock').textContent = `Items left: ${product.stock}`;
         quantityInput.value = 1;
+        
+        // Reset color and size selection
+        colorOptions.forEach(opt => opt.classList.remove('selected'));
+        sizeOptions.forEach(opt => opt.classList.remove('selected'));
+        selectedColor = null;
+        selectedSize = null;
+        
         modal.classList.add('show');
     }
 
@@ -397,9 +479,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     confirmBtn.addEventListener('click', () => {
         const quantity = parseInt(quantityInput.value);
-        if (typeof addItemToCart === 'function') {
-            addItemToCart(currentProduct.name, quantity);
+        
+        // Check if color is selected
+        if (!selectedColor) {
+            alert('Please select a color before adding to cart!');
+            return;
         }
+        
+        // Check if size is selected
+        if (!selectedSize) {
+            alert('Please select a size before adding to cart!');
+            return;
+        }
+        
+        if (typeof addItemToCart === 'function') {
+            // Include color, size and unit price in the cart item
+            addItemToCart(currentProduct.name, quantity, selectedColor, selectedSize, currentProduct.unitPrice);
+        }
+        
+        console.log('Adding to cart:', currentProduct.name, 'Quantity:', quantity, 'Color:', selectedColor, 'Size:', selectedSize);
         closeModal();
     });
 });

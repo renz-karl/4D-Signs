@@ -159,3 +159,95 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+// --- Checkout rendering & total calculation ---
+document.addEventListener('DOMContentLoaded', function() {
+    const checkoutItemsEl = document.getElementById('checkout-items');
+    const subtotalEl = document.getElementById('subtotal');
+    const shippingEl = document.getElementById('shipping');
+    const totalEl = document.getElementById('total');
+
+    function formatCurrency(num){
+        if (isNaN(num) || num == null) num = 0;
+        return '₱' + Number(num).toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2});
+    }
+
+    function getCartItems(){
+        try { return JSON.parse(localStorage.getItem('cartItems') || '[]'); } catch(e){ return []; }
+    }
+
+    // simple price lookup for legacy items without a price field
+    const priceLookup = {
+        'souvenirs': 150,
+        'giveaways': 100,
+        'bulk packages': 1000,
+        'custom signage': 500,
+        'banners': 500,
+        'stickers & decals': 300,
+        'custom mugs': 250,
+        't-shirt printing': 350,
+        'keychains': 80,
+        'invitations': 150,
+        'calling cards': 200
+    };
+
+    function resolveUnitPrice(item){
+        if (item.price != null && !isNaN(Number(item.price))) return Number(item.price);
+        const key = (item.id || item.name || '').toString().toLowerCase();
+        if (priceLookup[key]) return priceLookup[key];
+        // fallback: try to extract digits from item.name
+        const m = (item.name || '').replace(/,/g,'').match(/(\d+(?:\.\d+)?)/);
+        if (m) return Number(m[1]);
+        console.warn('No unit price found for cart item', item);
+        return 0;
+    }
+
+    function renderCheckout(){
+        const items = getCartItems();
+        checkoutItemsEl.innerHTML = '';
+        if (!items.length){
+            checkoutItemsEl.innerHTML = '<p style="color:rgba(255,255,255,0.8);">Your cart is empty.</p>';
+            subtotalEl.textContent = formatCurrency(0);
+            shippingEl.textContent = formatCurrency(0);
+            totalEl.textContent = formatCurrency(0);
+            return;
+        }
+
+        let subtotal = 0;
+        items.forEach(it => {
+            const unit = resolveUnitPrice(it);
+            const qty = parseInt(it.qty,10) || 0;
+            const line = unit * qty;
+            subtotal += line;
+            const el = document.createElement('div');
+            el.className = 'checkout-item';
+            el.style.display = 'flex';
+            el.style.justifyContent = 'space-between';
+            el.style.alignItems = 'center';
+            el.style.marginBottom = '0.75rem';
+            el.innerHTML = `
+                <div style="display:flex;flex-direction:column;">
+                    <strong style="color:#ffd700">${it.name}</strong>
+                    <small style="color:rgba(255,255,255,0.8)">${it.size? 'Size: '+it.size + (it.color? ' • Color: '+it.color : '') : (it.color? 'Color: '+it.color : '')}</small>
+                </div>
+                <div style="text-align:right">
+                    <div>${formatCurrency(unit)} x ${qty}</div>
+                    <div style="font-weight:600;color:#fff;margin-top:4px">${formatCurrency(line)}</div>
+                </div>`;
+            checkoutItemsEl.appendChild(el);
+        });
+
+        // shipping rules: free for subtotal >= 500, otherwise 50
+        const shipping = (subtotal > 0 && subtotal < 500) ? 50 : 0;
+        const total = subtotal + shipping;
+
+        subtotalEl.textContent = formatCurrency(subtotal);
+        shippingEl.textContent = formatCurrency(shipping);
+        totalEl.textContent = formatCurrency(total);
+    }
+
+    // listen for cart updates from other pages
+    window.addEventListener('cart:updated', renderCheckout);
+    // initial render
+    renderCheckout();
+});

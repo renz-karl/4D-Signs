@@ -405,15 +405,26 @@
       renderBadge(count);
       window.dispatchEvent(new CustomEvent('cart:updated', { detail: { count, items } }));
     }
-    function addItem(name, qty = 1) {
-      if (!name) name = 'Item';
-      qty = Math.max(1, parseInt(qty,10) || 1);
-      const id = name.trim().toLowerCase();
-      const items = getItems();
-      const idx = items.findIndex(i => i.id === id);
-      if (idx >= 0) items[idx].qty += qty; else items.push({ id, name, qty });
-      setItems(items);
-    }
+        // addItem now accepts optional color, size and price and stores them on the item
+        function addItem(name, qty = 1, color = null, size = null, price = null) {
+            if (!name) name = 'Item';
+            qty = Math.max(1, parseInt(qty,10) || 1);
+            const id = name.trim().toLowerCase();
+            const items = getItems();
+            // match same id and same options (color/size) to group items
+            const idx = items.findIndex(i => i.id === id && (i.color || null) === (color || null) && (i.size || null) === (size || null));
+            if (idx >= 0) {
+                items[idx].qty += qty;
+                if (price != null) items[idx].price = Number(price);
+            } else {
+                const item = { id, name, qty };
+                if (color) item.color = color;
+                if (size) item.size = size;
+                if (price != null) item.price = Number(price);
+                items.push(item);
+            }
+            setItems(items);
+        }
     function updateQty(id, qty) {
       const items = getItems();
       const idx = items.findIndex(i => i.id === id);

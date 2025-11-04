@@ -31,7 +31,7 @@ body {
     padding: 0 2rem;
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    
 }
 
 .logo {
@@ -40,6 +40,9 @@ body {
     font-size: 1.8rem;
     font-weight: 700;
     letter-spacing: 1px;
+    display: block;
+    width: 100%;
+    text-align: center;
 }
 
 .nav-bar {
@@ -422,58 +425,3 @@ body {
     }
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-    .hero-title {
-        font-size: 3rem;
-    }
-    
-    .hero-features {
-        gap: 2rem;
-    }
-    
-    .nav-bar {
-        gap: 1rem;
-    }
-    
-    .cta-button {
-        padding: 0.8rem 1.5rem;
-    }
-    
-    .category-grid,
-    .benefits-grid {
-        gap: 1.5rem;
-    }
-    
-    .footer-content {
-        text-align: center;
-    }
-    
-    .social-links {
-        justify-content: center;
-    }
-}
-
-@media (max-width: 480px) {
-    .hero-title {
-        font-size: 2.5rem;
-    }
-    
-    .hero-description {
-        font-size: 1rem;
-    }
-    
-    .hero-buttons {
-        flex-direction: column;
-        gap: 1rem;
-    }
-    
-    .main-header h1 {
-        font-size: 1.5rem;
-    }
-    
-    .nav-link {
-        padding: 0.4rem 0.8rem;
-        font-size: 0.9rem;
-    }
-}
