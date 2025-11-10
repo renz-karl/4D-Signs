@@ -62,16 +62,17 @@ body {
     font-size: 1.1rem;
 }
 
-/* Logo styling for header */
+
 .logo {
     color: #FFD700;
     text-decoration: none;
     font-size: 1.8rem;
     font-weight: 700;
     letter-spacing: 1px;
+    text-align: left;
 }
 
-/* Navigation Bar Styles */
+
 .nav-bar {
     display: flex;
     gap: 1rem;
