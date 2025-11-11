@@ -48,11 +48,43 @@ function toggleMessagePopup(event) {
     popup.classList.toggle('show');
 }
 
+// Function to handle editing custom items
+function editCustomItem(itemId) {
+    // Store current item details before editing
+    const cartItems = JSON.parse(localStorage.getItem('cartItems') || '[]');
+    const itemToEdit = cartItems.find(item => item.id === itemId);
+    
+    if (itemToEdit) {
+        // Make sure we have all the necessary properties
+        const itemForEdit = {
+            ...itemToEdit,
+            design: itemToEdit.design || {
+                image: itemToEdit.customImage || '',
+                position: { x: 0, y: 0 },
+                size: { width: '100px', height: '100px' }
+            }
+        };
+        
+        // Store the item being edited and its index
+        localStorage.setItem('editingCustomItem', JSON.stringify({
+            item: itemForEdit,
+            index: cartItems.indexOf(itemToEdit)
+        }));
+        
+        // Redirect to customize page
+        window.location.href = 'customize.html?mode=edit&id=' + encodeURIComponent(itemId);
+    }
+}
+
 function updatePaymentOptions() {
     const deliveryMethod = document.querySelector('input[name="deliveryMethod"]:checked').value;
     const codOption = document.getElementById('cod-option');
     const cashOption = document.getElementById('cash-option');
     const gcashOption = document.getElementById('gcash-option');
+    const gcashDetails = document.getElementById('gcash-details');
+    
+    // Reset GCash details visibility
+    gcashDetails.style.display = 'none';
     
     if (deliveryMethod === 'delivery') {
         codOption.style.display = 'block';
@@ -63,12 +95,65 @@ function updatePaymentOptions() {
         cashOption.style.display = 'block';
         document.getElementById('cash').checked = true;
     }
+
+    // Show GCash details if GCash is selected
+    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+    if (paymentMethod === 'gcash') {
+        gcashDetails.style.display = 'block';
+    }
+}
+
+// Validate GCash number
+function validateGCashNumber(number) {
+    return /^09\d{9}$/.test(number); // Validates format: 09XXXXXXXXX
+}
+
+// Validate order before submission
+function validateOrder() {
+    // Get all required form fields
+    const requiredFields = document.querySelectorAll('input[required]');
+    for (let field of requiredFields) {
+        if (!field.value) {
+            alert('Please fill in all required fields');
+            field.focus();
+            return false;
+        }
+    }
+
+    // Payment method specific validation
+    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+    if (paymentMethod === 'gcash') {
+        const gcashNumber = document.getElementById('gcash-number').value;
+        if (!validateGCashNumber(gcashNumber)) {
+            alert('Please enter a valid GCash number (format: 09XXXXXXXXX)');
+            document.getElementById('gcash-number').focus();
+            return false;
+        }
+    }
+
+    return true;
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Delivery method change handler
     const deliveryOptions = document.querySelectorAll('input[name="deliveryMethod"]');
     deliveryOptions.forEach(option => {
         option.addEventListener('change', updatePaymentOptions);
+    });
+
+    // Payment method change handler
+    const paymentOptions = document.querySelectorAll('input[name="paymentMethod"]');
+    paymentOptions.forEach(option => {
+        option.addEventListener('change', updatePaymentOptions);
+    });
+
+    // Place order button handler
+    const placeOrderBtn = document.querySelector('.place-order-btn');
+    placeOrderBtn.addEventListener('click', function() {
+        if (validateOrder()) {
+            // TODO: Handle order submission
+            alert('Order placed successfully!');
+        }
     });
     
     updatePaymentOptions();
@@ -230,9 +315,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     <strong style="color:#ffd700">${it.name}</strong>
                     <small style="color:rgba(255,255,255,0.8)">${it.size? 'Size: '+it.size + (it.color? ' • Color: '+it.color : '') : (it.color? 'Color: '+it.color : '')}</small>
                 </div>
-                <div style="text-align:right">
-                    <div>${formatCurrency(unit)} x ${qty}</div>
-                    <div style="font-weight:600;color:#fff;margin-top:4px">${formatCurrency(line)}</div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="text-align:right">
+                        <div>${formatCurrency(unit)} x ${qty}</div>
+                        <div style="font-weight:600;color:#fff;margin-top:4px">${formatCurrency(line)}</div>
+                    </div>
+                    ${it.isCustom ? `
+                    <button class="edit-custom-btn" onclick="editCustomItem('${it.id}')" style="background:#FFD700;color:#28263A;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;transition:all 0.3s ease;font-weight:500;text-shadow:none;">
+                        <i class="fas fa-edit"></i>
+                        Edit
+                    </button>
+                    ` : ''}
                 </div>`;
             checkoutItemsEl.appendChild(el);
         });
@@ -250,4 +343,86 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('cart:updated', renderCheckout);
     // initial render
     renderCheckout();
+});
+
+// Get DOM elements
+const deliveryMethodInputs = document.getElementsByName('deliveryMethod');
+const paymentMethodInputs = document.getElementsByName('paymentMethod');
+const codOption = document.getElementById('cod-option');
+const cashOption = document.getElementById('cash-option');
+const gcashOption = document.getElementById('gcash-option');
+const gcashDetails = document.getElementById('gcash-details');
+
+// Handle delivery method change
+deliveryMethodInputs.forEach(input => {
+    input.addEventListener('change', (e) => {
+        const isDelivery = e.target.value === 'delivery';
+        
+        // Show/hide payment options based on delivery method
+        codOption.style.display = isDelivery ? 'block' : 'none';
+        cashOption.style.display = isDelivery ? 'none' : 'block';
+        
+        // Reset payment selection
+        if (isDelivery) {
+            document.getElementById('cod').checked = true;
+        } else {
+            document.getElementById('cash').checked = true;
+        }
+    });
+});
+
+// Handle payment method change
+paymentMethodInputs.forEach(input => {
+    input.addEventListener('change', (e) => {
+        // Show/hide GCash details
+        gcashDetails.style.display = e.target.value === 'gcash' ? 'block' : 'none';
+        
+        // Clear GCash number when switching payment methods
+        if (e.target.value !== 'gcash') {
+            document.getElementById('gcash-number').value = '';
+        }
+    });
+});
+
+// Validate GCash number
+const gcashNumberInput = document.getElementById('gcash-number');
+gcashNumberInput.addEventListener('input', (e) => {
+    const value = e.target.value;
+    if (value.length > 11) {
+        e.target.value = value.slice(0, 11);
+    }
+    // Only allow numbers
+    e.target.value = e.target.value.replace(/[^0-9]/g, '');
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    const deliveryRadios = document.getElementsByName('deliveryMethod');
+    const codOption = document.getElementById('cod-option');
+    const cashOption = document.getElementById('cash-option');
+    const gcashOption = document.getElementById('gcash-option');
+
+    function updatePaymentMethods() {
+        const selectedDelivery = document.querySelector('input[name="deliveryMethod"]:checked').value;
+        
+        if (selectedDelivery === 'delivery') {
+            codOption.style.display = 'block';
+            cashOption.style.display = 'none';
+            document.getElementById('cod').checked = true;
+        } else {
+            codOption.style.display = 'none';
+            cashOption.style.display = 'block';
+            document.getElementById('cash').checked = true;
+        }
+        
+        // GCash is always visible
+        gcashOption.style.display = 'block';
+    }
+
+    // Add event listeners to delivery method radio buttons
+    deliveryRadios.forEach(radio => {
+        radio.addEventListener('change', updatePaymentMethods);
+    });
+
+    // Initialize payment methods on page load
+    updatePaymentMethods();
 });

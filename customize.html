@@ -30,65 +30,353 @@
             <p class="subtitle">Create your unique design with our easy-to-use customization tool</p>
         </div>
 
-        <div class="customize-box">
-
-            <div class="drag-drop-box">
-                <div class="product-selector">
-                    <label for="product-type"><i class="fas fa-box-open"></i> Select Product Type</label>
-                    <select class="custom-select-dropdown" id="product-type">
-                        <option value="sign">Custom Sign</option>
-                        <option value="shirt">T-Shirt</option>
-                        <option value="mug">Mug</option>
-                        <option value="ecobag">Eco Bag</option>
-                        <option value="key-chain">Key Chain</option>
-                        <option value="ref-magnet">Ref Magnet</option>
-                        <option value="sticker">Sticker</option>
-                    </select>
+        <div class="custom-layout">
+            <form class="customize" enctype="multipart/form-data" autocomplete="off" style="display: contents;">
+            <!-- Left Sidebar - Tools Panel -->
+            <aside class="tools-sidebar">
+                <div class="sidebar-header">
+                    <h3><i class="fas fa-magic"></i> Design Tools</h3>
                 </div>
 
-                <div class="shirt-drop-area" id="shirtDropArea"> 
-                    <div class="design-area">
-                        <p class="hint-text"><i class="fas fa-info-circle"></i> Drag and drop your design here</p>
+                <div class="sidebar-content">
+                    <!-- Elements Section -->
+                    <div class="tool-section">
+                        <button class="section-btn" onclick="toggleSection(this)">
+                            <i class="fas fa-shapes"></i>
+                            <span>Elements</span>
+                            <i class="fas fa-chevron-down arrow"></i>
+                        </button>
+                        <div class="section-content active">
+                            <button type="button" id="add-text-btn" class="element-btn">
+                                <i class="fas fa-font"></i>
+                                <span>Add Text</span>
+                            </button>
+                            <div class="text-input-wrapper">
+                                <input type="text" id="text-input" placeholder="Type your text..." class="custom-input">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Text Styles Section -->
+                    <div class="tool-section">
+                        <button class="section-btn" onclick="toggleSection(this)">
+                            <i class="fas fa-text-height"></i>
+                            <span>Text Styles</span>
+                            <i class="fas fa-chevron-down arrow"></i>
+                        </button>
+                        <div class="section-content">
+                            <div class="style-row">
+                                <label>Font</label>
+                                <select id="text-font" class="custom-select">
+                                    <option value="Poppins">Poppins</option>
+                                    <option value="Arial">Arial</option>
+                                    <option value="Georgia">Georgia</option>
+                                    <option value="Courier New">Courier New</option>
+                                    <option value="Comic Sans MS">Comic Sans</option>
+                                    <option value="Impact">Impact</option>
+                                </select>
+                            </div>
+                            <div class="style-row">
+                                <label>Size</label>
+                                <div class="range-wrapper">
+                                    <input type="range" id="text-size" min="12" max="72" value="24" class="custom-slider">
+                                    <span id="text-size-value" class="range-label">24</span>
+                                </div>
+                            </div>
+                            <div class="style-row">
+                                <label>Weight</label>
+                                <select id="text-weight" class="custom-select">
+                                    <option value="300">Light</option>
+                                    <option value="400">Normal</option>
+                                    <option value="600">Semi-Bold</option>
+                                    <option value="700" selected>Bold</option>
+                                    <option value="900">Black</option>
+                                </select>
+                            </div>
+                            <div class="style-row">
+                                <label>Color</label>
+                                <div class="color-input-wrapper">
+                                    <input type="color" id="text-color" value="#FFD700" class="custom-color">
+                                    <span class="color-hex">#FFD700</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Position Section -->
+                    <div class="tool-section">
+                        <button class="section-btn" onclick="toggleSection(this)">
+                            <i class="fas fa-up-down-left-right"></i>
+                            <span>Position</span>
+                            <i class="fas fa-chevron-down arrow"></i>
+                        </button>
+                        <div class="section-content">
+                            <div class="style-row">
+                                <label>Rotation</label>
+                                <div class="range-wrapper">
+                                    <input type="range" id="rotation-slider" min="0" max="360" value="0" class="custom-slider">
+                                    <span id="rotation-value" class="range-label">0°</span>
+                                </div>
+                            </div>
+                            <div class="style-row">
+                                <label>Opacity</label>
+                                <div class="range-wrapper">
+                                    <input type="range" id="opacity-slider" min="0" max="100" value="100" class="custom-slider">
+                                    <span id="opacity-value" class="range-label">100%</span>
+                                </div>
+                            </div>
+                            <div class="button-group">
+                                <button type="button" id="flip-horizontal" class="mini-btn">
+                                    <i class="fas fa-arrows-left-right"></i>
+                                    <span>Flip H</span>
+                                </button>
+                                <button type="button" id="flip-vertical" class="mini-btn">
+                                    <i class="fas fa-arrows-up-down"></i>
+                                    <span>Flip V</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Effects Section -->
+                    <div class="tool-section">
+                        <button class="section-btn" onclick="toggleSection(this)">
+                            <i class="fas fa-wand-magic-sparkles"></i>
+                            <span>Effects</span>
+                            <i class="fas fa-chevron-down arrow"></i>
+                        </button>
+                        <div class="section-content">
+                            <div class="style-row">
+                                <label>Brightness</label>
+                                <div class="range-wrapper">
+                                    <input type="range" id="brightness-slider" min="0" max="200" value="100" class="custom-slider">
+                                    <span id="brightness-value" class="range-label">100</span>
+                                </div>
+                            </div>
+                            <div class="style-row">
+                                <label>Contrast</label>
+                                <div class="range-wrapper">
+                                    <input type="range" id="contrast-slider" min="0" max="200" value="100" class="custom-slider">
+                                    <span id="contrast-value" class="range-label">100</span>
+                                </div>
+                            </div>
+                            <div class="style-row">
+                                <label>Saturation</label>
+                                <div class="range-wrapper">
+                                    <input type="range" id="saturation-slider" min="0" max="200" value="100" class="custom-slider">
+                                    <span id="saturation-value" class="range-label">100</span>
+                                </div>
+                            </div>
+                            <div class="style-row">
+                                <label>Blur</label>
+                                <div class="range-wrapper">
+                                    <input type="range" id="blur-slider" min="0" max="10" value="0" step="0.5" class="custom-slider">
+                                    <span id="blur-value" class="range-label">0</span>
+                                </div>
+                            </div>
+                            <button type="button" id="reset-filters" class="reset-btn">
+                                <i class="fas fa-rotate-left"></i> Reset All Filters
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Layers Section -->
+                    <div class="tool-section">
+                        <button class="section-btn" onclick="toggleSection(this)">
+                            <i class="fas fa-layer-group"></i>
+                            <span>Layers</span>
+                            <i class="fas fa-chevron-down arrow"></i>
+                        </button>
+                        <div class="section-content">
+                            <div class="button-group vertical">
+                                <button type="button" id="bring-forward" class="layer-action-btn">
+                                    <i class="fas fa-arrow-up"></i>
+                                    <span>Bring Forward</span>
+                                </button>
+                                <button type="button" id="send-backward" class="layer-action-btn">
+                                    <i class="fas fa-arrow-down"></i>
+                                    <span>Send Backward</span>
+                                </button>
+                                <button type="button" id="delete-selected" class="layer-action-btn delete">
+                                    <i class="fas fa-trash-alt"></i>
+                                    <span>Delete Selected</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Custom Area -->
+            <div class="custom-area">
+                <div class="custom-container">
+                    <div class="product-selector-bar">
+                        <label for="product-type"><i class="fas fa-box-open"></i> Product Type</label>
+                        <select class="custom-select-dropdown" id="product-type">
+                            <option value="sign">Custom Sign</option>
+                            <option value="shirt">T-Shirt</option>
+                            <option value="mug">Mug</option>
+                            <option value="ecobag">Eco Bag</option>
+                            <option value="key-chain">Key Chain</option>
+                            <option value="ref-magnet">Ref Magnet</option>
+                            <option value="sticker">Sticker</option>
+                        </select>
+                    </div>
+
+                    <div class="design-canvas">
+                        <div class="shirt-drop-area" id="shirtDropArea"> 
+                            <div class="design-area">
+                                <p class="hint-text"><i class="fas fa-info-circle"></i> Drag and drop your design here</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="custom-footer">
+                        <button type="button" id="choose-again" class="secondary-action-btn" style="display: none;">
+                            <i class="fas fa-redo"></i> Choose Again
+                        </button>
+                        <button type="button" id="done-design-btn" class="primary-action-btn">
+                            <i class="fas fa-check-circle"></i> Done Design
+                        </button>
                     </div>
                 </div>
             </div>
 
-
-            <form class="customize" enctype="multipart/form-data" autocomplete="off">
-                <div class="form-section">
-                    <h3><i class="fas fa-image"></i> Upload Your Design</h3>
-                    <div class="add-image" id="drop-zone">
+            <!-- Right Panel - Upload -->
+            <aside class="upload-panel">
+                <div class="upload-header">
+                    <h3><i class="fas fa-cloud-upload-alt"></i> Upload</h3>
+                </div>
+                <div class="upload-panel-content">
+                    <div class="upload-area" id="drop-zone">
                         <div class="upload-container">
                             <i class="fas fa-cloud-upload-alt upload-icon" id="upload-icon"></i>
                             <img id="preview-image" class="preview-image" style="display: none;">
-                            <p id="drop-text">Drag and drop your image here</p>
+                            <p id="drop-text">Drop image here</p>
                             <p class="or-text">or</p>
                             <input type="file" id="file-input" accept="image/*" hidden>
-                            <button type="button" class="browse-btn" onclick="document.getElementById('file-input').click()">
-                                <i class="fas fa-folder-open"></i> Choose Photo/Video
+                            <button type="button" class="browse-btn-custom" onclick="document.getElementById('file-input').click()">
+                                <i class="fas fa-folder-open"></i> Browse Files
                             </button>
                         </div>
                     </div>
-                </div>
 
-                <div class="form-section">
-                    <h3><i class="fas fa-pencil-alt"></i> Product Details</h3>
-                    <div class="custom-name">
-                        <label for="custom-text">Custom Text</label>
-                        <input type="text" id="custom-text" placeholder="Enter your custom text or name">
+                    <div class="custom-name-section">
+                        <label for="custom-text"><i class="fas fa-tag"></i> Product Name</label>
+                        <input type="text" id="custom-text" placeholder="Enter product name" class="custom-input">
                     </div>
                 </div>
-
-                <div class="customize-buttons">
-                    <button type="button" id="choose-again" class="choose-again-btn" style="display: none;">
-                        <i class="fas fa-redo"></i> Choose Again
-                    </button>
-                    <button type="submit" class="submit-btn">
-                        <i class="fas fa-check"></i> Submit Design
-                    </button>
-                </div>
+            </aside>
             </form>
         </div>
     </main>
+
+    <script>
+        function toggleSection(button) {
+            const section = button.closest('.tool-section');
+            const content = section.querySelector('.section-content');
+            const arrow = button.querySelector('.arrow');
+            
+            section.classList.toggle('collapsed');
+            
+            if (section.classList.contains('collapsed')) {
+                content.style.maxHeight = '0';
+                content.style.opacity = '0';
+                arrow.style.transform = 'rotate(-90deg)';
+            } else {
+                content.style.maxHeight = content.scrollHeight + 'px';
+                content.style.opacity = '1';
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        // Update slider values and color hex display
+        document.addEventListener('DOMContentLoaded', function() {
+            // Text size slider
+            const textSizeSlider = document.getElementById('text-size');
+            const textSizeValue = document.getElementById('text-size-value');
+            if (textSizeSlider && textSizeValue) {
+                textSizeSlider.addEventListener('input', function() {
+                    textSizeValue.textContent = this.value;
+                });
+            }
+
+            // Rotation slider
+            const rotationSlider = document.getElementById('rotation-slider');
+            const rotationValue = document.getElementById('rotation-value');
+            if (rotationSlider && rotationValue) {
+                rotationSlider.addEventListener('input', function() {
+                    rotationValue.textContent = this.value + '°';
+                });
+            }
+
+            // Opacity slider
+            const opacitySlider = document.getElementById('opacity-slider');
+            const opacityValue = document.getElementById('opacity-value');
+            if (opacitySlider && opacityValue) {
+                opacitySlider.addEventListener('input', function() {
+                    opacityValue.textContent = this.value + '%';
+                });
+            }
+
+            // Brightness slider
+            const brightnessSlider = document.getElementById('brightness-slider');
+            const brightnessValue = document.getElementById('brightness-value');
+            if (brightnessSlider && brightnessValue) {
+                brightnessSlider.addEventListener('input', function() {
+                    brightnessValue.textContent = this.value;
+                });
+            }
+
+            // Contrast slider
+            const contrastSlider = document.getElementById('contrast-slider');
+            const contrastValue = document.getElementById('contrast-value');
+            if (contrastSlider && contrastValue) {
+                contrastSlider.addEventListener('input', function() {
+                    contrastValue.textContent = this.value;
+                });
+            }
+
+            // Saturation slider
+            const saturationSlider = document.getElementById('saturation-slider');
+            const saturationValue = document.getElementById('saturation-value');
+            if (saturationSlider && saturationValue) {
+                saturationSlider.addEventListener('input', function() {
+                    saturationValue.textContent = this.value;
+                });
+            }
+
+            // Blur slider
+            const blurSlider = document.getElementById('blur-slider');
+            const blurValue = document.getElementById('blur-value');
+            if (blurSlider && blurValue) {
+                blurSlider.addEventListener('input', function() {
+                    blurValue.textContent = this.value;
+                });
+            }
+
+            // Color picker hex display
+            const textColor = document.getElementById('text-color');
+            const colorHex = document.querySelector('.color-hex');
+            if (textColor && colorHex) {
+                textColor.addEventListener('input', function() {
+                    colorHex.textContent = this.value.toUpperCase();
+                });
+            }
+
+            // Initialize section states - keep Elements section open by default
+            const sections = document.querySelectorAll('.tool-section');
+            sections.forEach((section, index) => {
+                const content = section.querySelector('.section-content');
+                if (index !== 0) { // Keep first section (Elements) open
+                    section.classList.add('collapsed');
+                    content.style.maxHeight = '0';
+                    content.style.opacity = '0';
+                    const arrow = section.querySelector('.arrow');
+                    if (arrow) arrow.style.transform = 'rotate(-90deg)';
+                }
+            });
+        });
+    </script>
 </body>
 </html>

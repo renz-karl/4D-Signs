@@ -401,17 +401,17 @@ body {
 }
 
 .product-item {
-    background: linear-gradient(145deg, rgba(22, 21, 33, 0.95), rgba(16, 15, 25, 0.92));
+    background: linear-gradient(145deg, rgba(40, 38, 58, 0.95), rgba(34, 33, 48, 0.92));
     border-radius: 24px;
     overflow: hidden;
-    transition: none;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
     position: relative;
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 215, 0, 0.1);
     box-shadow:
         0 14px 40px rgba(0, 0, 0, 0.35),
         0 4px 16px rgba(0, 0, 0, 0.25),
-        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        inset 0 1px 0 rgba(255, 215, 0, 0.05);
     cursor: pointer;
 }
 
@@ -422,22 +422,23 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(45deg, rgba(255, 215, 0, 0.1), transparent);
+    background: linear-gradient(45deg, rgba(255, 215, 0, 0.08), transparent);
     opacity: 0;
-    transition: none;
+    transition: opacity 0.3s ease;
 }
 
 .product-item:hover {
+    transform: translateY(-5px);
     box-shadow:
         0 26px 64px rgba(0, 0, 0, 0.45),
         0 10px 28px rgba(0, 0, 0, 0.35),
-        inset 0 1px 0 rgba(255, 255, 255, 0.06);
-    border-color: rgba(255, 255, 255, 0.12);
+        inset 0 1px 0 rgba(255, 215, 0, 0.08);
+    border-color: rgba(255, 215, 0, 0.25);
 }
 
 .product-item:hover::before {
     opacity: 1;
-    background: linear-gradient(45deg, rgba(255, 215, 0, 0.08), rgba(40, 38, 58, 0.03));
+    background: linear-gradient(45deg, rgba(255, 215, 0, 0.12), rgba(40, 38, 58, 0.05));
 }
 
 .product-image-container {
@@ -474,8 +475,8 @@ body {
 .product-details {
     padding: 1.6rem 1.6rem 1.6rem;
     position: relative;
-    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    background: linear-gradient(to bottom, rgba(40, 38, 58, 0.3), rgba(34, 33, 48, 0.2));
+    border-top: 1px solid rgba(255, 215, 0, 0.08);
 }
 
 .product-details h3 {
@@ -489,8 +490,7 @@ body {
 }
 
 .product-item:hover .product-details h3 {
-    color: #ffd27a;
-    /* no movement on hover */
+    color: #FFD700;
 }
 
 .product-details p {
@@ -509,7 +509,7 @@ body {
 }
 
 .product-price {
-    color: #e6a23c;
+    color: #FFD700;
     font-size: 1.35rem;
     font-weight: 700;
     margin-bottom: 1rem;
@@ -597,19 +597,19 @@ body {
 .add-to-cart-btn {
     width: 100%;
     padding: 1rem 1.5rem;
-    background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
-    color: #ffffff;
+    background: linear-gradient(135deg, #FFD700 0%, #FFC700 100%);
+    color: #28263A;
     border: none;
     border-radius: 16px;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 1rem;
     cursor: pointer;
-    transition: none;
+    transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    box-shadow: 0 6px 20px rgba(243, 156, 18, 0.3);
+    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.3);
     border: 2px solid transparent;
     font-family: 'Poppins', sans-serif;
 }
@@ -617,13 +617,14 @@ body {
 
 
 .add-to-cart-btn:hover {
-    background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
-    box-shadow: 0 10px 30px rgba(243, 156, 18, 0.4);
-    border-color: rgba(255, 255, 255, 0.2);
+    background: linear-gradient(135deg, #FFC700 0%, #FFB700 100%);
+    box-shadow: 0 10px 30px rgba(255, 215, 0, 0.5);
+    border-color: rgba(255, 215, 0, 0.3);
+    transform: translateY(-2px);
 }
 
 .add-to-cart-btn:active {
-    transform: none;
+    transform: translateY(0);
 }
 
 
@@ -806,8 +807,8 @@ h2{
     margin-top: 1rem;
     width: 90%;
     max-width: 220px;
-    background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
-    color: #fff;
+    background: linear-gradient(135deg, #FFD700 0%, #FFC700 100%);
+    color: #28263A;
     border: none;
     border-radius: 12px;
     padding: 0.85rem 1rem;
@@ -818,9 +819,9 @@ h2{
     display: block;
     margin-left: auto;
     margin-right: auto;
-    box-shadow: 0 8px 22px rgba(243, 156, 18, 0.28);
+    box-shadow: 0 8px 22px rgba(255, 215, 0, 0.35);
 }
-.add-to-cart-btn:hover { background: linear-gradient(135deg, #e67e22 0%, #d35400 100%); transform: translateY(-2px); }
+.add-to-cart-btn:hover { background: linear-gradient(135deg, #FFC700 0%, #FFB700 100%); transform: translateY(-2px); box-shadow: 0 10px 30px rgba(255, 215, 0, 0.5); }
 .add-to-cart-btn:active { transform: translateY(0); }
 
 

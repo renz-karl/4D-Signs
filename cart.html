@@ -8,6 +8,42 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
+        .edit-custom-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px;
+            cursor: pointer;
+            margin-left: 8px;
+            transition: background-color 0.3s ease;
+        }
+        
+        .edit-custom-btn:hover {
+            background: #45a049;
+        }
+        
+        .edit-custom-btn i {
+            font-size: 1rem;
+        }
+        
+        .custom-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: linear-gradient(135deg, #FFD700, #FFC700);
+            color: #1a1a2e;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        
+        .custom-badge i {
+            font-size: 0.7rem;
+        }
+        
         body {
             font-family: 'Poppins', sans-serif;
             margin: 0;
@@ -447,6 +483,34 @@
 
     renderBadge(parseInt(localStorage.getItem(COUNT_KEY) || '0', 10));
   })();
+
+  // Function to handle editing custom items
+  function editCustomItem(itemId) {
+    // Store current item details before editing
+    const cartItems = JSON.parse(localStorage.getItem('cartItems') || '[]');
+    const itemToEdit = cartItems.find(item => item.id === itemId);
+    
+    if (itemToEdit) {
+      // Make sure we have all the necessary properties
+      const itemForEdit = {
+        ...itemToEdit,
+        design: itemToEdit.design || {
+          image: itemToEdit.customImage || '',
+          position: { x: 0, y: 0 },
+          size: { width: '100px', height: '100px' }
+        }
+      };
+      
+      // Store the item being edited and its index
+      localStorage.setItem('editingCustomItem', JSON.stringify({
+        item: itemForEdit,
+        index: cartItems.indexOf(itemToEdit)
+      }));
+      
+      // Redirect to customize page for editing
+      window.location.href = 'customize.html?mode=edit&id=' + encodeURIComponent(itemId);
+    }
+  }
   </script>
 
   <script>
@@ -482,6 +546,7 @@
 
     function render(){
       const its = items();
+      console.log('Rendering cart with items:', its);
       const count = its.reduce((s,i)=> s + (parseInt(i.qty,10) || 0), 0);
       if (countEl) countEl.textContent = count;
       if (!its.length) {
@@ -494,14 +559,19 @@
       if (summary) summary.style.display = 'block';
       if (list) {
         list.innerHTML = its.map(it => {
+          console.log('Rendering item:', it);
           const editing = editingAll ? ' editing' : '';
-          const img = resolveImage(it.id || it.name);
+          // Use custom image if available, otherwise fallback to resolved image
+          // Check for designData (new structure) or legacy design/customImage
+          const img = it.designData?.images?.[0]?.src || it.design?.image || it.customImage || it.image || resolveImage(it.id || it.name);
+          console.log('Image for item:', img);
           return `
           <li class="cart-item" data-id="${it.id}">
             <img class="item-thumb" src="${img}" alt="${it.name}">
             <div class="item-details">
-                <div class="item-name">${it.name}</div>
-                <div class="item-category">${it.id}</div>
+                <div class="item-name">${it.name || 'Custom Design'}</div>
+                <div class="item-category">${it.productType || 'Custom'}</div>
+                ${it.isCustom ? '<span class="custom-badge"><i class="fas fa-magic"></i> Customized</span>' : ''}
             </div>
             <div class="item-controls">
                 <button class="qty-btn minus" aria-label="Decrease quantity">
@@ -514,6 +584,10 @@
                 <button class="delete-btn" aria-label="Remove item">
                     <i class="fas fa-trash-alt"></i>
                 </button>
+                ${it.isCustom ? `
+                <button class="edit-custom-btn" aria-label="Edit customization" onclick="editCustomItem('${it.id}')">
+                    <i class="fas fa-edit"></i>
+                </button>` : ''}
             </div>
           </li>`;
         }).join('');
