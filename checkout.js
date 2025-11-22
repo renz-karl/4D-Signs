@@ -151,8 +151,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const placeOrderBtn = document.querySelector('.place-order-btn');
     placeOrderBtn.addEventListener('click', function() {
         if (validateOrder()) {
-            // TODO: Handle order submission
-            alert('Order placed successfully!');
+            placeOrder();
         }
     });
     
@@ -425,4 +424,90 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize payment methods on page load
     updatePaymentMethods();
-});
+});// Place order function
+function placeOrder() {
+    try {
+        // Get customer information
+        const customerInfo = {
+            name: document.getElementById('name').value.trim(),
+            phone: document.getElementById('phone').value.trim(),
+            email: document.getElementById('email').value.trim(),
+            deliveryMethod: document.querySelector('input[name="deliveryMethod"]:checked').value,
+            paymentMethod: document.querySelector('input[name="paymentMethod"]:checked').value
+        };
+        
+        // Get address if delivery
+        if (customerInfo.deliveryMethod === 'delivery') {
+            customerInfo.address = {
+                street: document.getElementById('street').value.trim(),
+                barangay: document.getElementById('barangay').value.trim(),
+                city: document.getElementById('city').value.trim(),
+                province: document.getElementById('province').value.trim(),
+                zipCode: document.getElementById('zipCode').value.trim(),
+                landmark: document.getElementById('landmark').value.trim()
+            };
+            customerInfo.fullAddress = `${customerInfo.address.street}, ${customerInfo.address.barangay}, ${customerInfo.address.city}, ${customerInfo.address.province} ${customerInfo.address.zipCode}`;
+            if (customerInfo.address.landmark) {
+                customerInfo.fullAddress += ` (${customerInfo.address.landmark})`;
+            }
+        } else {
+            customerInfo.fullAddress = 'Pick-up at store';
+        }
+        
+        // Get GCash number if payment method is GCash
+        if (customerInfo.paymentMethod === 'gcash') {
+            customerInfo.gcashNumber = document.getElementById('gcash-number').value.trim();
+        }
+        
+        // Get cart items
+        const cart = JSON.parse(localStorage.getItem('cartItems')) || [];
+        
+        if (cart.length === 0) {
+            alert('Your cart is empty!');
+            window.location.href = '4Dsigns.html';
+            return;
+        }
+        
+        // Calculate totals
+        const subtotal = parseFloat(document.getElementById('subtotal').textContent.replace('â‚±', '').replace(/,/g, '')) || 0;
+        const shipping = parseFloat(document.getElementById('shipping').textContent.replace('â‚±', '').replace(/,/g, '')) || 0;
+        const total = parseFloat(document.getElementById('total').textContent.replace('â‚±', '').replace(/,/g, '')) || 0;
+        
+        // Create order object
+        const order = {
+            orderId: 'ORD-' + Date.now(),
+            customer: customerInfo,
+            items: cart,
+            subtotal: subtotal,
+            shipping: shipping,
+            total: total,
+            status: 'Pending',
+            orderDate: new Date().toISOString(),
+            orderDateFormatted: new Date().toLocaleString('en-PH', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            })
+        };
+        
+        // Save order to localStorage
+        const orders = JSON.parse(localStorage.getItem('orders')) || [];
+        orders.push(order);
+        localStorage.setItem('orders', JSON.stringify(orders));
+        
+        // Clear cart
+        localStorage.removeItem('cartItems');
+        
+        // Show success message with order details
+        const successMessage = `Order placed successfully!\n\nOrder ID: ${order.orderId}\nTotal: â‚±${total.toLocaleString('en-PH', { minimumFractionDigits: 2 })}\n\nDelivery Method: ${customerInfo.deliveryMethod === 'delivery' ? 'Delivery' : 'Pick-up'}\nPayment Method: ${customerInfo.paymentMethod.toUpperCase()}\n\nThank you for your order!`;
+        alert(successMessage);
+        
+        // Redirect to homepage
+        window.location.href = '4Dsigns.html';
+    } catch (error) {
+        console.error('Error placing order:', error);
+        alert('An error occurred while placing your order. Please try again.');
+    }
+}

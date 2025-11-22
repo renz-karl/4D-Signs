@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Test - 4D Signs</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+        }
+        
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
+        }
+        
+        .btn-info {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .btn-info:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+        }
+        
+        #output {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #e5e7eb;
+            min-height: 100px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .success {
+            color: #10b981;
+            font-weight: 600;
+        }
+        
+        .error {
+            color: #ef4444;
+            font-weight: 600;
+        }
+        
+        .info {
+            color: #3b82f6;
+        }
+        
+        pre {
+            background: #1f2937;
+            color: #10b981;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        
+        .badge-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 4D Signs System Test</h1>
+        <p class="subtitle">Test checkout and admin functionality</p>
+        
+        <div class="section">
+            <h2>📦 Cart Management</h2>
+            <div class="button-group">
+                <button class="btn-primary" onclick="addSampleItems()">Add Sample Items to Cart</button>
+                <button class="btn-info" onclick="viewCart()">View Cart</button>
+                <button class="btn-danger" onclick="clearCart()">Clear Cart</button>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>🛒 Checkout System</h2>
+            <div class="button-group">
+                <button class="btn-success" onclick="goToCheckout()">Go to Checkout Page</button>
+                <button class="btn-info" onclick="testCheckoutFunction()">Test placeOrder Function</button>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📊 Admin System</h2>
+            <div class="button-group">
+                <button class="btn-primary" onclick="goToAdmin()">Go to Admin Login</button>
+                <button class="btn-info" onclick="viewOrders()">View All Orders</button>
+                <button class="btn-danger" onclick="clearOrders()">Clear All Orders</button>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📋 System Status</h2>
+            <div class="button-group">
+                <button class="btn-info" onclick="checkSystemStatus()">Check Status</button>
+                <button class="btn-info" onclick="viewStatistics()">View Statistics</button>
+            </div>
+        </div>
+        
+        <div id="output"></div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const output = document.getElementById('output');
+            const className = type === 'success' ? 'success' : type === 'error' ? 'error' : 'info';
+            output.innerHTML += `<p class="${className}">${message}</p>`;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function addSampleItems() {
+            const sampleItems = [
+                {
+                    id: 'giveaways-' + Date.now(),
+                    name: 'Giveaways',
+                    price: 100,
+                    qty: 2,
+                    quantity: 2,
+                    color: 'Gold',
+                    size: 'Medium',
+                    image: 'ProductPics/Giveaways.jpg'
+                },
+                {
+                    id: 'mugs-' + Date.now(),
+                    name: 'Custom Mugs',
+                    price: 250,
+                    qty: 3,
+                    quantity: 3,
+                    size: 'Large',
+                    design: 'Design 1',
+                    image: 'ProductPics/Mugs.jpg'
+                },
+                {
+                    id: 'stickers-' + Date.now(),
+                    name: 'Stickers & Decals',
+                    price: 50,
+                    qty: 5,
+                    quantity: 5,
+                    color: 'White',
+                    size: 'Small',
+                    image: 'ProductPics/Sticker.jpg'
+                }
+            ];
+            
+            localStorage.setItem('cartItems', JSON.stringify(sampleItems));
+            log('✅ Added 3 sample items to cart!', 'success');
+            log(`<pre>${JSON.stringify(sampleItems, null, 2)}</pre>`);
+        }
+        
+        function viewCart() {
+            const cart = JSON.parse(localStorage.getItem('cartItems') || '[]');
+            if (cart.length === 0) {
+                log('⚠️ Cart is empty!', 'error');
+            } else {
+                log(`📦 Cart has ${cart.length} items:`, 'success');
+                log(`<pre>${JSON.stringify(cart, null, 2)}</pre>`);
+            }
+        }
+        
+        function clearCart() {
+            localStorage.removeItem('cartItems');
+            log('🗑️ Cart cleared!', 'info');
+        }
+        
+        function goToCheckout() {
+            const cart = JSON.parse(localStorage.getItem('cartItems') || '[]');
+            if (cart.length === 0) {
+                alert('Please add items to cart first!');
+                return;
+            }
+            window.location.href = 'checkout.html';
+        }
+        
+        function testCheckoutFunction() {
+            if (typeof placeOrder === 'function') {
+                log('✅ placeOrder function exists!', 'success');
+            } else {
+                log('❌ placeOrder function not found!', 'error');
+                log('ℹ️ Function is in checkout.js and only works on checkout.html page', 'info');
+            }
+        }
+        
+        function goToAdmin() {
+            window.location.href = 'admin-login.html';
+        }
+        
+        function viewOrders() {
+            const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+            if (orders.length === 0) {
+                log('⚠️ No orders yet!', 'error');
+            } else {
+                log(`📊 Found ${orders.length} orders:`, 'success');
+                orders.forEach((order, index) => {
+                    log(`<div style="margin: 10px 0; padding: 10px; background: #f3f4f6; border-radius: 8px;">
+                        <strong>${index + 1}. ${order.orderId}</strong>
+                        <span class="status-badge badge-${order.status === 'Delivered' ? 'success' : 'warning'}">${order.status}</span>
+                        <br>Customer: ${order.customer.name}
+                        <br>Total: ₱${order.total.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                        <br>Date: ${order.orderDateFormatted}
+                    </div>`);
+                });
+            }
+        }
+        
+        function clearOrders() {
+            if (confirm('Are you sure you want to clear all orders?')) {
+                localStorage.removeItem('orders');
+                log('🗑️ All orders cleared!', 'info');
+            }
+        }
+        
+        function checkSystemStatus() {
+            log('🔍 Checking system status...', 'info');
+            
+            // Check cart
+            const cart = JSON.parse(localStorage.getItem('cartItems') || '[]');
+            log(`Cart: ${cart.length} items ${cart.length > 0 ? '✅' : '⚠️'}`, cart.length > 0 ? 'success' : 'error');
+            
+            // Check orders
+            const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+            log(`Orders: ${orders.length} orders ${orders.length > 0 ? '✅' : '⚠️'}`, orders.length > 0 ? 'success' : 'error');
+            
+            // Check admin session
+            const adminLoggedIn = sessionStorage.getItem('adminLoggedIn');
+            log(`Admin Session: ${adminLoggedIn === 'true' ? 'Logged In ✅' : 'Not Logged In ⚠️'}`, adminLoggedIn === 'true' ? 'success' : 'error');
+            
+            log('<br>📁 LocalStorage Data:', 'info');
+            log(`<pre>${JSON.stringify({ cart: cart.length, orders: orders.length }, null, 2)}</pre>`);
+        }
+        
+        function viewStatistics() {
+            const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+            
+            if (orders.length === 0) {
+                log('⚠️ No orders to analyze!', 'error');
+                return;
+            }
+            
+            const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
+            const totalItems = orders.reduce((sum, order) => sum + order.items.reduce((s, item) => s + (item.quantity || 1), 0), 0);
+            const customers = new Set(orders.map(o => o.customer.email)).size;
+            
+            const statusCount = orders.reduce((acc, order) => {
+                acc[order.status] = (acc[order.status] || 0) + 1;
+                return acc;
+            }, {});
+            
+            log('📊 System Statistics:', 'success');
+            log(`<div style="margin: 10px 0; padding: 15px; background: #f9fafb; border-radius: 8px;">
+                <strong>Orders:</strong> ${orders.length}<br>
+                <strong>Revenue:</strong> ₱${totalRevenue.toLocaleString('en-PH', { minimumFractionDigits: 2 })}<br>
+                <strong>Items Sold:</strong> ${totalItems}<br>
+                <strong>Customers:</strong> ${customers}<br>
+                <strong>Average Order:</strong> ₱${(totalRevenue / orders.length).toLocaleString('en-PH', { minimumFractionDigits: 2 })}<br>
+                <br><strong>Order Status:</strong><br>
+                ${Object.entries(statusCount).map(([status, count]) => `${status}: ${count}`).join('<br>')}
+            </div>`);
+        }
+        
+        // Initial message
+        log('🚀 System Test Ready!', 'success');
+        log('Use the buttons above to test different features.', 'info');
+    </script>
+</body>
+</html>

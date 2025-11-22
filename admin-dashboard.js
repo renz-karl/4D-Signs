@@ -165,7 +165,7 @@ function loadProducts() {
                 ${product.image ? `<img src="${product.image}" alt="${product.name}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px;">` : '<div style="width: 50px; height: 50px; background: #f1f5f9; border-radius: 8px;"></div>'}
             </td>
             <td><strong>${product.name}</strong></td>
-            <td>${product.price}</td>
+            <td><strong style="color: #059669; font-size: 1.05rem;">${product.price}</strong></td>
             <td><span style="color: ${product.stock > 50 ? '#22c55e' : product.stock > 20 ? '#f59e0b' : '#ef4444'};">${product.stock} items</span></td>
             <td>⭐ ${product.reviews} reviews</td>
             <td>
