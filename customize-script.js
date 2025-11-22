@@ -9,6 +9,131 @@ document.addEventListener('DOMContentLoaded', function() {
     const shirtDropArea = document.getElementById('shirtDropArea');
     const designArea = document.querySelector('.design-area');
 
+    // ====== LOAD EDITING DATA ======
+    // Check if we're editing an existing item
+    const editingItemData = localStorage.getItem('editingCustomItem');
+    if (editingItemData) {
+        try {
+            const editData = JSON.parse(editingItemData);
+            const itemToEdit = editData.item;
+            
+            console.log('Loading item for editing:', itemToEdit);
+            
+            // Set product type if available
+            const productTypeDropdown = document.getElementById('product-type');
+            if (productTypeDropdown && itemToEdit.productType) {
+                productTypeDropdown.value = itemToEdit.productType;
+            }
+            
+            // Set product name if available
+            const customTextInput = document.getElementById('custom-text');
+            if (customTextInput && itemToEdit.name) {
+                customTextInput.value = itemToEdit.name;
+            }
+            
+            // Load design data if available
+            if (itemToEdit.designData) {
+                // Load images
+                if (itemToEdit.designData.images && itemToEdit.designData.images.length > 0) {
+                    itemToEdit.designData.images.forEach(imgData => {
+                        const designImage = document.createElement('img');
+                        designImage.src = imgData.src;
+                        designImage.className = 'resizable-image';
+                        designImage.style.width = imgData.width;
+                        designImage.style.height = imgData.height;
+                        designImage.style.transform = imgData.transform || `translate(${imgData.x}, ${imgData.y})`;
+                        
+                        // Extract x and y from transform or use provided values
+                        const match = (imgData.transform || '').match(/translate\(([^,]+),\s*([^)]+)\)/);
+                        const x = match ? parseFloat(match[1]) : parseFloat(imgData.x);
+                        const y = match ? parseFloat(match[2]) : parseFloat(imgData.y);
+                        
+                        designImage.dataset.x = x;
+                        designImage.dataset.y = y;
+                        
+                        shirtDropArea.insertBefore(designImage, designArea);
+                        
+                        // Make interactive
+                        interact(designImage)
+                            .draggable({
+                                inertia: true,
+                                modifiers: [
+                                    interact.modifiers.restrictRect({
+                                        restriction: shirtDropArea,
+                                        endOnly: true
+                                    })
+                                ],
+                                listeners: {
+                                    move: dragMoveListener
+                                }
+                            })
+                            .resizable({
+                                edges: { left: true, right: true, bottom: true, top: true },
+                                preserveAspectRatio: true,
+                                inertia: true,
+                                modifiers: [
+                                    interact.modifiers.restrictEdges({
+                                        outer: shirtDropArea
+                                    }),
+                                    interact.modifiers.restrictSize({
+                                        min: { width: 50, height: 50 }
+                                    })
+                                ],
+                                listeners: {
+                                    move: resizeListener
+                                }
+                            });
+                    });
+                }
+                
+                // Load texts
+                if (itemToEdit.designData.texts && itemToEdit.designData.texts.length > 0) {
+                    itemToEdit.designData.texts.forEach(txtData => {
+                        const designText = document.createElement('div');
+                        designText.className = 'design-text';
+                        designText.textContent = txtData.content;
+                        designText.style.fontSize = txtData.fontSize || '24px';
+                        designText.style.fontWeight = txtData.fontWeight || 'normal';
+                        designText.style.color = txtData.color || '#FFD700';
+                        designText.style.transform = txtData.transform || `translate(${txtData.x}, ${txtData.y})`;
+                        
+                        // Extract x and y from transform or use provided values
+                        const match = (txtData.transform || '').match(/translate\(([^,]+),\s*([^)]+)\)/);
+                        const x = match ? parseFloat(match[1]) : parseFloat(txtData.x);
+                        const y = match ? parseFloat(match[2]) : parseFloat(txtData.y);
+                        
+                        designText.dataset.x = x;
+                        designText.dataset.y = y;
+                        
+                        shirtDropArea.appendChild(designText);
+                        
+                        // Make interactive
+                        interact(designText)
+                            .draggable({
+                                inertia: true,
+                                modifiers: [
+                                    interact.modifiers.restrictRect({
+                                        restriction: shirtDropArea,
+                                        endOnly: true
+                                    })
+                                ],
+                                listeners: {
+                                    move: dragMoveListener
+                                }
+                            });
+                    });
+                }
+                
+                updateContentClass();
+            }
+            
+            console.log('Item loaded successfully for editing');
+        } catch (e) {
+            console.error('Error loading item for editing:', e);
+        }
+    }
+    // ====== END LOAD EDITING DATA ======
+
     // Helper function to update has-content class
     function updateContentClass() {
         const hasImages = shirtDropArea.querySelectorAll('.resizable-image').length > 0;

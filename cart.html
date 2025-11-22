@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="style.css">
     <style>
         .edit-custom-btn {
-            background: #4CAF50;
+            background: linear-gradient(135deg, #FFD700, #FFC700);
             color: white;
             border: none;
             border-radius: 4px;
@@ -20,7 +20,7 @@
         }
         
         .edit-custom-btn:hover {
-            background: #45a049;
+            background: #cbae2e;
         }
         
         .edit-custom-btn i {
@@ -491,24 +491,21 @@
     const itemToEdit = cartItems.find(item => item.id === itemId);
     
     if (itemToEdit) {
-      // Make sure we have all the necessary properties
-      const itemForEdit = {
-        ...itemToEdit,
-        design: itemToEdit.design || {
-          image: itemToEdit.customImage || '',
-          position: { x: 0, y: 0 },
-          size: { width: '100px', height: '100px' }
-        }
-      };
+      console.log('Editing item:', itemToEdit);
       
-      // Store the item being edited and its index
+      // Store the complete item data for editing
       localStorage.setItem('editingCustomItem', JSON.stringify({
-        item: itemForEdit,
+        item: itemToEdit,
+        id: itemId,
         index: cartItems.indexOf(itemToEdit)
       }));
       
+      console.log('Stored editing data for item ID:', itemId);
+      
       // Redirect to customize page for editing
       window.location.href = 'customize.html?mode=edit&id=' + encodeURIComponent(itemId);
+    } else {
+      console.error('Item not found:', itemId);
     }
   }
   </script>
