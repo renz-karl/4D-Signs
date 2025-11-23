@@ -54,35 +54,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         shirtDropArea.insertBefore(designImage, designArea);
                         
                         // Make interactive
-                        interact(designImage)
-                            .draggable({
-                                inertia: true,
-                                modifiers: [
-                                    interact.modifiers.restrictRect({
-                                        restriction: shirtDropArea,
-                                        endOnly: true
-                                    })
-                                ],
-                                listeners: {
-                                    move: dragMoveListener
-                                }
-                            })
-                            .resizable({
-                                edges: { left: true, right: true, bottom: true, top: true },
-                                preserveAspectRatio: true,
-                                inertia: true,
-                                modifiers: [
-                                    interact.modifiers.restrictEdges({
-                                        outer: shirtDropArea
-                                    }),
-                                    interact.modifiers.restrictSize({
-                                        min: { width: 50, height: 50 }
-                                    })
-                                ],
-                                listeners: {
-                                    move: resizeListener
-                                }
-                            });
+                        makeImageInteractive(designImage);
                     });
                 }
                 
@@ -108,19 +80,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         shirtDropArea.appendChild(designText);
                         
                         // Make interactive
-                        interact(designText)
-                            .draggable({
-                                inertia: true,
-                                modifiers: [
-                                    interact.modifiers.restrictRect({
-                                        restriction: shirtDropArea,
-                                        endOnly: true
-                                    })
-                                ],
-                                listeners: {
-                                    move: dragMoveListener
-                                }
-                            });
+                        makeTextInteractive(designText);
                     });
                 }
                 
@@ -131,6 +91,9 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (e) {
             console.error('Error loading item for editing:', e);
         }
+        
+        // Clear the editing data after loading to prevent it from persisting
+        localStorage.removeItem('editingCustomItem');
     }
     // ====== END LOAD EDITING DATA ======
 
@@ -191,35 +154,9 @@ document.addEventListener('DOMContentLoaded', function() {
             updateContentClass();
             
             // Make the image both resizable and draggable
-            interact(designImage)
-                .draggable({
-                    inertia: true,
-                    modifiers: [
-                        interact.modifiers.restrictRect({
-                            restriction: shirtDropArea,
-                            endOnly: true
-                        })
-                    ],
-                    listeners: {
-                        move: dragMoveListener
-                    }
-                })
-                .resizable({
-                    edges: { left: true, right: true, bottom: true, top: true },
-                    preserveAspectRatio: true,
-                    inertia: true,
-                    modifiers: [
-                        interact.modifiers.restrictEdges({
-                            outer: shirtDropArea
-                        }),
-                        interact.modifiers.restrictSize({
-                            min: { width: 50, height: 50 }
-                        })
-                    ],
-                    listeners: {
-                        move: resizeListener
-                    }
-                });
+            makeImageInteractive(designImage);
+            selectElement(designImage);
+            saveState();
         }
     });
 
@@ -254,6 +191,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     fileInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
+        console.log('File selected:', file);
         if (file) {
             handleFile(file);
         }
@@ -274,6 +212,7 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         dropZone.classList.remove('drag-over');
         const file = e.dataTransfer.files[0];
+        console.log('File dropped:', file);
         if (file) {
             handleFile(file);
         }
@@ -281,23 +220,37 @@ document.addEventListener('DOMContentLoaded', function() {
 
     
     function handleFile(file) {
-        if (file.type.startsWith('image/')) {
+        console.log('handleFile called with:', file);
+        if (file && file.type.startsWith('image/')) {
             const reader = new FileReader();
 
             reader.onload = function(e) {
+                console.log('File loaded successfully');
                 previewImage.src = e.target.result;
                 previewImage.style.display = 'block';
+                previewImage.style.maxWidth = '100%';
+                previewImage.style.maxHeight = '200px';
                 uploadContainer.classList.add('has-image');
 
                 
                 if (uploadIcon) uploadIcon.style.display = 'none';
                 if (dropText) dropText.style.display = 'none';
+                
+                // Hide the or-text
+                const orText = document.querySelector('.or-text');
+                if (orText) orText.style.display = 'none';
+                
+                // Hide browse button
+                const browseBtn = document.querySelector('.browse-btn-custom');
+                if (browseBtn) browseBtn.style.display = 'none';
 
                 
                 const chooseAgainBtn = document.getElementById('choose-again');
                 if (chooseAgainBtn) {
                     chooseAgainBtn.style.display = 'block';
                 }
+                
+                console.log('Preview image set:', previewImage.src.substring(0, 50));
             };
 
             reader.onerror = function() {
@@ -324,6 +277,13 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (uploadIcon) uploadIcon.style.display = 'block';
             if (dropText) dropText.style.display = 'block';
+            
+            // Show or-text and browse button
+            const orText = document.querySelector('.or-text');
+            if (orText) orText.style.display = 'block';
+            
+            const browseBtn = document.querySelector('.browse-btn-custom');
+            if (browseBtn) browseBtn.style.display = 'block';
 
             
             this.style.display = 'none';
@@ -477,6 +437,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const customNameInput = document.querySelector('.custom-name input');
     let customNameText = null;
 
+    // Clear the custom name input on page load (prevent cached values)
+    if (customNameInput) {
+        customNameInput.value = '';
+    }
+
     function addCustomNameToDesignArea(name) {
         
         if (customNameText) customNameText.remove();
@@ -496,27 +461,9 @@ document.addEventListener('DOMContentLoaded', function() {
         shirtDropArea.insertBefore(customNameText, designArea);
         updateContentClass();
 
-        
-        interact(customNameText).draggable({
-            listeners: {
-                move (event) {
-                    const target = event.target;
-                    const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
-                    const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
-
-                    target.style.transform = `translate(${x}px, ${y}px)`;
-                    target.setAttribute('data-x', x);
-                    target.setAttribute('data-y', y);
-                }
-            },
-            inertia: true,
-            modifiers: [
-                interact.modifiers.restrictRect({
-                    restriction: shirtDropArea,
-                    endOnly: true
-                })
-            ]
-        });
+        // Make draggable
+        makeTextInteractive(customNameText);
+        saveState();
     }
 
     
@@ -527,6 +474,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (customNameText) {
                 customNameText.remove();
                 customNameText = null;
+                updateContentClass();
             }
         });
     }
@@ -541,6 +489,96 @@ document.addEventListener('DOMContentLoaded', function() {
         blur: 0
     };
 
+    // Undo/Redo functionality
+    let undoStack = [];
+    let redoStack = [];
+    const MAX_UNDO_STEPS = 20;
+
+    function saveState() {
+        const state = captureDesignData();
+        undoStack.push(JSON.stringify(state));
+        if (undoStack.length > MAX_UNDO_STEPS) {
+            undoStack.shift();
+        }
+        redoStack = []; // Clear redo stack when new action is performed
+    }
+
+    function undo() {
+        if (undoStack.length > 0) {
+            const currentState = captureDesignData();
+            redoStack.push(JSON.stringify(currentState));
+            const previousState = undoStack.pop();
+            restoreState(JSON.parse(previousState));
+        }
+    }
+
+    function redo() {
+        if (redoStack.length > 0) {
+            const currentState = captureDesignData();
+            undoStack.push(JSON.stringify(currentState));
+            const nextState = redoStack.pop();
+            restoreState(JSON.parse(nextState));
+        }
+    }
+
+    function restoreState(state) {
+        // Clear current design
+        shirtDropArea.querySelectorAll('.resizable-image, .design-text, .draggable-custom-name').forEach(el => el.remove());
+        
+        // Restore images
+        if (state.images) {
+            state.images.forEach(imgData => {
+                const designImage = document.createElement('img');
+                designImage.src = imgData.src;
+                designImage.className = 'resizable-image';
+                designImage.style.width = imgData.width;
+                designImage.style.height = imgData.height;
+                designImage.style.transform = imgData.transform || `translate(${imgData.x}, ${imgData.y})`;
+                designImage.style.filter = imgData.filter || '';
+                designImage.style.opacity = imgData.opacity || '1';
+                designImage.style.zIndex = imgData.zIndex || '1';
+                
+                const match = (imgData.transform || '').match(/translate\(([^,]+),\s*([^)]+)\)/);
+                const x = match ? parseFloat(match[1]) : parseFloat(imgData.x);
+                const y = match ? parseFloat(match[2]) : parseFloat(imgData.y);
+                
+                designImage.dataset.x = x;
+                designImage.dataset.y = y;
+                
+                shirtDropArea.insertBefore(designImage, designArea);
+                makeImageInteractive(designImage);
+            });
+        }
+        
+        // Restore texts
+        if (state.texts) {
+            state.texts.forEach(txtData => {
+                const designText = document.createElement('div');
+                designText.className = 'design-text';
+                designText.textContent = txtData.content;
+                designText.style.fontSize = txtData.fontSize || '24px';
+                designText.style.fontWeight = txtData.fontWeight || 'normal';
+                designText.style.fontFamily = txtData.fontFamily || 'Poppins';
+                designText.style.color = txtData.color || '#FFD700';
+                designText.style.transform = txtData.transform || `translate(${txtData.x}, ${txtData.y})`;
+                designText.style.opacity = txtData.opacity || '1';
+                designText.style.zIndex = txtData.zIndex || '10';
+                
+                const match = (txtData.transform || '').match(/translate\(([^,]+),\s*([^)]+)\)/);
+                const x = match ? parseFloat(match[1]) : parseFloat(txtData.x);
+                const y = match ? parseFloat(match[2]) : parseFloat(txtData.y);
+                
+                designText.dataset.x = x;
+                designText.dataset.y = y;
+                
+                shirtDropArea.appendChild(designText);
+                makeTextInteractive(designText);
+            });
+        }
+        
+        updateContentClass();
+    }
+
     // Function to select an element
     function selectElement(element) {
         if (selectedElement) {
@@ -550,6 +588,26 @@ document.addEventListener('DOMContentLoaded', function() {
         if (selectedElement) {
             selectedElement.classList.add('selected');
             updateToolValues();
+            showSelectionInfo();
+        } else {
+            hideSelectionInfo();
+        }
+    }
+
+    // Show selection info
+    function showSelectionInfo() {
+        const info = document.getElementById('selection-info');
+        if (info && selectedElement) {
+            const type = selectedElement.classList.contains('resizable-image') ? 'Image' : 'Text';
+            info.innerHTML = `<i class="fas fa-check-circle"></i> Selected: ${type}`;
+            info.style.display = 'block';
+        }
+    }
+
+    function hideSelectionInfo() {
+        const info = document.getElementById('selection-info');
+        if (info) {
+            info.style.display = 'none';
         }
     }
 
@@ -572,6 +630,40 @@ document.addEventListener('DOMContentLoaded', function() {
             opacitySlider.value = opacity;
             opacityValue.textContent = Math.round(opacity) + '%';
         }
+
+        // Update filter values if image is selected
+        if (selectedElement.classList.contains('resizable-image')) {
+            const filterStr = selectedElement.style.filter || '';
+            const brightnessMatch = filterStr.match(/brightness\((\d+)%\)/);
+            const contrastMatch = filterStr.match(/contrast\((\d+)%\)/);
+            const saturationMatch = filterStr.match(/saturate\((\d+)%\)/);
+            const blurMatch = filterStr.match(/blur\((\d+)px\)/);
+
+            if (brightnessMatch) {
+                const val = brightnessMatch[1];
+                document.getElementById('brightness-slider').value = val;
+                document.getElementById('brightness-value').textContent = val + '%';
+                currentFilters.brightness = val;
+            }
+            if (contrastMatch) {
+                const val = contrastMatch[1];
+                document.getElementById('contrast-slider').value = val;
+                document.getElementById('contrast-value').textContent = val + '%';
+                currentFilters.contrast = val;
+            }
+            if (saturationMatch) {
+                const val = saturationMatch[1];
+                document.getElementById('saturation-slider').value = val;
+                document.getElementById('saturation-value').textContent = val + '%';
+                currentFilters.saturation = val;
+            }
+            if (blurMatch) {
+                const val = blurMatch[1];
+                document.getElementById('blur-slider').value = val;
+                document.getElementById('blur-value').textContent = val + 'px';
+                currentFilters.blur = val;
+            }
+        }
     }
 
     // Get rotation angle from transform
@@ -582,13 +674,179 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Click on design area elements to select them
-    designArea.addEventListener('click', function(e) {
+    shirtDropArea.addEventListener('click', function(e) {
         if (e.target.classList.contains('resizable-image') || e.target.classList.contains('design-text')) {
+            e.stopPropagation();
             selectElement(e.target);
-        } else if (e.target === designArea) {
+        } else if (e.target === shirtDropArea || e.target === designArea) {
             selectElement(null);
         }
     });
+
+    // Helper functions to make elements interactive
+    function makeImageInteractive(img) {
+        interact(img)
+            .draggable({
+                inertia: true,
+                modifiers: [
+                    interact.modifiers.restrictRect({
+                        restriction: shirtDropArea,
+                        endOnly: true
+                    })
+                ],
+                listeners: {
+                    move: dragMoveListener,
+                    end: () => saveState()
+                }
+            })
+            .resizable({
+                edges: { left: true, right: true, bottom: true, top: true },
+                preserveAspectRatio: true,
+                inertia: true,
+                modifiers: [
+                    interact.modifiers.restrictEdges({
+                        outer: shirtDropArea
+                    }),
+                    interact.modifiers.restrictSize({
+                        min: { width: 50, height: 50 }
+                    })
+                ],
+                listeners: {
+                    move: resizeListener,
+                    end: () => saveState()
+                }
+            });
+
+        // Click to select
+        img.addEventListener('click', (e) => {
+            e.stopPropagation();
+            selectElement(img);
+        });
+    }
+
+    function makeTextInteractive(txt) {
+        interact(txt).draggable({
+            listeners: { 
+                move: dragMoveListener,
+                end: () => saveState()
+            },
+            inertia: true,
+            modifiers: [
+                interact.modifiers.restrictRect({
+                    restriction: shirtDropArea,
+                    endOnly: true
+                })
+            ]
+        });
+
+        // Click to select
+        txt.addEventListener('click', (e) => {
+            e.stopPropagation();
+            selectElement(txt);
+        });
+    }
+
+    // Duplicate selected element
+    function duplicateElement() {
+        if (!selectedElement) {
+            alert('Please select an element to duplicate');
+            return;
+        }
+
+        const clone = selectedElement.cloneNode(true);
+        clone.classList.remove('selected');
+        
+        // Offset the duplicate slightly
+        const x = parseFloat(selectedElement.dataset.x || 0) + 20;
+        const y = parseFloat(selectedElement.dataset.y || 0) + 20;
+        clone.dataset.x = x;
+        clone.dataset.y = y;
+        
+        if (clone.classList.contains('resizable-image')) {
+            const rotation = getRotationAngle(selectedElement);
+            clone.style.transform = `translate(${x}px, ${y}px) rotate(${rotation}deg)`;
+            shirtDropArea.insertBefore(clone, designArea);
+            makeImageInteractive(clone);
+        } else if (clone.classList.contains('design-text')) {
+            const rotation = getRotationAngle(selectedElement);
+            clone.style.transform = `translate(${x}px, ${y}px) rotate(${rotation}deg)`;
+            shirtDropArea.appendChild(clone);
+            makeTextInteractive(clone);
+        }
+
+        updateContentClass();
+        saveState();
+        selectElement(clone);
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl/Cmd + Z = Undo
+        if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+            e.preventDefault();
+            undo();
+        }
+        // Ctrl/Cmd + Shift + Z = Redo OR Ctrl/Cmd + Y = Redo
+        else if (((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'z') || 
+                 ((e.ctrlKey || e.metaKey) && e.key === 'y')) {
+            e.preventDefault();
+            redo();
+        }
+        // Ctrl/Cmd + D = Duplicate
+        else if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+            e.preventDefault();
+            duplicateElement();
+        }
+        // Delete/Backspace = Delete selected
+        else if ((e.key === 'Delete' || e.key === 'Backspace') && selectedElement) {
+            e.preventDefault();
+            if (confirm('Delete selected element?')) {
+                selectedElement.remove();
+                selectedElement = null;
+                updateContentClass();
+                saveState();
+            }
+        }
+        // Arrow keys = Move selected element
+        else if (selectedElement && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+            e.preventDefault();
+            const shift = e.shiftKey ? 10 : 1;
+            const x = parseFloat(selectedElement.dataset.x || 0);
+            const y = parseFloat(selectedElement.dataset.y || 0);
+            
+            switch(e.key) {
+                case 'ArrowUp':
+                    selectedElement.dataset.y = y - shift;
+                    break;
+                case 'ArrowDown':
+                    selectedElement.dataset.y = y + shift;
+                    break;
+                case 'ArrowLeft':
+                    selectedElement.dataset.x = x - shift;
+                    break;
+                case 'ArrowRight':
+                    selectedElement.dataset.x = x + shift;
+                    break;
+            }
+            
+            const newX = parseFloat(selectedElement.dataset.x);
+            const newY = parseFloat(selectedElement.dataset.y);
+            const rotation = getRotationAngle(selectedElement);
+            const scaleX = selectedElement.dataset.scaleX || 1;
+            const scaleY = selectedElement.dataset.scaleY || 1;
+            selectedElement.style.transform = `translate(${newX}px, ${newY}px) scale(${scaleX}, ${scaleY}) rotate(${rotation}deg)`;
+        }
+    });
+
+    // Show helpful notification on first load
+    const hasSeenTutorial = localStorage.getItem('customizeTutorialSeen');
+    if (!hasSeenTutorial) {
+        setTimeout(() => {
+            alert('💡 Quick Tips:\n\n• Upload an image or add text to get started\n• Click elements to select them\n• Use keyboard shortcuts: Ctrl+Z (Undo), Ctrl+D (Duplicate)\n• Drag elements to position them\n• Use the sidebar tools to customize further!');
+            localStorage.setItem('customizeTutorialSeen', 'true');
+        }, 1000);
+    }
+
 
     // Add Text Tool
     const addTextBtn = document.getElementById('add-text-btn');
@@ -624,19 +882,11 @@ document.addEventListener('DOMContentLoaded', function() {
             updateContentClass();
 
             // Make text draggable
-            interact(textElement).draggable({
-                listeners: { move: dragMoveListener },
-                inertia: true,
-                modifiers: [
-                    interact.modifiers.restrictRect({
-                        restriction: shirtDropArea,
-                        endOnly: true
-                    })
-                ]
-            });
+            makeTextInteractive(textElement);
 
             textInput.value = '';
             selectElement(textElement);
+            saveState();
         });
     }
 
@@ -648,6 +898,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 selectedElement.style.fontSize = this.value + 'px';
             }
         });
+        
+        textSizeSlider.addEventListener('change', function() {
+            if (selectedElement && selectedElement.classList.contains('design-text')) {
+                saveState();
+            }
+        });
     }
 
     // Text color picker
@@ -657,6 +913,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 selectedElement.style.color = this.value;
             }
         });
+        
+        textColorPicker.addEventListener('change', function() {
+            if (selectedElement && selectedElement.classList.contains('design-text')) {
+                saveState();
+            }
+        });
     }
 
     // Text font selector
@@ -664,6 +926,7 @@ document.addEventListener('DOMContentLoaded', function() {
         textFontSelect.addEventListener('change', function() {
             if (selectedElement && selectedElement.classList.contains('design-text')) {
                 selectedElement.style.fontFamily = this.value;
+                saveState();
             }
         });
     }
@@ -673,6 +936,7 @@ document.addEventListener('DOMContentLoaded', function() {
         textWeightSelect.addEventListener('change', function() {
             if (selectedElement && selectedElement.classList.contains('design-text')) {
                 selectedElement.style.fontWeight = this.value;
+                saveState();
             }
         });
     }
@@ -689,14 +953,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 applyRotation(selectedElement, this.value);
             }
         });
+        
+        rotationSlider.addEventListener('change', function() {
+            saveState();
+        });
     }
 
     if (resetRotationBtn) {
         resetRotationBtn.addEventListener('click', function() {
+            if (!selectedElement) {
+                alert('Please select an element first');
+                return;
+            }
             if (rotationSlider) rotationSlider.value = 0;
             if (rotationValue) rotationValue.textContent = '0°';
             if (selectedElement) {
                 applyRotation(selectedElement, 0);
+                saveState();
             }
         });
     }
@@ -704,7 +977,9 @@ document.addEventListener('DOMContentLoaded', function() {
     function applyRotation(element, angle) {
         const x = parseFloat(element.dataset.x) || 0;
         const y = parseFloat(element.dataset.y) || 0;
-        element.style.transform = `translate(${x}px, ${y}px) rotate(${angle}deg)`;
+        const scaleX = element.dataset.scaleX || 1;
+        const scaleY = element.dataset.scaleY || 1;
+        element.style.transform = `translate(${x}px, ${y}px) scale(${scaleX}, ${scaleY}) rotate(${angle}deg)`;
     }
 
     // Opacity Tool
@@ -717,6 +992,10 @@ document.addEventListener('DOMContentLoaded', function() {
             if (selectedElement) {
                 selectedElement.style.opacity = this.value / 100;
             }
+        });
+        
+        opacitySlider.addEventListener('change', function() {
+            saveState();
         });
     }
 
@@ -740,38 +1019,74 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (brightnessSlider && brightnessValue) {
         brightnessSlider.addEventListener('input', function() {
+            if (!selectedElement || !selectedElement.classList.contains('resizable-image')) {
+                alert('Please select an image to apply filters');
+                return;
+            }
             brightnessValue.textContent = this.value + '%';
             currentFilters.brightness = this.value;
             applyFilters();
+        });
+        
+        brightnessSlider.addEventListener('change', function() {
+            saveState();
         });
     }
 
     if (contrastSlider && contrastValue) {
         contrastSlider.addEventListener('input', function() {
+            if (!selectedElement || !selectedElement.classList.contains('resizable-image')) {
+                alert('Please select an image to apply filters');
+                return;
+            }
             contrastValue.textContent = this.value + '%';
             currentFilters.contrast = this.value;
             applyFilters();
+        });
+        
+        contrastSlider.addEventListener('change', function() {
+            saveState();
         });
     }
 
     if (saturationSlider && saturationValue) {
         saturationSlider.addEventListener('input', function() {
+            if (!selectedElement || !selectedElement.classList.contains('resizable-image')) {
+                alert('Please select an image to apply filters');
+                return;
+            }
             saturationValue.textContent = this.value + '%';
             currentFilters.saturation = this.value;
             applyFilters();
+        });
+        
+        saturationSlider.addEventListener('change', function() {
+            saveState();
         });
     }
 
     if (blurSlider && blurValue) {
         blurSlider.addEventListener('input', function() {
+            if (!selectedElement || !selectedElement.classList.contains('resizable-image')) {
+                alert('Please select an image to apply filters');
+                return;
+            }
             blurValue.textContent = this.value + 'px';
             currentFilters.blur = this.value;
             applyFilters();
+        });
+        
+        blurSlider.addEventListener('change', function() {
+            saveState();
         });
     }
 
     if (resetFiltersBtn) {
         resetFiltersBtn.addEventListener('click', function() {
+            if (!selectedElement || !selectedElement.classList.contains('resizable-image')) {
+                alert('Please select an image to reset filters');
+                return;
+            }
             currentFilters = { brightness: 100, contrast: 100, saturation: 100, blur: 0 };
             if (brightnessSlider) brightnessSlider.value = 100;
             if (brightnessValue) brightnessValue.textContent = '100%';
@@ -783,6 +1098,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (blurValue) blurValue.textContent = '0px';
             if (selectedElement) {
                 selectedElement.style.filter = 'none';
+                saveState();
             }
         });
     }
@@ -791,31 +1107,90 @@ document.addEventListener('DOMContentLoaded', function() {
     const bringForwardBtn = document.getElementById('bring-forward');
     const sendBackwardBtn = document.getElementById('send-backward');
     const deleteSelectedBtn = document.getElementById('delete-selected');
+    const duplicateBtn = document.getElementById('duplicate-btn');
 
     if (bringForwardBtn) {
         bringForwardBtn.addEventListener('click', function() {
-            if (selectedElement) {
-                const currentZ = parseInt(selectedElement.style.zIndex || 1);
-                selectedElement.style.zIndex = currentZ + 1;
+            if (!selectedElement) {
+                alert('Please select an element first');
+                return;
             }
+            const currentZ = parseInt(selectedElement.style.zIndex || 1);
+            selectedElement.style.zIndex = currentZ + 1;
+            saveState();
         });
     }
 
     if (sendBackwardBtn) {
         sendBackwardBtn.addEventListener('click', function() {
-            if (selectedElement) {
-                const currentZ = parseInt(selectedElement.style.zIndex || 1);
-                selectedElement.style.zIndex = Math.max(1, currentZ - 1);
+            if (!selectedElement) {
+                alert('Please select an element first');
+                return;
             }
+            const currentZ = parseInt(selectedElement.style.zIndex || 1);
+            selectedElement.style.zIndex = Math.max(1, currentZ - 1);
+            saveState();
         });
     }
 
     if (deleteSelectedBtn) {
         deleteSelectedBtn.addEventListener('click', function() {
-            if (selectedElement && confirm('Are you sure you want to delete this element?')) {
+            if (!selectedElement) {
+                alert('Please select an element first');
+                return;
+            }
+            if (confirm('Are you sure you want to delete this element?')) {
                 selectedElement.remove();
                 selectedElement = null;
                 updateContentClass();
+                saveState();
+            }
+        });
+    }
+
+    if (duplicateBtn) {
+        duplicateBtn.addEventListener('click', function() {
+            duplicateElement();
+        });
+    }
+
+    // Undo/Redo Buttons
+    const undoBtn = document.getElementById('undo-btn');
+    const redoBtn = document.getElementById('redo-btn');
+
+    if (undoBtn) {
+        undoBtn.addEventListener('click', function() {
+            undo();
+        });
+    }
+
+    if (redoBtn) {
+        redoBtn.addEventListener('click', function() {
+            redo();
+        });
+    }
+
+    // Clear All Button
+    const clearAllBtn = document.getElementById('clear-all-btn');
+    if (clearAllBtn) {
+        clearAllBtn.addEventListener('click', function() {
+            if (confirm('Are you sure you want to clear all elements? This cannot be undone.')) {
+                // Clear all design elements
+                shirtDropArea.querySelectorAll('.resizable-image, .design-text, .draggable-custom-name').forEach(el => el.remove());
+                
+                // Reset selection
+                selectedElement = null;
+                hideSelectionInfo();
+                
+                // Update content class
+                updateContentClass();
+                
+                // Clear undo/redo stacks
+                undoStack = [];
+                redoStack = [];
+                
+                // Show success message
+                alert('All elements have been cleared!');
             }
         });
     }
@@ -826,23 +1201,29 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (flipHorizontalBtn) {
         flipHorizontalBtn.addEventListener('click', function() {
-            if (selectedElement) {
-                const currentScaleX = selectedElement.dataset.scaleX || 1;
-                const newScaleX = currentScaleX == 1 ? -1 : 1;
-                selectedElement.dataset.scaleX = newScaleX;
-                applyFlip(selectedElement);
+            if (!selectedElement) {
+                alert('Please select an element first');
+                return;
             }
+            const currentScaleX = selectedElement.dataset.scaleX || 1;
+            const newScaleX = currentScaleX == 1 ? -1 : 1;
+            selectedElement.dataset.scaleX = newScaleX;
+            applyFlip(selectedElement);
+            saveState();
         });
     }
 
     if (flipVerticalBtn) {
         flipVerticalBtn.addEventListener('click', function() {
-            if (selectedElement) {
-                const currentScaleY = selectedElement.dataset.scaleY || 1;
-                const newScaleY = currentScaleY == 1 ? -1 : 1;
-                selectedElement.dataset.scaleY = newScaleY;
-                applyFlip(selectedElement);
+            if (!selectedElement) {
+                alert('Please select an element first');
+                return;
             }
+            const currentScaleY = selectedElement.dataset.scaleY || 1;
+            const newScaleY = currentScaleY == 1 ? -1 : 1;
+            selectedElement.dataset.scaleY = newScaleY;
+            applyFlip(selectedElement);
+            saveState();
         });
     }
 
@@ -857,120 +1238,245 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ====== END NEW TOOLS ======
 
-    // ====== DONE DESIGN BUTTON ======
+    // ====== DONE DESIGN BUTTON & SIZE MODAL FUNCTIONALITY ======
     const doneDesignBtn = document.getElementById('done-design-btn');
+    const sizeModal = document.getElementById('size-modal');
+    const closeSizeModal = document.getElementById('close-size-modal');
+    const cancelSizeBtn = document.getElementById('cancel-size-btn');
+    const confirmSizeBtn = document.getElementById('confirm-size-btn');
+
+    // Function to capture design data
+    function captureDesignData() {
+        const designData = {
+            images: [],
+            texts: []
+        };
+        
+        // Get all resizable images from shirtDropArea
+        const images = shirtDropArea.querySelectorAll('.resizable-image');
+        images.forEach(img => {
+            const transform = img.style.transform || '';
+            const match = transform.match(/translate\(([^,]+),\s*([^)]+)\)/);
+            const x = match ? match[1] : '0px';
+            const y = match ? match[2] : '0px';
+            
+            designData.images.push({
+                src: img.src,
+                width: img.style.width || img.width + 'px',
+                height: img.style.height || img.height + 'px',
+                x: x,
+                y: y,
+                transform: transform,
+                filter: img.style.filter || '',
+                opacity: img.style.opacity || '1',
+                zIndex: img.style.zIndex || '1'
+            });
+        });
+        
+        // Get all text elements from shirtDropArea
+        const texts = shirtDropArea.querySelectorAll('.design-text, .draggable-custom-name');
+        texts.forEach(txt => {
+            const transform = txt.style.transform || '';
+            const match = transform.match(/translate\(([^,]+),\s*([^)]+)\)/);
+            const x = match ? match[1] : '0px';
+            const y = match ? match[2] : '0px';
+            
+            designData.texts.push({
+                content: txt.textContent,
+                fontSize: txt.style.fontSize || '24px',
+                fontWeight: txt.style.fontWeight || 'normal',
+                fontFamily: txt.style.fontFamily || 'Poppins',
+                color: txt.style.color || '#000000',
+                x: x,
+                y: y,
+                transform: transform,
+                opacity: txt.style.opacity || '1',
+                zIndex: txt.style.zIndex || '10'
+            });
+        });
+        
+        return designData;
+    }
+
+    // Open modal on Done Design click
     if (doneDesignBtn) {
         doneDesignBtn.addEventListener('click', function(e) {
             e.preventDefault();
             
-            // Collect design data
-            const designData = {
-                images: [],
-                texts: []
-            };
-            
-            // Get all resizable images from shirtDropArea
-            const images = shirtDropArea.querySelectorAll('.resizable-image');
-            images.forEach(img => {
-                const transform = img.style.transform || '';
-                const match = transform.match(/translate\(([^,]+),\s*([^)]+)\)/);
-                const x = match ? match[1] : '0px';
-                const y = match ? match[2] : '0px';
-                
-                designData.images.push({
-                    src: img.src,
-                    width: img.style.width || img.width + 'px',
-                    height: img.style.height || img.height + 'px',
-                    x: x,
-                    y: y,
-                    transform: transform
-                });
-            });
-            
-            // Get all text elements from shirtDropArea (including both .design-text and .draggable-custom-name)
-            const texts = shirtDropArea.querySelectorAll('.design-text, .draggable-custom-name');
-            texts.forEach(txt => {
-                const transform = txt.style.transform || '';
-                const match = transform.match(/translate\(([^,]+),\s*([^)]+)\)/);
-                const x = match ? match[1] : '0px';
-                const y = match ? match[2] : '0px';
-                
-                designData.texts.push({
-                    content: txt.textContent,
-                    fontSize: txt.style.fontSize || '24px',
-                    fontWeight: txt.style.fontWeight || 'normal',
-                    color: txt.style.color || '#000000',
-                    x: x,
-                    y: y,
-                    transform: transform
-                });
-            });
-            
-            // Check if we have any customizations
+            // Validate that design has content
+            const designData = captureDesignData();
             if (designData.images.length === 0 && designData.texts.length === 0) {
                 alert('Please add at least one image or text to your design.');
                 return;
             }
             
-            // Get product info from dropdown
-            const productTypeDropdown = document.getElementById('product-type');
-            const productType = productTypeDropdown ? productTypeDropdown.value : 'sign';
-            const productName = productTypeDropdown ? productTypeDropdown.options[productTypeDropdown.selectedIndex].text : 'Custom Sign';
-            const productPrice = 99.99; // Default price for custom sign
+            // Open the size modal
+            sizeModal.classList.add('active');
+        });
+    }
+
+    // Enable/Disable size controls
+    document.querySelectorAll('.size-enable').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const size = this.id.replace('enable-', '');
+            const controls = document.getElementById(`${size}-controls`);
             
-            // Get first uploaded image as thumbnail, or use default
-            const thumbnailImage = designData.images.length > 0 ? designData.images[0].src : 'images/custom-sign.jpg';
-            
-            // Create cart item
-            const cartItem = {
-                id: Date.now().toString(),
-                name: productName,
-                price: productPrice,
-                qty: 1,
-                image: thumbnailImage,
-                isCustom: true,
-                productType: productType,
-                designData: designData
-            };
-            
-            console.log('Adding cart item:', cartItem);
-            
-            // Check if we're editing an existing item
-            const editingItem = localStorage.getItem('editingCustomItem');
-            if (editingItem) {
-                try {
-                    const editData = JSON.parse(editingItem);
-                    cartItem.id = editData.id; // Keep the same ID
-                    console.log('Editing existing item with ID:', editData.id);
-                } catch(e) {
-                    console.error('Error parsing editing item:', e);
+            if (this.checked) {
+                controls.classList.add('active');
+                // Set default quantity to 1 when enabled
+                const qtyInput = document.getElementById(`qty-${size}`);
+                if (qtyInput.value === '0') {
+                    qtyInput.value = '1';
                 }
-            }
-            
-            // Get current cart
-            const cartItems = getCartItems();
-            console.log('Current cart items:', cartItems);
-            
-            // Remove old item if editing
-            const existingIndex = cartItems.findIndex(item => item.id === cartItem.id);
-            if (existingIndex >= 0) {
-                cartItems[existingIndex] = cartItem;
-                console.log('Updated existing item at index:', existingIndex);
             } else {
-                cartItems.push(cartItem);
-                console.log('Added new item to cart');
+                controls.classList.remove('active');
+                // Reset quantity to 0 when disabled
+                document.getElementById(`qty-${size}`).value = '0';
             }
+        });
+    });
+
+    // Quantity buttons
+    document.querySelectorAll('.qty-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const size = this.dataset.size;
+            const qtyInput = document.getElementById(`qty-${size}`);
+            const enableCheckbox = document.getElementById(`enable-${size}`);
+            let currentQty = parseInt(qtyInput.value) || 0;
+
+            if (this.classList.contains('plus')) {
+                currentQty++;
+                if (!enableCheckbox.checked && currentQty > 0) {
+                    enableCheckbox.checked = true;
+                    enableCheckbox.dispatchEvent(new Event('change'));
+                }
+            } else if (this.classList.contains('minus') && currentQty > 0) {
+                currentQty--;
+            }
+
+            qtyInput.value = currentQty;
+        });
+    });
+
+    // Color picker label update
+    document.querySelectorAll('.size-color-picker').forEach(picker => {
+        picker.addEventListener('input', function() {
+            const size = this.id.replace('color-', '');
+            const label = document.getElementById(`color-${size}-label`);
+            label.textContent = this.value.toUpperCase();
+        });
+    });
+
+    // Open modal on Done Design click
+    if (doneDesignBtn) {
+        doneDesignBtn.addEventListener('click', function() {
+            sizeModal.classList.add('active');
+        });
+    }
+
+    // Close modal functions
+    function closeSizeModalFunc() {
+        sizeModal.classList.remove('active');
+        // Reset all values
+        document.querySelectorAll('.size-enable').forEach(checkbox => {
+            checkbox.checked = false;
+            checkbox.dispatchEvent(new Event('change'));
+        });
+        document.querySelectorAll('.qty-input').forEach(input => {
+            input.value = '0';
+        });
+        document.querySelectorAll('.size-color-picker').forEach(picker => {
+            picker.value = '#ffffff';
+            const size = picker.id.replace('color-', '');
+            document.getElementById(`color-${size}-label`).textContent = '#FFFFFF';
+        });
+    }
+
+    if (closeSizeModal) {
+        closeSizeModal.addEventListener('click', closeSizeModalFunc);
+    }
+
+    if (cancelSizeBtn) {
+        cancelSizeBtn.addEventListener('click', closeSizeModalFunc);
+    }
+
+    // Close modal when clicking outside
+    if (sizeModal) {
+        sizeModal.addEventListener('click', function(e) {
+            if (e.target === sizeModal) {
+                closeSizeModalFunc();
+            }
+        });
+    }
+
+    // Confirm and add to cart
+    if (confirmSizeBtn) {
+        confirmSizeBtn.addEventListener('click', function() {
+            // Collect size data
+            const sizeData = [];
+            const sizes = ['small', 'medium', 'large'];
             
-            // Save to cart
+            sizes.forEach(size => {
+                const enabled = document.getElementById(`enable-${size}`).checked;
+                const qty = parseInt(document.getElementById(`qty-${size}`).value) || 0;
+                const color = document.getElementById(`color-${size}`).value;
+                
+                if (enabled && qty > 0) {
+                    sizeData.push({
+                        size: size.charAt(0).toUpperCase() + size.slice(1),
+                        quantity: qty,
+                        color: color
+                    });
+                }
+            });
+
+            if (sizeData.length === 0) {
+                alert('Please select at least one size with quantity greater than 0');
+                return;
+            }
+
+            // Get design data
+            const designData = captureDesignData();
+            const productType = document.getElementById('product-type').value;
+            const productName = document.getElementById('custom-text').value || 'Custom Product';
+            
+            // Get thumbnail image - use first uploaded image or default
+            const thumbnailImage = designData.images.length > 0 
+                ? designData.images[0].src 
+                : 'BGDS.jpg';
+
+            // Add each size as a separate cart item
+            const cartItems = getCartItems();
+            
+            sizeData.forEach(sizeInfo => {
+                const item = {
+                    id: Date.now() + Math.random(),
+                    name: `${productName} - Size ${sizeInfo.size}`,
+                    productType: productType,
+                    qty: sizeInfo.quantity,
+                    price: 25.00, // Base price
+                    size: sizeInfo.size,
+                    color: sizeInfo.color,
+                    image: thumbnailImage,  // Add thumbnail image
+                    designData: designData,
+                    isCustom: true,
+                    customized: true
+                };
+                cartItems.push(item);
+                console.log('Added item to cart:', item);
+            });
+
             setCartItems(cartItems);
-            console.log('Cart saved. Total items:', cartItems.length);
+            console.log('Cart updated. Total items:', cartItems.length);
             
-            // Clear editing flag
-            localStorage.removeItem('editingCustomItem');
+            // Close modal and show success
+            closeSizeModalFunc();
+            alert(`Successfully added ${sizeData.length} item(s) to cart!`);
             
-            // Show success message and redirect
-            alert('Design added to cart successfully!');
-            window.location.href = 'cart.html';
+            // Optional: redirect to cart
+            setTimeout(() => {
+                window.location.href = 'cart.html';
+            }, 500);
         });
     }
 });
@@ -986,3 +1492,4 @@ function setCartItems(items) {
   localStorage.setItem('cartCount', String(count));
   window.dispatchEvent(new CustomEvent('cart:updated', { detail: { count, items } }));
 }
+

@@ -14,6 +14,9 @@ window.addEventListener('DOMContentLoaded', () => {
     loadProducts();
     loadOrders();
     loadCustomers();
+    loadReviews();
+    loadMessages();
+    updateUnreadBadge();
 });
 
 // Navigation
@@ -89,9 +92,20 @@ function loadDashboardData() {
     });
     document.getElementById('total-revenue').textContent = '₱' + totalRevenue.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     
+    // Get reviews
+    const reviews = JSON.parse(localStorage.getItem('reviews')) || [];
+    document.getElementById('dashboard-total-reviews').textContent = reviews.length;
+    
+    // Get messages
+    const messages = JSON.parse(localStorage.getItem('contactMessages')) || [];
+    const unreadMessages = messages.filter(m => m.status === 'Unread').length;
+    document.getElementById('dashboard-unread-messages').textContent = unreadMessages;
+    
     console.log('Dashboard Stats:', {
         totalOrders: orders.length,
         totalRevenue: totalRevenue,
+        totalReviews: reviews.length,
+        unreadMessages: unreadMessages,
         orders: orders.map(o => ({ id: o.orderId, total: o.total }))
     });
     
@@ -402,5 +416,501 @@ function viewCustomerOrders(email) {
     ).join('\n');
     
     alert(`CUSTOMER ORDERS\n\nEmail: ${email}\nTotal Orders: ${customerOrders.length}\n\n${ordersList}`);
+}
+
+// Load Reviews
+function loadReviews() {
+    const reviews = JSON.parse(localStorage.getItem('reviews')) || [];
+    const reviewsGrid = document.getElementById('reviews-grid');
+    
+    // Update stats
+    document.getElementById('total-reviews').textContent = reviews.length;
+    
+    if (reviews.length === 0) {
+        const avgRating = 0;
+        document.getElementById('average-rating').textContent = avgRating.toFixed(1);
+        reviewsGrid.innerHTML = `
+            <div class="no-reviews">
+                <i class="fas fa-star-half-alt"></i>
+                <p>No reviews yet</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Calculate average rating
+    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+    const avgRating = totalRating / reviews.length;
+    document.getElementById('average-rating').textContent = avgRating.toFixed(1);
+    
+    // Sort reviews by date (newest first)
+    const sortedReviews = [...reviews].sort((a, b) => 
+        new Date(b.reviewDate) - new Date(a.reviewDate)
+    );
+    
+    // Display reviews
+    reviewsGrid.innerHTML = sortedReviews.map(review => {
+        const stars = generateStars(review.rating);
+        const itemsList = review.items.map(item => item.name).join(', ');
+        
+        return `
+            <div class="review-card">
+                <div class="review-header">
+                    <div class="review-customer">
+                        <div class="customer-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="customer-info">
+                            <h4>${review.customerName}</h4>
+                            <p class="review-date">
+                                <i class="fas fa-calendar"></i> ${review.reviewDateFormatted}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="review-rating">
+                        ${stars}
+                        <span class="rating-number">${review.rating}.0</span>
+                    </div>
+                </div>
+                
+                <div class="review-order-info">
+                    <p><strong>Order ID:</strong> ${review.orderId}</p>
+                    <p><strong>Products:</strong> ${itemsList}</p>
+                </div>
+                
+                <div class="review-comment">
+                    <p>${review.comment}</p>
+                </div>
+                
+                <div class="review-actions">
+                    <button onclick="deleteReview('${review.reviewId}')" class="btn-delete">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Generate star icons
+function generateStars(rating) {
+    let stars = '';
+    for (let i = 1; i <= 5; i++) {
+        if (i <= rating) {
+            stars += '<i class="fas fa-star" style="color: #FFD700;"></i>';
+        } else {
+            stars += '<i class="far fa-star" style="color: #ddd;"></i>';
+        }
+    }
+    return stars;
+}
+
+// Delete review
+function deleteReview(reviewId) {
+    if (confirm('Are you sure you want to delete this review?')) {
+        let reviews = JSON.parse(localStorage.getItem('reviews')) || [];
+        reviews = reviews.filter(r => r.reviewId !== reviewId);
+        localStorage.setItem('reviews', JSON.stringify(reviews));
+        loadReviews();
+        loadDashboardData();
+        alert('Review deleted successfully!');
+    }
+}
+
+// Load Messages
+let currentFilter = 'all';
+
+function loadMessages(filter = 'all') {
+    currentFilter = filter;
+    const messages = JSON.parse(localStorage.getItem('contactMessages')) || [];
+    const messagesGrid = document.getElementById('messages-grid');
+    
+    if (messages.length === 0) {
+        messagesGrid.innerHTML = `
+            <div class="no-messages">
+                <i class="fas fa-inbox"></i>
+                <p>No messages yet</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Filter messages
+    let filteredMessages = messages;
+    if (filter !== 'all') {
+        filteredMessages = messages.filter(m => m.status === filter);
+    }
+    
+    // Sort messages by date (newest first)
+    const sortedMessages = [...filteredMessages].sort((a, b) => 
+        new Date(b.createdDate) - new Date(a.createdDate)
+    );
+    
+    if (sortedMessages.length === 0) {
+        messagesGrid.innerHTML = `
+            <div class="no-messages">
+                <i class="fas fa-inbox"></i>
+                <p>No ${filter.toLowerCase()} messages</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Display messages
+    messagesGrid.innerHTML = sortedMessages.map(msg => {
+        const statusClass = msg.status.toLowerCase();
+        const statusIcon = msg.status === 'Unread' ? 'envelope' : 
+                          msg.status === 'Read' ? 'envelope-open' : 'reply';
+        
+        return `
+            <div class="message-card ${statusClass}">
+                <div class="message-header">
+                    <div class="message-customer">
+                        <div class="customer-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="customer-info">
+                            <h4>${msg.name}</h4>
+                            <p class="message-email">
+                                <i class="fas fa-envelope"></i> ${msg.email}
+                            </p>
+                            <p class="message-phone">
+                                <i class="fas fa-phone"></i> ${msg.phone}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="message-status-badge">
+                        <span class="status-badge status-${statusClass}">
+                            <i class="fas fa-${statusIcon}"></i> ${msg.status}
+                        </span>
+                        <p class="message-date">
+                            <i class="fas fa-calendar"></i> ${msg.createdDateFormatted}
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="message-subject">
+                    <i class="fas fa-tag"></i> 
+                    <strong>Subject:</strong> ${msg.subject}
+                </div>
+                
+                <div class="message-body">
+                    <p>${msg.message}</p>
+                </div>
+                
+                ${msg.reply ? `
+                    <div class="message-reply">
+                        <div class="reply-header">
+                            <i class="fas fa-reply"></i> Admin Reply
+                            <span class="reply-date">${msg.replyDateFormatted}</span>
+                        </div>
+                        <p>${msg.reply}</p>
+                        ${msg.replyImages && msg.replyImages.length > 0 ? `
+                            <div class="reply-images">
+                                <p style="margin-top: 15px; font-weight: 600; color: #667eea;">
+                                    <i class="fas fa-images"></i> Attached Images (${msg.replyImages.length}):
+                                </p>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 10px;">
+                                    ${msg.replyImages.map((img, index) => `
+                                        <img src="${img.data}" alt="Attachment ${index + 1}" 
+                                             style="width: 100%; height: 150px; object-fit: cover; border-radius: 8px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"
+                                             onclick="window.open('${img.data}', '_blank')">
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                ` : ''}
+                
+                <div class="message-actions">
+                    ${msg.status === 'Unread' ? `
+                        <button onclick="markAsRead('${msg.messageId}')" class="btn-mark-read">
+                            <i class="fas fa-check"></i> Mark as Read
+                        </button>
+                    ` : ''}
+                    ${msg.status !== 'Replied' ? `
+                        <button onclick="openReplyModal('${msg.messageId}')" class="btn-reply">
+                            <i class="fas fa-reply"></i> Reply
+                        </button>
+                    ` : ''}
+                    <button onclick="deleteMessage('${msg.messageId}')" class="btn-delete">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Message filter buttons
+document.addEventListener('DOMContentLoaded', () => {
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const filter = btn.getAttribute('data-filter');
+            loadMessages(filter);
+        });
+    });
+});
+
+// Mark message as read
+function markAsRead(messageId) {
+    let messages = JSON.parse(localStorage.getItem('contactMessages')) || [];
+    const messageIndex = messages.findIndex(m => m.messageId === messageId);
+    
+    if (messageIndex !== -1) {
+        messages[messageIndex].status = 'Read';
+        localStorage.setItem('contactMessages', JSON.stringify(messages));
+        loadMessages(currentFilter);
+        loadDashboardData();
+        updateUnreadBadge();
+    }
+}
+
+// Open reply modal
+function openReplyModal(messageId) {
+    const messages = JSON.parse(localStorage.getItem('contactMessages')) || [];
+    const message = messages.find(m => m.messageId === messageId);
+    
+    if (!message) return;
+    
+    // Store current message ID
+    window.currentReplyMessageId = messageId;
+    window.currentReplyMessage = message;
+    window.replyImages = [];
+    
+    // Populate modal with message details
+    document.getElementById('reply-customer-name').textContent = message.name;
+    document.getElementById('reply-customer-email').textContent = message.email;
+    document.getElementById('reply-subject').textContent = message.subject;
+    document.getElementById('reply-original-message').textContent = message.message;
+    document.getElementById('reply-text').value = '';
+    document.getElementById('image-preview-container').innerHTML = '';
+    
+    // Show modal
+    document.getElementById('reply-modal').style.display = 'flex';
+    
+    // Setup image upload handler
+    setupImageUpload();
+}
+
+// Close reply modal
+function closeReplyModal() {
+    document.getElementById('reply-modal').style.display = 'none';
+    window.currentReplyMessageId = null;
+    window.currentReplyMessage = null;
+    window.replyImages = [];
+}
+
+// Setup image upload functionality
+function setupImageUpload() {
+    const imageInput = document.getElementById('reply-image-input');
+    
+    imageInput.onchange = function(e) {
+        const files = Array.from(e.target.files);
+        
+        // Limit to 5 images
+        if (window.replyImages.length + files.length > 5) {
+            alert('⚠️ You can only attach up to 5 images');
+            return;
+        }
+        
+        files.forEach(file => {
+            // Check file size (5MB limit)
+            if (file.size > 5 * 1024 * 1024) {
+                alert(`⚠️ ${file.name} is too large. Max size is 5MB`);
+                return;
+            }
+            
+            // Check if it's an image
+            if (!file.type.startsWith('image/')) {
+                alert(`⚠️ ${file.name} is not an image`);
+                return;
+            }
+            
+            // Read and preview image
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const imageData = {
+                    name: file.name,
+                    data: event.target.result,
+                    size: file.size
+                };
+                
+                window.replyImages.push(imageData);
+                displayImagePreview(imageData, window.replyImages.length - 1);
+            };
+            reader.readAsDataURL(file);
+        });
+        
+        // Clear input
+        imageInput.value = '';
+    };
+}
+
+// Display image preview
+function displayImagePreview(imageData, index) {
+    const container = document.getElementById('image-preview-container');
+    
+    const previewItem = document.createElement('div');
+    previewItem.className = 'image-preview-item';
+    previewItem.innerHTML = `
+        <img src="${imageData.data}" alt="${imageData.name}">
+        <button class="remove-image-btn" onclick="removeImage(${index})">&times;</button>
+        <div style="padding: 5px; font-size: 0.75rem; background: rgba(0,0,0,0.7); color: white; text-align: center;">
+            ${(imageData.size / 1024).toFixed(0)}KB
+        </div>
+    `;
+    
+    container.appendChild(previewItem);
+}
+
+// Remove image from attachments
+function removeImage(index) {
+    window.replyImages.splice(index, 1);
+    
+    // Re-render previews
+    const container = document.getElementById('image-preview-container');
+    container.innerHTML = '';
+    
+    window.replyImages.forEach((img, i) => {
+        displayImagePreview(img, i);
+    });
+}
+
+// Submit reply
+function submitReply() {
+    const replyText = document.getElementById('reply-text').value.trim();
+    
+    if (!replyText) {
+        alert('⚠️ Please enter a reply message');
+        return;
+    }
+    
+    if (!window.currentReplyMessageId) {
+        alert('⚠️ Error: No message selected');
+        return;
+    }
+    
+    // Disable send button while processing
+    const sendBtn = document.querySelector('.btn-send-reply');
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+    
+    // Send reply with images
+    sendReply(window.currentReplyMessageId, replyText, window.replyImages);
+}
+
+// Send reply (old function - now removed, replaced above)
+// The new openReplyModal function replaces this
+
+// Send reply
+function sendReply(messageId, reply, images = []) {
+    let messages = JSON.parse(localStorage.getItem('contactMessages')) || [];
+    const messageIndex = messages.findIndex(m => m.messageId === messageId);
+    
+    if (messageIndex !== -1) {
+        const message = messages[messageIndex];
+        
+        // Update message status
+        messages[messageIndex].status = 'Replied';
+        messages[messageIndex].reply = reply;
+        messages[messageIndex].replyImages = images;
+        messages[messageIndex].replyDate = new Date().toISOString();
+        messages[messageIndex].replyDateFormatted = new Date().toLocaleString('en-PH', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        localStorage.setItem('contactMessages', JSON.stringify(messages));
+        
+        // Send email notification to customer
+        sendEmailReply(message, reply, images);
+        
+        loadMessages(currentFilter);
+        loadDashboardData();
+        updateUnreadBadge();
+        
+        // Close modal
+        closeReplyModal();
+    }
+}
+
+// Send email reply to customer
+function sendEmailReply(message, reply, images = []) {
+    // Initialize EmailJS (you'll need to set up your account)
+    emailjs.init("YOUR_PUBLIC_KEY"); // Replace with your EmailJS public key
+    
+    // Prepare image HTML for email
+    let imagesHtml = '';
+    if (images && images.length > 0) {
+        imagesHtml = '<div style="margin-top: 20px;"><strong>Attached Images:</strong><br><br>';
+        images.forEach((img, index) => {
+            imagesHtml += `<img src="${img.data}" alt="Attachment ${index + 1}" style="max-width: 300px; margin: 10px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">`;
+        });
+        imagesHtml += '</div>';
+    }
+    
+    const templateParams = {
+        to_email: message.email,
+        to_name: message.name,
+        from_name: "4D Signs Customer Support",
+        subject: `Re: ${message.subject}`,
+        original_message: message.message,
+        reply_message: reply,
+        customer_name: message.name,
+        images_html: imagesHtml,
+        has_images: images.length > 0 ? 'yes' : 'no'
+    };
+    
+    // Show sending notification
+    const notification = document.createElement('div');
+    notification.className = 'email-notification';
+    notification.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending email to customer...';
+    document.body.appendChild(notification);
+    
+    emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", templateParams)
+        .then(function(response) {
+            notification.className = 'email-notification success';
+            notification.innerHTML = `<i class="fas fa-check-circle"></i> ✅ Reply sent successfully to ${message.email}${images.length > 0 ? ' (with ' + images.length + ' image(s))' : ''}`;
+            setTimeout(() => notification.remove(), 4000);
+        }, function(error) {
+            notification.className = 'email-notification error';
+            notification.innerHTML = '<i class="fas fa-exclamation-circle"></i> ⚠️ Reply saved but email failed to send. You may need to configure EmailJS.';
+            console.error('Email send failed:', error);
+            setTimeout(() => notification.remove(), 5000);
+        });
+}
+
+// Delete message
+function deleteMessage(messageId) {
+    if (confirm('Are you sure you want to delete this message?')) {
+        let messages = JSON.parse(localStorage.getItem('contactMessages')) || [];
+        messages = messages.filter(m => m.messageId !== messageId);
+        localStorage.setItem('contactMessages', JSON.stringify(messages));
+        loadMessages(currentFilter);
+        loadDashboardData();
+        updateUnreadBadge();
+        alert('Message deleted successfully!');
+    }
+}
+
+// Update unread badge
+function updateUnreadBadge() {
+    const messages = JSON.parse(localStorage.getItem('contactMessages')) || [];
+    const unreadCount = messages.filter(m => m.status === 'Unread').length;
+    const badge = document.getElementById('unread-count');
+    
+    if (unreadCount > 0) {
+        badge.textContent = unreadCount;
+        badge.style.display = 'inline-block';
+    } else {
+        badge.style.display = 'none';
+    }
 }
 

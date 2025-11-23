@@ -202,8 +202,70 @@ body {
     font-weight: 500;
 }
 
+/* Address Selector */
+.address-selector {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 1rem 1.2rem;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    background: rgba(40, 38, 58, 0.6);
+    border-radius: 8px;
+    color: #fff;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1rem;
+    min-height: 48px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.address-selector:focus {
+    outline: none;
+    border-color: #ffd700;
+    background: rgba(40, 38, 58, 0.8);
+    box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1);
+}
+
+.address-selector option {
+    background: #28263A;
+    color: #fff;
+    padding: 0.5rem;
+}
+
+/* Save Address Checkbox */
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    cursor: pointer;
+    padding: 1rem;
+    background: rgba(255, 215, 0, 0.05);
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.checkbox-label:hover {
+    background: rgba(255, 215, 0, 0.1);
+    border-color: rgba(255, 215, 0, 0.3);
+}
+
+.save-address-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #FFD700;
+}
+
+.checkbox-label span {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+    user-select: none;
+}
+
 .input-with-icon {
     position: relative;
+    display: flex;
+    align-items: center;
 }
 
 .input-with-icon i {
@@ -213,10 +275,14 @@ body {
     transform: translateY(-50%);
     color: rgba(255, 215, 0, 0.7);
     font-size: 1rem;
+    z-index: 1;
+    pointer-events: none;
 }
 
-.input-with-icon input {
-    padding-left: 2.8rem;
+.input-with-icon input,
+.input-with-icon textarea {
+    padding-left: 3rem !important;
+    width: 100%;
 }
 
 input[type="text"],
@@ -346,6 +412,126 @@ input[type="number"] {
 
 .checkout-items {
     margin-bottom: 1.5rem;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.checkout-items::-webkit-scrollbar {
+    width: 6px;
+}
+
+.checkout-items::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+}
+
+.checkout-items::-webkit-scrollbar-thumb {
+    background: rgba(255, 215, 0, 0.3);
+    border-radius: 10px;
+}
+
+.checkout-items::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 215, 0, 0.5);
+}
+
+.checkout-item {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    gap: 1rem;
+    align-items: center;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    border: 1px solid rgba(255, 215, 0, 0.15);
+    transition: all 0.3s ease;
+}
+
+.checkout-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 215, 0, 0.3);
+}
+
+.checkout-item-image img {
+    display: block;
+}
+
+.checkout-item-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.checkout-item-name {
+    font-weight: 600;
+    color: #FFD700;
+    font-size: 0.95rem;
+    line-height: 1.3;
+}
+
+.checkout-item-meta {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.7);
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+}
+
+.custom-badge-small {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: linear-gradient(135deg, #FFD700, #FFC700);
+    color: #1a1a2e;
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.custom-badge-small i {
+    font-size: 0.65rem;
+}
+
+.checkout-item-price {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin-top: 0.25rem;
+}
+
+.checkout-item-total {
+    font-weight: 700;
+    color: #fff;
+    font-size: 1.1rem;
+    text-align: right;
+    min-width: 80px;
+}
+
+.edit-item-btn {
+    background: rgba(255, 215, 0, 0.2);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    color: #FFD700;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+}
+
+.edit-item-btn:hover {
+    background: rgba(255, 215, 0, 0.3);
+    border-color: rgba(255, 215, 0, 0.5);
+    transform: scale(1.05);
+}
+
+.edit-item-btn:active {
+    transform: scale(0.95);
 }
 
 .summary-row {
@@ -444,7 +630,7 @@ input[type="number"] {
     display: block;
     margin-bottom: 5px;
     font-weight: 500;
-    color: #333;
+    color: #FFD700;
 }
 
 /* Form Field Groups */
@@ -467,7 +653,7 @@ input[type="number"] {
 
 .delivery-options h3 {
     margin-bottom: 10px;
-    color: #333;
+    color: #FFD700;
     font-size: 1em;
     font-weight: 500;
 }

@@ -30,7 +30,21 @@
                         <i class="fas fa-map-marker-alt"></i>
                         Shipping Address
                     </h2>
-                    <div class="address-form">
+                    
+                    <!-- Saved Address Selector -->
+                    <div id="saved-address-section" style="display: none; margin-bottom: 1.5rem;">
+                        <div class="form-group">
+                            <label for="address-selector">
+                                <i class="fas fa-bookmark"></i> Use Saved Address
+                            </label>
+                            <select id="address-selector" class="address-selector">
+                                <option value="">-- Select an address --</option>
+                                <option value="new">+ Add New Address</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="address-form" id="address-form">
                         <div class="form-group">
                             <label for="name">Full Name</label>
                             <input type="text" id="name" name="name" required>
@@ -83,6 +97,14 @@
                                 <input type="text" id="landmark" name="landmark" placeholder="Nearby landmark or additional directions">
                             </div>
                         </div>
+                        
+                        <!-- Save Address Checkbox -->
+                        <div class="form-group" style="margin-top: 1rem;">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="save-address" name="save-address" class="save-address-checkbox">
+                                <span>Save this address for future orders</span>
+                            </label>
+                        </div>
                     </div>
                 </section>
 
@@ -127,7 +149,7 @@
                             </label>
                         </div>
                         <!-- For Store Pickup -->
-                        <div class="payment-option" id="cash-option">
+                        <div class="payment-option" id="cash-option" style="display: none;">
                             <input type="radio" id="cash" name="paymentMethod" value="cash">
                             <label for="cash">
                                 <i class="fas fa-money-bill"></i>
@@ -147,6 +169,20 @@
                                     <p>Pay via GCash</p>
                                 </div>
                             </label>
+                        </div>
+                    </div>
+                    
+                    <!-- GCash Details Section -->
+                    <div id="gcash-details" style="display: none; margin-top: 1rem;">
+                        <div class="form-group">
+                            <label for="gcash-number">GCash Number</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-mobile-alt"></i>
+                                <input type="tel" id="gcash-number" name="gcash-number" pattern="09[0-9]{9}" maxlength="11" placeholder="09XXXXXXXXX">
+                            </div>
+                            <small style="color: rgba(255, 255, 255, 0.6); font-size: 0.85rem; margin-top: 0.5rem; display: block;">
+                                <i class="fas fa-info-circle"></i> Enter your 11-digit GCash number
+                            </small>
                         </div>
                     </div>
                 </section>

@@ -256,41 +256,37 @@ document.addEventListener('DOMContentLoaded', function() {
         return '₱' + Number(num).toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2});
     }
 
-    function getCartItems(){
-        try { return JSON.parse(localStorage.getItem('cartItems') || '[]'); } catch(e){ return []; }
+    function getCheckoutItems(){
+        // First check if there are selected items from cart
+        try {
+            const checkoutItems = localStorage.getItem('checkoutItems');
+            if (checkoutItems) {
+                return JSON.parse(checkoutItems);
+            }
+        } catch(e) {
+            console.error('Error loading checkout items:', e);
+        }
+        
+        // Fallback to all cart items
+        try { 
+            return JSON.parse(localStorage.getItem('cartItems') || '[]'); 
+        } catch(e){ 
+            return []; 
+        }
     }
-
-    // simple price lookup for legacy items without a price field
-    const priceLookup = {
-        'souvenirs': 150,
-        'giveaways': 100,
-        'bulk packages': 1000,
-        'custom signage': 500,
-        'banners': 500,
-        'stickers & decals': 300,
-        'custom mugs': 250,
-        't-shirt printing': 350,
-        'keychains': 80,
-        'invitations': 150,
-        'calling cards': 200
-    };
 
     function resolveUnitPrice(item){
         if (item.price != null && !isNaN(Number(item.price))) return Number(item.price);
-        const key = (item.id || item.name || '').toString().toLowerCase();
-        if (priceLookup[key]) return priceLookup[key];
-        // fallback: try to extract digits from item.name
-        const m = (item.name || '').replace(/,/g,'').match(/(\d+(?:\.\d+)?)/);
-        if (m) return Number(m[1]);
-        console.warn('No unit price found for cart item', item);
-        return 0;
+        console.warn('No unit price found for item', item);
+        return 25.00; // Default price
     }
 
     function renderCheckout(){
-        const items = getCartItems();
+        const items = getCheckoutItems();
         checkoutItemsEl.innerHTML = '';
+        
         if (!items.length){
-            checkoutItemsEl.innerHTML = '<p style="color:rgba(255,255,255,0.8);">Your cart is empty.</p>';
+            checkoutItemsEl.innerHTML = '<p style="color:rgba(255,255,255,0.8); text-align: center; padding: 2rem;">Your checkout is empty.</p>';
             subtotalEl.textContent = formatCurrency(0);
             shippingEl.textContent = formatCurrency(0);
             totalEl.textContent = formatCurrency(0);
@@ -303,34 +299,40 @@ document.addEventListener('DOMContentLoaded', function() {
             const qty = parseInt(it.qty,10) || 0;
             const line = unit * qty;
             subtotal += line;
+            
             const el = document.createElement('div');
             el.className = 'checkout-item';
-            el.style.display = 'flex';
-            el.style.justifyContent = 'space-between';
-            el.style.alignItems = 'center';
-            el.style.marginBottom = '0.75rem';
+            
+            // Get thumbnail image
+            const img = it.designData?.images?.[0]?.src || it.image || 'BGDS.jpg';
+            
             el.innerHTML = `
-                <div style="display:flex;flex-direction:column;">
-                    <strong style="color:#ffd700">${it.name}</strong>
-                    <small style="color:rgba(255,255,255,0.8)">${it.size? 'Size: '+it.size + (it.color? ' • Color: '+it.color : '') : (it.color? 'Color: '+it.color : '')}</small>
+                <div class="checkout-item-image">
+                    <img src="${img}" alt="${it.name}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 2px solid rgba(255, 215, 0, 0.3);">
                 </div>
-                <div style="display:flex;align-items:center;gap:8px;">
-                    <div style="text-align:right">
-                        <div>${formatCurrency(unit)} x ${qty}</div>
-                        <div style="font-weight:600;color:#fff;margin-top:4px">${formatCurrency(line)}</div>
+                <div class="checkout-item-details">
+                    <div class="checkout-item-name">${it.name}</div>
+                    <div class="checkout-item-meta">
+                        ${it.size ? `Size: ${it.size}` : ''}
+                        ${it.size && it.color ? ' • ' : ''}
+                        ${it.color ? `Color: ${it.color}` : ''}
+                        ${it.isCustom ? '<span class="custom-badge-small"><i class="fas fa-magic"></i> Custom</span>' : ''}
                     </div>
-                    ${it.isCustom ? `
-                    <button class="edit-custom-btn" onclick="editCustomItem('${it.id}')" style="background:#FFD700;color:#28263A;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;transition:all 0.3s ease;font-weight:500;text-shadow:none;">
-                        <i class="fas fa-edit"></i>
-                        Edit
-                    </button>
-                    ` : ''}
-                </div>`;
+                    <div class="checkout-item-price">
+                        ${formatCurrency(unit)} × ${qty}
+                    </div>
+                </div>
+                <div class="checkout-item-total">
+                    ${formatCurrency(line)}
+                </div>
+            `;
             checkoutItemsEl.appendChild(el);
         });
 
-        // shipping rules: free for subtotal >= 500, otherwise 50
-        const shipping = (subtotal > 0 && subtotal < 500) ? 50 : 0;
+        // Calculate shipping
+        const deliveryMethod = document.querySelector('input[name="deliveryMethod"]:checked');
+        const isDelivery = deliveryMethod && deliveryMethod.value === 'delivery';
+        const shipping = (isDelivery && subtotal > 0 && subtotal < 500) ? 50 : 0;
         const total = subtotal + shipping;
 
         subtotalEl.textContent = formatCurrency(subtotal);
@@ -338,10 +340,21 @@ document.addEventListener('DOMContentLoaded', function() {
         totalEl.textContent = formatCurrency(total);
     }
 
-    // listen for cart updates from other pages
+    // Update shipping when delivery method changes
+    const deliveryInputs = document.querySelectorAll('input[name="deliveryMethod"]');
+    deliveryInputs.forEach(input => {
+        input.addEventListener('change', renderCheckout);
+    });
+
+    // Listen for cart updates from other pages
     window.addEventListener('cart:updated', renderCheckout);
-    // initial render
+    
+    // Initial render
     renderCheckout();
+    
+    // ====== SAVED ADDRESS FUNCTIONALITY ======
+    loadSavedAddresses();
+    initializeAddressSelector();
 });
 
 // Get DOM elements
@@ -427,57 +440,107 @@ document.addEventListener('DOMContentLoaded', function() {
 });// Place order function
 function placeOrder() {
     try {
+        // Validate form fields
+        const name = document.getElementById('name').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        const email = document.getElementById('email').value.trim();
+        
+        if (!name || !phone || !email) {
+            alert('Please fill in all required fields (Name, Phone, Email)');
+            return;
+        }
+        
+        // Validate phone number
+        if (!validatePhoneNumber(phone)) {
+            alert('Please enter a valid 11-digit phone number');
+            return;
+        }
+        
         // Get customer information
+        const deliveryMethod = document.querySelector('input[name="deliveryMethod"]:checked').value;
+        const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+        
         const customerInfo = {
-            name: document.getElementById('name').value.trim(),
-            phone: document.getElementById('phone').value.trim(),
-            email: document.getElementById('email').value.trim(),
-            deliveryMethod: document.querySelector('input[name="deliveryMethod"]:checked').value,
-            paymentMethod: document.querySelector('input[name="paymentMethod"]:checked').value
+            name: name,
+            phone: phone,
+            email: email,
+            deliveryMethod: deliveryMethod,
+            paymentMethod: paymentMethod
         };
         
         // Get address if delivery
-        if (customerInfo.deliveryMethod === 'delivery') {
+        if (deliveryMethod === 'delivery') {
+            const street = document.getElementById('street').value.trim();
+            const barangay = document.getElementById('barangay').value.trim();
+            const city = document.getElementById('city').value.trim();
+            const province = document.getElementById('province').value.trim();
+            const zipCode = document.getElementById('zipCode').value.trim();
+            const landmark = document.getElementById('landmark').value.trim();
+            
+            if (!street || !barangay || !city || !province || !zipCode) {
+                alert('Please complete all address fields for delivery');
+                return;
+            }
+            
             customerInfo.address = {
-                street: document.getElementById('street').value.trim(),
-                barangay: document.getElementById('barangay').value.trim(),
-                city: document.getElementById('city').value.trim(),
-                province: document.getElementById('province').value.trim(),
-                zipCode: document.getElementById('zipCode').value.trim(),
-                landmark: document.getElementById('landmark').value.trim()
+                street: street,
+                barangay: barangay,
+                city: city,
+                province: province,
+                zipCode: zipCode,
+                landmark: landmark
             };
-            customerInfo.fullAddress = `${customerInfo.address.street}, ${customerInfo.address.barangay}, ${customerInfo.address.city}, ${customerInfo.address.province} ${customerInfo.address.zipCode}`;
-            if (customerInfo.address.landmark) {
-                customerInfo.fullAddress += ` (${customerInfo.address.landmark})`;
+            customerInfo.fullAddress = `${street}, ${barangay}, ${city}, ${province} ${zipCode}`;
+            if (landmark) {
+                customerInfo.fullAddress += ` (${landmark})`;
             }
         } else {
             customerInfo.fullAddress = 'Pick-up at store';
         }
         
         // Get GCash number if payment method is GCash
-        if (customerInfo.paymentMethod === 'gcash') {
-            customerInfo.gcashNumber = document.getElementById('gcash-number').value.trim();
+        if (paymentMethod === 'gcash') {
+            const gcashNumber = document.getElementById('gcash-number').value.trim();
+            if (!validateGCashNumber(gcashNumber)) {
+                alert('Please enter a valid GCash number (format: 09XXXXXXXXX)');
+                return;
+            }
+            customerInfo.gcashNumber = gcashNumber;
         }
         
-        // Get cart items
-        const cart = JSON.parse(localStorage.getItem('cartItems')) || [];
+        // Get checkout items
+        const checkoutItems = JSON.parse(localStorage.getItem('checkoutItems') || '[]');
         
-        if (cart.length === 0) {
-            alert('Your cart is empty!');
-            window.location.href = '4Dsigns.html';
-            return;
+        if (checkoutItems.length === 0) {
+            // Fallback to cart items if no checkout items
+            const cartItems = JSON.parse(localStorage.getItem('cartItems') || '[]');
+            if (cartItems.length === 0) {
+                alert('Your cart is empty!');
+                window.location.href = '4Dsigns.html';
+                return;
+            }
+            checkoutItems.push(...cartItems);
         }
         
-        // Calculate totals
-        const subtotal = parseFloat(document.getElementById('subtotal').textContent.replace('â‚±', '').replace(/,/g, '')) || 0;
-        const shipping = parseFloat(document.getElementById('shipping').textContent.replace('â‚±', '').replace(/,/g, '')) || 0;
-        const total = parseFloat(document.getElementById('total').textContent.replace('â‚±', '').replace(/,/g, '')) || 0;
+        // Calculate totals from displayed values
+        const subtotalText = document.getElementById('subtotal').textContent;
+        const shippingText = document.getElementById('shipping').textContent;
+        const totalText = document.getElementById('total').textContent;
+        
+        const subtotal = parseFloat(subtotalText.replace('₱', '').replace(/,/g, '')) || 0;
+        const shipping = parseFloat(shippingText.replace('₱', '').replace(/,/g, '')) || 0;
+        const total = parseFloat(totalText.replace('₱', '').replace(/,/g, '')) || 0;
+        
+        // Get message to seller
+        const messageTextarea = document.querySelector('textarea[name="message"]');
+        const message = messageTextarea ? messageTextarea.value.trim() : '';
         
         // Create order object
         const order = {
             orderId: 'ORD-' + Date.now(),
             customer: customerInfo,
-            items: cart,
+            items: checkoutItems,
+            message: message,
             subtotal: subtotal,
             shipping: shipping,
             total: total,
@@ -497,12 +560,45 @@ function placeOrder() {
         orders.push(order);
         localStorage.setItem('orders', JSON.stringify(orders));
         
-        // Clear cart
-        localStorage.removeItem('cartItems');
+        // Remove checked out items from cart
+        const allCartItems = JSON.parse(localStorage.getItem('cartItems') || '[]');
+        const checkoutItemIds = checkoutItems.map(item => String(item.id));
+        const remainingItems = allCartItems.filter(item => !checkoutItemIds.includes(String(item.id)));
+        
+        // Update cart
+        localStorage.setItem('cartItems', JSON.stringify(remainingItems));
+        const cartCount = remainingItems.reduce((sum, item) => sum + (parseInt(item.qty, 10) || 0), 0);
+        localStorage.setItem('cartCount', String(cartCount));
+        
+        // Clear checkout items
+        localStorage.removeItem('checkoutItems');
+        
+        // Dispatch cart updated event
+        window.dispatchEvent(new CustomEvent('cart:updated', { 
+            detail: { count: cartCount, items: remainingItems } 
+        }));
         
         // Show success message with order details
-        const successMessage = `Order placed successfully!\n\nOrder ID: ${order.orderId}\nTotal: â‚±${total.toLocaleString('en-PH', { minimumFractionDigits: 2 })}\n\nDelivery Method: ${customerInfo.deliveryMethod === 'delivery' ? 'Delivery' : 'Pick-up'}\nPayment Method: ${customerInfo.paymentMethod.toUpperCase()}\n\nThank you for your order!`;
+        const paymentMethodText = paymentMethod === 'cod' ? 'Cash on Delivery' : 
+                                 paymentMethod === 'cash' ? 'Cash (Pick-up)' : 
+                                 'GCash';
+        const deliveryMethodText = deliveryMethod === 'delivery' ? 'Home Delivery' : 'Store Pick-up';
+        
+        const successMessage = `✅ Order placed successfully!\n\n` +
+                             `Order ID: ${order.orderId}\n` +
+                             `Total: ₱${total.toLocaleString('en-PH', { minimumFractionDigits: 2 })}\n\n` +
+                             `Delivery: ${deliveryMethodText}\n` +
+                             `Payment: ${paymentMethodText}\n\n` +
+                             `Thank you for your order!`;
         alert(successMessage);
+        
+        // Save address if checkbox is checked
+        if (deliveryMethod === 'delivery') {
+            const saveAddressCheckbox = document.getElementById('save-address');
+            if (saveAddressCheckbox && saveAddressCheckbox.checked) {
+                saveAddress(customerInfo);
+            }
+        }
         
         // Redirect to homepage
         window.location.href = '4Dsigns.html';
@@ -511,3 +607,121 @@ function placeOrder() {
         alert('An error occurred while placing your order. Please try again.');
     }
 }
+
+// ====== SAVED ADDRESSES MANAGEMENT ======
+function getSavedAddresses() {
+    try {
+        return JSON.parse(localStorage.getItem('savedAddresses') || '[]');
+    } catch(e) {
+        return [];
+    }
+}
+
+function saveAddress(customerInfo) {
+    const addresses = getSavedAddresses();
+    
+    // Create address object
+    const newAddress = {
+        id: Date.now(),
+        name: customerInfo.name,
+        phone: customerInfo.phone,
+        email: customerInfo.email,
+        street: customerInfo.address.street,
+        barangay: customerInfo.address.barangay,
+        city: customerInfo.address.city,
+        province: customerInfo.address.province,
+        zipCode: customerInfo.address.zipCode,
+        landmark: customerInfo.address.landmark,
+        fullAddress: customerInfo.fullAddress,
+        savedDate: new Date().toISOString()
+    };
+    
+    // Check if address already exists (same full address)
+    const exists = addresses.some(addr => 
+        addr.fullAddress === newAddress.fullAddress && 
+        addr.phone === newAddress.phone
+    );
+    
+    if (!exists) {
+        addresses.push(newAddress);
+        // Keep only last 5 addresses
+        if (addresses.length > 5) {
+            addresses.shift();
+        }
+        localStorage.setItem('savedAddresses', JSON.stringify(addresses));
+        console.log('Address saved successfully');
+    }
+}
+
+function loadSavedAddresses() {
+    const addresses = getSavedAddresses();
+    const addressSelector = document.getElementById('address-selector');
+    const savedAddressSection = document.getElementById('saved-address-section');
+    
+    if (addresses.length > 0 && addressSelector) {
+        // Show the saved address section
+        savedAddressSection.style.display = 'block';
+        
+        // Clear existing options except first two (default and "new")
+        while (addressSelector.options.length > 2) {
+            addressSelector.remove(2);
+        }
+        
+        // Add saved addresses to selector
+        addresses.forEach((addr, index) => {
+            const option = document.createElement('option');
+            option.value = addr.id;
+            option.textContent = `${addr.name} - ${addr.street}, ${addr.city}`;
+            addressSelector.appendChild(option);
+        });
+    }
+}
+
+function initializeAddressSelector() {
+    const addressSelector = document.getElementById('address-selector');
+    
+    if (addressSelector) {
+        addressSelector.addEventListener('change', function() {
+            const selectedValue = this.value;
+            
+            if (selectedValue === 'new' || selectedValue === '') {
+                // Clear form for new address
+                clearAddressForm();
+                return;
+            }
+            
+            // Load selected address
+            const addresses = getSavedAddresses();
+            const selectedAddress = addresses.find(addr => addr.id == selectedValue);
+            
+            if (selectedAddress) {
+                fillAddressForm(selectedAddress);
+            }
+        });
+    }
+}
+
+function clearAddressForm() {
+    document.getElementById('name').value = '';
+    document.getElementById('phone').value = '';
+    document.getElementById('email').value = '';
+    document.getElementById('street').value = '';
+    document.getElementById('barangay').value = '';
+    document.getElementById('city').value = '';
+    document.getElementById('province').value = '';
+    document.getElementById('zipCode').value = '';
+    document.getElementById('landmark').value = '';
+}
+
+function fillAddressForm(address) {
+    document.getElementById('name').value = address.name || '';
+    document.getElementById('phone').value = address.phone || '';
+    document.getElementById('email').value = address.email || '';
+    document.getElementById('street').value = address.street || '';
+    document.getElementById('barangay').value = address.barangay || '';
+    document.getElementById('city').value = address.city || '';
+    document.getElementById('province').value = address.province || '';
+    document.getElementById('zipCode').value = address.zipCode || '';
+    document.getElementById('landmark').value = address.landmark || '';
+}
+

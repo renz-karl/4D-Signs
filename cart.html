@@ -44,6 +44,46 @@
             font-size: 0.7rem;
         }
         
+        .item-checkbox {
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+            accent-color: #FFD700;
+            margin-right: 1rem;
+        }
+        
+        .select-all-container {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 1rem 1.5rem;
+            background: rgba(40, 38, 58, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+        
+        .select-all-container label {
+            cursor: pointer;
+            font-weight: 500;
+            color: #FFD700;
+            user-select: none;
+        }
+        
+        .select-all-checkbox {
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+            accent-color: #FFD700;
+        }
+        
+        .selection-info {
+            margin-left: auto;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+        }
+        
         body {
             font-family: 'Poppins', sans-serif;
             margin: 0;
@@ -186,7 +226,7 @@
 
         .cart-item {
             display: grid;
-            grid-template-columns: auto 1fr auto;
+            grid-template-columns: auto auto 1fr auto;
             gap: 1.5rem;
             align-items: center;
             padding: 1.5rem;
@@ -196,6 +236,11 @@
             margin-bottom: 1rem;
             border: 1px solid rgba(255, 215, 0, 0.2);
             transition: all 0.3s ease;
+        }
+        
+        .cart-item.selected {
+            border-color: rgba(255, 215, 0, 0.6);
+            background: rgba(40, 38, 58, 0.95);
         }
 
         .cart-item:hover {
@@ -397,12 +442,28 @@
             </a>
         </div>
 
+        <div id="select-all-container" class="select-all-container" style="display: none;">
+            <input type="checkbox" id="select-all-checkbox" class="select-all-checkbox">
+            <label for="select-all-checkbox">Select All</label>
+            <span id="selection-info" class="selection-info">0 items selected</span>
+        </div>
+
         <ul id="page-cart-items" class="cart-items-list"></ul>
 
         <div id="page-cart-summary" class="cart-summary" style="display:none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                 <span>Items in Cart:</span>
                 <span id="page-cart-count" style="color: #ffd700; font-size: 1.2rem; font-weight: 600;">0</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255, 215, 0, 0.2);">
+                <span>Cart Total:</span>
+                <span id="cart-total-price" style="color: #ffd700; font-size: 1.3rem; font-weight: 700;">₱0.00</span>
+            </div>
+            <div id="selected-total-section" style="display: none; padding-top: 1rem; border-top: 2px solid rgba(255, 215, 0, 0.4);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+                    <span style="font-size: 1.1rem; font-weight: 600;">Selected Total:</span>
+                    <span id="selected-total-price" style="color: #FFD700; font-size: 1.5rem; font-weight: 700;">₱0.00</span>
+                </div>
             </div>
         </div>
 
@@ -411,13 +472,13 @@
                 <i class="fas fa-arrow-left"></i>
                 Continue Shopping
             </a>
-            <button id="page-clear-cart" class="cart-action">
+            <button id="page-remove-selected" class="cart-action" style="display: none;">
                 <i class="fas fa-trash-alt"></i>
-                Clear Cart
+                Remove Selected
             </button>
             <button id="page-checkout" class="cart-action primary">
                 <i class="fas fa-check"></i>
-                Proceed to Checkout
+                Checkout Selected
             </button>
         </div>
     </main>
@@ -546,14 +607,20 @@
       console.log('Rendering cart with items:', its);
       const count = its.reduce((s,i)=> s + (parseInt(i.qty,10) || 0), 0);
       if (countEl) countEl.textContent = count;
+      
+      const selectAllContainer = document.getElementById('select-all-container');
+      
       if (!its.length) {
         if (empty) empty.style.display = 'block';
         if (summary) summary.style.display = 'none';
         if (list) list.innerHTML = '';
+        if (selectAllContainer) selectAllContainer.style.display = 'none';
         return;
       }
       if (empty) empty.style.display = 'none';
       if (summary) summary.style.display = 'block';
+      if (selectAllContainer) selectAllContainer.style.display = 'flex';
+      
       if (list) {
         list.innerHTML = its.map(it => {
           console.log('Rendering item:', it);
@@ -562,13 +629,19 @@
           // Check for designData (new structure) or legacy design/customImage
           const img = it.designData?.images?.[0]?.src || it.design?.image || it.customImage || it.image || resolveImage(it.id || it.name);
           console.log('Image for item:', img);
+          const itemPrice = parseFloat(it.price) || 25.00;
+          const itemTotal = itemPrice * (parseInt(it.qty) || 1);
           return `
-          <li class="cart-item" data-id="${it.id}">
+          <li class="cart-item" data-id="${it.id}" data-price="${itemPrice}" data-qty="${it.qty}">
+            <input type="checkbox" class="item-checkbox" data-item-id="${it.id}">
             <img class="item-thumb" src="${img}" alt="${it.name}">
             <div class="item-details">
                 <div class="item-name">${it.name || 'Custom Design'}</div>
                 <div class="item-category">${it.productType || 'Custom'}</div>
                 ${it.isCustom ? '<span class="custom-badge"><i class="fas fa-magic"></i> Customized</span>' : ''}
+                <div style="margin-top: 0.5rem; color: #FFD700; font-weight: 600;">
+                    ₱${itemPrice.toFixed(2)} × ${it.qty} = ₱${itemTotal.toFixed(2)}
+                </div>
             </div>
             <div class="item-controls">
                 <button class="qty-btn minus" aria-label="Decrease quantity">
@@ -588,6 +661,9 @@
             </div>
           </li>`;
         }).join('');
+        
+        // Update selection count
+        updateSelectionInfo();
       }
     }
 
@@ -597,6 +673,19 @@
         const itemEl = target.closest('.cart-item');
         if (!itemEl) return;
         const id = itemEl.getAttribute('data-id');
+        
+        // Handle checkbox clicks
+        if (target.classList.contains('item-checkbox')) {
+          updateSelectionInfo();
+          // Toggle selected class
+          if (target.checked) {
+            itemEl.classList.add('selected');
+          } else {
+            itemEl.classList.remove('selected');
+          }
+          return;
+        }
+        
         if (target.classList.contains('delete-btn')) {
           if (typeof removeCartItem === 'function') removeCartItem(id);
           render();
@@ -621,6 +710,116 @@
         render();
       });
     }
+    
+    // Selection functionality
+    function updateSelectionInfo() {
+      const checkboxes = document.querySelectorAll('.item-checkbox');
+      const checkedCheckboxes = document.querySelectorAll('.item-checkbox:checked');
+      const checkedCount = checkedCheckboxes.length;
+      const selectionInfo = document.getElementById('selection-info');
+      const removeSelectedBtn = document.getElementById('page-remove-selected');
+      const selectAllCheckbox = document.getElementById('select-all-checkbox');
+      const selectedTotalSection = document.getElementById('selected-total-section');
+      const selectedTotalPrice = document.getElementById('selected-total-price');
+      
+      if (selectionInfo) {
+        selectionInfo.textContent = `${checkedCount} item${checkedCount !== 1 ? 's' : ''} selected`;
+      }
+      
+      // Calculate selected total
+      let selectedTotal = 0;
+      checkedCheckboxes.forEach(checkbox => {
+        const itemEl = checkbox.closest('.cart-item');
+        const price = parseFloat(itemEl.getAttribute('data-price')) || 0;
+        const qty = parseInt(itemEl.getAttribute('data-qty')) || 1;
+        selectedTotal += price * qty;
+      });
+      
+      // Show/hide selected total section
+      if (selectedTotalSection) {
+        if (checkedCount > 0) {
+          selectedTotalSection.style.display = 'block';
+          if (selectedTotalPrice) {
+            selectedTotalPrice.textContent = `₱${selectedTotal.toFixed(2)}`;
+          }
+        } else {
+          selectedTotalSection.style.display = 'none';
+        }
+      }
+      
+      // Show/hide remove selected button
+      if (removeSelectedBtn) {
+        removeSelectedBtn.style.display = checkedCount > 0 ? 'block' : 'none';
+      }
+      
+      // Update select all checkbox state
+      if (selectAllCheckbox) {
+        selectAllCheckbox.checked = checkboxes.length > 0 && checkedCount === checkboxes.length;
+        selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < checkboxes.length;
+      }
+      
+      // Calculate and display cart total
+      updateCartTotal();
+    }
+    
+    // Calculate cart total
+    function updateCartTotal() {
+      const cartItems = document.querySelectorAll('.cart-item');
+      let cartTotal = 0;
+      
+      cartItems.forEach(itemEl => {
+        const price = parseFloat(itemEl.getAttribute('data-price')) || 0;
+        const qty = parseInt(itemEl.getAttribute('data-qty')) || 1;
+        cartTotal += price * qty;
+      });
+      
+      const cartTotalPrice = document.getElementById('cart-total-price');
+      if (cartTotalPrice) {
+        cartTotalPrice.textContent = `₱${cartTotal.toFixed(2)}`;
+      }
+    }
+    
+    // Select All functionality
+    const selectAllCheckbox = document.getElementById('select-all-checkbox');
+    if (selectAllCheckbox) {
+      selectAllCheckbox.addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.item-checkbox');
+        checkboxes.forEach(checkbox => {
+          checkbox.checked = this.checked;
+          const itemEl = checkbox.closest('.cart-item');
+          if (this.checked) {
+            itemEl.classList.add('selected');
+          } else {
+            itemEl.classList.remove('selected');
+          }
+        });
+        updateSelectionInfo();
+      });
+    }
+    
+    // Remove Selected functionality
+    const removeSelectedBtn = document.getElementById('page-remove-selected');
+    if (removeSelectedBtn) {
+      removeSelectedBtn.addEventListener('click', function() {
+        const checkedCheckboxes = document.querySelectorAll('.item-checkbox:checked');
+        const selectedIds = Array.from(checkedCheckboxes).map(cb => cb.getAttribute('data-item-id'));
+        
+        if (selectedIds.length === 0) {
+          alert('Please select items to remove');
+          return;
+        }
+        
+        if (confirm(`Are you sure you want to remove ${selectedIds.length} item(s) from your cart?`)) {
+          const cartItems = items();
+          const updatedItems = cartItems.filter(item => !selectedIds.includes(String(item.id)));
+          
+          if (typeof setCartItems === 'function') {
+            setCartItems(updatedItems);
+          }
+          render();
+        }
+      });
+    }
 
     if (editAllBtn) editAllBtn.addEventListener('click', function(){
       editingAll = !editingAll;
@@ -634,6 +833,20 @@
     });
 
     if (checkoutBtn) checkoutBtn.addEventListener('click', function(){
+      const checkedCheckboxes = document.querySelectorAll('.item-checkbox:checked');
+      
+      if (checkedCheckboxes.length === 0) {
+        alert('Please select at least one item to checkout');
+        return;
+      }
+      
+      const selectedIds = Array.from(checkedCheckboxes).map(cb => cb.getAttribute('data-item-id'));
+      const cartItems = items();
+      const selectedItems = cartItems.filter(item => selectedIds.includes(String(item.id)));
+      
+      // Store selected items for checkout
+      localStorage.setItem('checkoutItems', JSON.stringify(selectedItems));
+      
       window.location.href = 'checkout.html';
     });
 

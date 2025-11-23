@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="customize.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
-    <script src="customize-script.js"></script>
 </head>
 <body>
     <header class="main-header">
@@ -28,6 +27,9 @@
         <div class="page-header">
             <h1><i class="fas fa-paint-brush"></i> Customize Your Product</h1>
             <p class="subtitle">Create your unique design with our easy-to-use customization tool</p>
+            <p class="subtitle" style="font-size: 0.75rem; margin-top: 0.5rem; opacity: 0.7;">
+                <i class="fas fa-keyboard"></i> Shortcuts: Ctrl+Z (Undo), Ctrl+Y (Redo), Ctrl+D (Duplicate), Del (Delete), Arrows (Move)
+            </p>
         </div>
 
         <div class="custom-layout">
@@ -96,8 +98,8 @@
                             <div class="style-row">
                                 <label>Color</label>
                                 <div class="color-input-wrapper">
-                                    <input type="color" id="text-color" value="#FFD700" class="custom-color">
-                                    <span class="color-hex">#FFD700</span>
+                                    <input type="color" id="text-color" value="#FFFFFF" class="custom-color">
+                                    <span class="color-hex">#FFFFFF</span>
                                 </div>
                             </div>
                         </div>
@@ -197,9 +199,34 @@
                                     <i class="fas fa-arrow-down"></i>
                                     <span>Send Backward</span>
                                 </button>
+                                <button type="button" id="duplicate-btn" class="layer-action-btn">
+                                    <i class="fas fa-copy"></i>
+                                    <span>Duplicate (Ctrl+D)</span>
+                                </button>
                                 <button type="button" id="delete-selected" class="layer-action-btn delete">
                                     <i class="fas fa-trash-alt"></i>
                                     <span>Delete Selected</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- History Section -->
+                    <div class="tool-section">
+                        <button class="section-btn" onclick="toggleSection(this)">
+                            <i class="fas fa-history"></i>
+                            <span>History</span>
+                            <i class="fas fa-chevron-down arrow"></i>
+                        </button>
+                        <div class="section-content">
+                            <div class="button-group vertical">
+                                <button type="button" id="undo-btn" class="layer-action-btn">
+                                    <i class="fas fa-undo"></i>
+                                    <span>Undo (Ctrl+Z)</span>
+                                </button>
+                                <button type="button" id="redo-btn" class="layer-action-btn">
+                                    <i class="fas fa-redo"></i>
+                                    <span>Redo (Ctrl+Y)</span>
                                 </button>
                             </div>
                         </div>
@@ -210,6 +237,11 @@
             <!-- Main Custom Area -->
             <div class="custom-area">
                 <div class="custom-container">
+                    <!-- Selection Info Banner -->
+                    <div id="selection-info" style="display: none; background: rgba(255, 215, 0, 0.2); border: 1px solid #FFD700; padding: 0.5rem 1rem; margin-bottom: 1rem; border-radius: 8px; text-align: center; color: #FFD700; font-size: 0.9rem;">
+                        <i class="fas fa-check-circle"></i> No element selected
+                    </div>
+
                     <div class="product-selector-bar">
                         <label for="product-type"><i class="fas fa-box-open"></i> Product Type</label>
                         <select class="custom-select-dropdown" id="product-type">
@@ -235,8 +267,128 @@
                         <button type="button" id="choose-again" class="secondary-action-btn" style="display: none;">
                             <i class="fas fa-redo"></i> Choose Again
                         </button>
+                        <button type="button" id="clear-all-btn" class="secondary-action-btn" style="background: rgba(220, 53, 69, 0.2); border-color: #dc3545;">
+                            <i class="fas fa-trash"></i> Clear All
+                        </button>
                         <button type="button" id="done-design-btn" class="primary-action-btn">
                             <i class="fas fa-check-circle"></i> Done Design
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Size Selection Modal -->
+            <div id="size-modal" class="size-modal">
+                <div class="size-modal-content">
+                    <div class="size-modal-header">
+                        <h2><i class="fas fa-ruler-combined"></i> Select Sizes & Quantities</h2>
+                        <button type="button" class="close-modal" id="close-size-modal">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="size-modal-body">
+                        <!-- Small Size -->
+                        <div class="size-option">
+                            <div class="size-header">
+                                <h3>Small (S)</h3>
+                                <label class="enable-checkbox">
+                                    <input type="checkbox" id="enable-small" class="size-enable">
+                                    <span>Enable</span>
+                                </label>
+                            </div>
+                            <div class="size-controls" id="small-controls">
+                                <div class="control-row">
+                                    <label><i class="fas fa-hashtag"></i> Quantity:</label>
+                                    <div class="quantity-control">
+                                        <button type="button" class="qty-btn minus" data-size="small">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <input type="number" id="qty-small" class="qty-input" value="0" min="0" readonly>
+                                        <button type="button" class="qty-btn plus" data-size="small">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="control-row">
+                                    <label><i class="fas fa-palette"></i> Color:</label>
+                                    <div class="color-picker-wrapper">
+                                        <input type="color" id="color-small" class="size-color-picker" value="#ffffff">
+                                        <span class="color-label" id="color-small-label">#FFFFFF</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Medium Size -->
+                        <div class="size-option">
+                            <div class="size-header">
+                                <h3>Medium (M)</h3>
+                                <label class="enable-checkbox">
+                                    <input type="checkbox" id="enable-medium" class="size-enable">
+                                    <span>Enable</span>
+                                </label>
+                            </div>
+                            <div class="size-controls" id="medium-controls">
+                                <div class="control-row">
+                                    <label><i class="fas fa-hashtag"></i> Quantity:</label>
+                                    <div class="quantity-control">
+                                        <button type="button" class="qty-btn minus" data-size="medium">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <input type="number" id="qty-medium" class="qty-input" value="0" min="0" readonly>
+                                        <button type="button" class="qty-btn plus" data-size="medium">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="control-row">
+                                    <label><i class="fas fa-palette"></i> Color:</label>
+                                    <div class="color-picker-wrapper">
+                                        <input type="color" id="color-medium" class="size-color-picker" value="#ffffff">
+                                        <span class="color-label" id="color-medium-label">#FFFFFF</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Large Size -->
+                        <div class="size-option">
+                            <div class="size-header">
+                                <h3>Large (L)</h3>
+                                <label class="enable-checkbox">
+                                    <input type="checkbox" id="enable-large" class="size-enable">
+                                    <span>Enable</span>
+                                </label>
+                            </div>
+                            <div class="size-controls" id="large-controls">
+                                <div class="control-row">
+                                    <label><i class="fas fa-hashtag"></i> Quantity:</label>
+                                    <div class="quantity-control">
+                                        <button type="button" class="qty-btn minus" data-size="large">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <input type="number" id="qty-large" class="qty-input" value="0" min="0" readonly>
+                                        <button type="button" class="qty-btn plus" data-size="large">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="control-row">
+                                    <label><i class="fas fa-palette"></i> Color:</label>
+                                    <div class="color-picker-wrapper">
+                                        <input type="color" id="color-large" class="size-color-picker" value="#ffffff">
+                                        <span class="color-label" id="color-large-label">#FFFFFF</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="size-modal-footer">
+                        <button type="button" id="cancel-size-btn" class="cancel-btn">
+                            <i class="fas fa-times-circle"></i> Cancel
+                        </button>
+                        <button type="button" id="confirm-size-btn" class="confirm-btn">
+                            <i class="fas fa-check-circle"></i> Add to Cart
                         </button>
                     </div>
                 </div>
@@ -263,7 +415,7 @@
 
                     <div class="custom-name-section">
                         <label for="custom-text"><i class="fas fa-tag"></i> Product Name</label>
-                        <input type="text" id="custom-text" placeholder="Enter product name" class="custom-input">
+                        <input type="text" id="custom-text" placeholder="Enter product name" class="custom-input" autocomplete="off">
                     </div>
                 </div>
             </aside>
@@ -378,5 +530,7 @@
             });
         });
     </script>
+    <script src="customize-script.js"></script>
 </body>
 </html>
+
