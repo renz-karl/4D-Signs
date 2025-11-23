@@ -75,9 +75,25 @@ function loadDashboardData() {
     // Calculate revenue
     let totalRevenue = 0;
     orders.forEach(order => {
-        totalRevenue += order.total || 0;
+        // Parse total as number if it's a string
+        let orderTotal = 0;
+        if (typeof order.total === 'number') {
+            orderTotal = order.total;
+        } else if (typeof order.total === 'string') {
+            orderTotal = parseFloat(order.total.replace('₱', '').replace(/,/g, '')) || 0;
+        } else {
+            // Fallback: calculate from items if total is missing
+            orderTotal = (order.subtotal || 0) + (order.shipping || 0);
+        }
+        totalRevenue += orderTotal;
     });
-    document.getElementById('total-revenue').textContent = '₱' + totalRevenue.toLocaleString('en-PH', { minimumFractionDigits: 2 });
+    document.getElementById('total-revenue').textContent = '₱' + totalRevenue.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    
+    console.log('Dashboard Stats:', {
+        totalOrders: orders.length,
+        totalRevenue: totalRevenue,
+        orders: orders.map(o => ({ id: o.orderId, total: o.total }))
+    });
     
     // Load recent activity
     loadRecentActivity(orders);
@@ -99,7 +115,17 @@ function getUniqueCustomers(orders) {
             }
             const customer = customers.get(order.customer.email);
             customer.totalOrders++;
-            customer.totalSpent += order.total || 0;
+            
+            // Parse total properly
+            let orderTotal = 0;
+            if (typeof order.total === 'number') {
+                orderTotal = order.total;
+            } else if (typeof order.total === 'string') {
+                orderTotal = parseFloat(order.total.replace('₱', '').replace(/,/g, '')) || 0;
+            } else {
+                orderTotal = (order.subtotal || 0) + (order.shipping || 0);
+            }
+            customer.totalSpent += orderTotal;
         }
     });
     return Array.from(customers.values());
@@ -117,18 +143,29 @@ function loadRecentActivity(orders) {
     // Get last 5 orders
     const recentOrders = orders.slice(-5).reverse();
     
-    activityList.innerHTML = recentOrders.map(order => `
+    activityList.innerHTML = recentOrders.map(order => {
+        // Parse total properly
+        let orderTotal = 0;
+        if (typeof order.total === 'number') {
+            orderTotal = order.total;
+        } else if (typeof order.total === 'string') {
+            orderTotal = parseFloat(order.total.replace('₱', '').replace(/,/g, '')) || 0;
+        } else {
+            orderTotal = (order.subtotal || 0) + (order.shipping || 0);
+        }
+        
+        return `
         <div style="padding: 12px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
             <div>
                 <strong style="color: #1e293b;">${order.orderId}</strong>
                 <p style="font-size: 0.9rem; color: #64748b; margin: 4px 0 0 0;">${order.customer.name} - ${order.orderDateFormatted}</p>
             </div>
             <div style="text-align: right;">
-                <strong style="color: #059669;">₱${order.total.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</strong>
+                <strong style="color: #059669; font-size: 1.05rem;">₱${orderTotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
                 <p style="font-size: 0.85rem; color: #f59e0b; margin: 4px 0 0 0;">${order.status}</p>
             </div>
-        </div>
-    `).join('');
+        </div>`;
+    }).join('');
 }
 
 // Get products from the main page
@@ -236,9 +273,9 @@ function loadOrders() {
         <tr>
             <td><strong>${order.orderId}</strong></td>
             <td>${order.customer.name}<br><small style="color: #64748b;">${order.customer.email}</small></td>
-            <td>${order.items.map(item => `${item.name} (x${item.quantity || 1})`).join(', ')}</td>
-            <td>${order.items.reduce((sum, item) => sum + (item.quantity || 1), 0)} items</td>
-            <td><strong>₱${order.total.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</strong></td>
+            <td>${order.items.map(item => `${item.name} (x${item.quantity || item.qty || 1})`).join(', ')}</td>
+            <td>${order.items.reduce((sum, item) => sum + (item.quantity || item.qty || 1), 0)} items</td>
+            <td><strong style="color: #059669; font-size: 1.1rem;">₱${(order.total || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></td>
             <td>
                 <select onchange="updateOrderStatus('${order.orderId}', this.value)" style="padding: 6px 10px; border: 2px solid #e2e8f0; border-radius: 6px; background: ${getStatusColor(order.status)}; font-weight: 600;">
                     <option value="Pending" ${order.status === 'Pending' ? 'selected' : ''}>Pending</option>
@@ -293,11 +330,22 @@ function viewOrderDetails(orderId) {
     
     if (!order) return;
     
-    const itemsList = order.items.map(item => 
-        `- ${item.name} (${item.color || item.design || 'N/A'}, ${item.size || 'N/A'}) x${item.quantity || 1} = ₱${((parseFloat(item.price.replace('₱', '').replace(',', '')) || 0) * (item.quantity || 1)).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`
-    ).join('\n');
+    const itemsList = order.items.map(item => {
+        const qty = item.quantity || item.qty || 1;
+        let price = 0;
+        
+        // Handle different price formats
+        if (typeof item.price === 'number') {
+            price = item.price;
+        } else if (typeof item.price === 'string') {
+            price = parseFloat(item.price.replace('₱', '').replace(/,/g, '')) || 0;
+        }
+        
+        const lineTotal = price * qty;
+        return `- ${item.name} (${item.color || item.design || 'Standard'}, ${item.size || 'Regular'}) x${qty} @ ₱${price.toLocaleString('en-PH', { minimumFractionDigits: 2 })} = ₱${lineTotal.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
+    }).join('\n');
     
-    alert(`ORDER DETAILS\n\nOrder ID: ${order.orderId}\nDate: ${order.orderDateFormatted}\nStatus: ${order.status}\n\nCUSTOMER:\nName: ${order.customer.name}\nEmail: ${order.customer.email}\nPhone: ${order.customer.phone}\nAddress: ${order.customer.fullAddress}\n\nDELIVERY METHOD:\n${order.customer.deliveryMethod === 'delivery' ? 'Delivery' : 'Pick-up'}\n\nPAYMENT METHOD:\n${order.customer.paymentMethod}\n\nITEMS:\n${itemsList}\n\nSubtotal: ₱${order.subtotal.toLocaleString('en-PH', { minimumFractionDigits: 2 })}\nShipping: ₱${order.shipping.toLocaleString('en-PH', { minimumFractionDigits: 2 })}\nTOTAL: ₱${order.total.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`);
+    alert(`ORDER DETAILS\n\nOrder ID: ${order.orderId}\nDate: ${order.orderDateFormatted}\nStatus: ${order.status}\n\nCUSTOMER:\nName: ${order.customer.name}\nEmail: ${order.customer.email}\nPhone: ${order.customer.phone}\nAddress: ${order.customer.fullAddress}\n\nDELIVERY METHOD:\n${order.customer.deliveryMethod === 'delivery' ? 'Delivery' : 'Pick-up'}\n\nPAYMENT METHOD:\n${order.customer.paymentMethod.toUpperCase()}\n\nITEMS:\n${itemsList}\n\nSubtotal: ₱${(order.subtotal || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}\nShipping: ₱${(order.shipping || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}\n━━━━━━━━━━━━━━━━━━━━\nTOTAL: ₱${(order.total || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`);
 }
 
 // Delete order

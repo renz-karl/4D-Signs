@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Revenue Calculation Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; }
+        .stat-box {
+            display: inline-block;
+            padding: 20px;
+            margin: 10px;
+            background: #667eea;
+            color: white;
+            border-radius: 8px;
+            min-width: 200px;
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        button {
+            padding: 12px 24px;
+            margin: 5px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-success { background: #10b981; color: white; }
+        .btn-danger { background: #ef4444; color: white; }
+        .order-list {
+            margin-top: 20px;
+        }
+        .order-item {
+            background: #f9fafb;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #667eea;
+            border-radius: 4px;
+        }
+        .price {
+            color: #10b981;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        pre {
+            background: #1f2937;
+            color: #10b981;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💰 Revenue Calculation Test</h1>
+        
+        <div>
+            <button class="btn-success" onclick="addTestOrders()">Add Test Orders</button>
+            <button class="btn-primary" onclick="calculateRevenue()">Calculate Revenue</button>
+            <button class="btn-danger" onclick="clearOrders()">Clear All Orders</button>
+            <button class="btn-primary" onclick="openAdmin()">Open Admin Dashboard</button>
+        </div>
+        
+        <div style="margin-top: 30px;">
+            <div class="stat-box">
+                <div class="stat-label">Total Orders</div>
+                <div class="stat-value" id="totalOrders">0</div>
+            </div>
+            <div class="stat-box" style="background: #10b981;">
+                <div class="stat-label">Total Revenue</div>
+                <div class="stat-value" id="totalRevenue">₱0.00</div>
+            </div>
+        </div>
+        
+        <div class="order-list" id="orderList"></div>
+        
+        <div id="debug" style="margin-top: 20px;"></div>
+    </div>
+
+    <script>
+        function addTestOrders() {
+            const testOrders = [
+                {
+                    orderId: 'ORD-' + Date.now(),
+                    customer: {
+                        name: 'Juan Dela Cruz',
+                        email: 'juan@test.com',
+                        phone: '09171234567',
+                        deliveryMethod: 'delivery',
+                        paymentMethod: 'cod',
+                        fullAddress: '123 Test St, Manila'
+                    },
+                    items: [
+                        { name: 'Giveaways', qty: 2, quantity: 2, price: 100 },
+                        { name: 'Custom Mugs', qty: 3, quantity: 3, price: 250 }
+                    ],
+                    subtotal: 950,
+                    shipping: 100,
+                    total: 1050,
+                    status: 'Pending',
+                    orderDate: new Date().toISOString(),
+                    orderDateFormatted: new Date().toLocaleString('en-PH')
+                },
+                {
+                    orderId: 'ORD-' + (Date.now() + 1000),
+                    customer: {
+                        name: 'Maria Santos',
+                        email: 'maria@test.com',
+                        phone: '09187654321',
+                        deliveryMethod: 'pickup',
+                        paymentMethod: 'cash',
+                        fullAddress: 'Pick-up at store'
+                    },
+                    items: [
+                        { name: 'Stickers', qty: 5, quantity: 5, price: 50 },
+                        { name: 'Keychains', qty: 10, quantity: 10, price: 80 }
+                    ],
+                    subtotal: 1050,
+                    shipping: 0,
+                    total: 1050,
+                    status: 'Processing',
+                    orderDate: new Date().toISOString(),
+                    orderDateFormatted: new Date().toLocaleString('en-PH')
+                },
+                {
+                    orderId: 'ORD-' + (Date.now() + 2000),
+                    customer: {
+                        name: 'Pedro Reyes',
+                        email: 'pedro@test.com',
+                        phone: '09191112222',
+                        deliveryMethod: 'delivery',
+                        paymentMethod: 'gcash',
+                        fullAddress: '456 Sample Ave, Quezon City',
+                        gcashNumber: '09191112222'
+                    },
+                    items: [
+                        { name: 'Banners', qty: 1, quantity: 1, price: 500 },
+                        { name: 'Party Hats', qty: 20, quantity: 20, price: 150 }
+                    ],
+                    subtotal: 3500,
+                    shipping: 150,
+                    total: 3650,
+                    status: 'Delivered',
+                    orderDate: new Date().toISOString(),
+                    orderDateFormatted: new Date().toLocaleString('en-PH')
+                }
+            ];
+            
+            const existingOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+            const allOrders = [...existingOrders, ...testOrders];
+            localStorage.setItem('orders', JSON.stringify(allOrders));
+            
+            alert('✅ Added 3 test orders!\n\nOrder 1: ₱1,050.00\nOrder 2: ₱1,050.00\nOrder 3: ₱3,650.00\n\nTotal: ₱5,750.00');
+            calculateRevenue();
+        }
+        
+        function calculateRevenue() {
+            const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+            
+            let totalRevenue = 0;
+            const orderDetails = [];
+            
+            orders.forEach(order => {
+                let orderTotal = 0;
+                
+                // Parse total (same logic as admin dashboard)
+                if (typeof order.total === 'number') {
+                    orderTotal = order.total;
+                } else if (typeof order.total === 'string') {
+                    orderTotal = parseFloat(order.total.replace('₱', '').replace(/,/g, '')) || 0;
+                } else {
+                    orderTotal = (order.subtotal || 0) + (order.shipping || 0);
+                }
+                
+                totalRevenue += orderTotal;
+                orderDetails.push({
+                    id: order.orderId,
+                    customer: order.customer.name,
+                    total: orderTotal,
+                    status: order.status
+                });
+            });
+            
+            // Update display
+            document.getElementById('totalOrders').textContent = orders.length;
+            document.getElementById('totalRevenue').textContent = '₱' + totalRevenue.toLocaleString('en-PH', { 
+                minimumFractionDigits: 2, 
+                maximumFractionDigits: 2 
+            });
+            
+            // Show order list
+            const orderList = document.getElementById('orderList');
+            orderList.innerHTML = '<h2>Order Details:</h2>' + orderDetails.map(order => `
+                <div class="order-item">
+                    <strong>${order.id}</strong> - ${order.customer}
+                    <br>
+                    Status: <span style="color: #f59e0b;">${order.status}</span>
+                    <br>
+                    Total: <span class="price">₱${order.total.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                </div>
+            `).join('');
+            
+            // Show debug info
+            document.getElementById('debug').innerHTML = `
+                <h3>Debug Info:</h3>
+                <pre>${JSON.stringify({
+                    totalOrders: orders.length,
+                    totalRevenue: totalRevenue,
+                    calculationMethod: 'Parses order.total (number or string) with fallback to subtotal + shipping',
+                    orders: orderDetails
+                }, null, 2)}</pre>
+            `;
+        }
+        
+        function clearOrders() {
+            if (confirm('Clear all orders?')) {
+                localStorage.removeItem('orders');
+                calculateRevenue();
+                alert('✅ Orders cleared!');
+            }
+        }
+        
+        function openAdmin() {
+            window.open('admin-login.html', '_blank');
+        }
+        
+        // Auto-calculate on load
+        window.addEventListener('DOMContentLoaded', calculateRevenue);
+    </script>
+</body>
+</html>
