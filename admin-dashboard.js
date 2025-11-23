@@ -836,24 +836,71 @@ function sendReply(messageId, reply, images = []) {
         loadDashboardData();
         updateUnreadBadge();
         
-        // Close modal
         closeReplyModal();
     }
 }
 
+// Function to compress image to reduce size
+function compressImage(base64Str, maxWidth = 300, quality = 0.4) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+
+            // Resize if too large
+            if (width > maxWidth) {
+                height = (height * maxWidth) / width;
+                width = maxWidth;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // Compress to JPEG with quality setting
+            const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+            resolve(compressedBase64);
+        };
+        img.src = base64Str;
+    });
+}
+
 // Send email reply to customer
-function sendEmailReply(message, reply, images = []) {
-    // Initialize EmailJS (you'll need to set up your account)
-    emailjs.init("YOUR_PUBLIC_KEY"); // Replace with your EmailJS public key
+async function sendEmailReply(message, reply, images = []) {
+    // Check if EmailJS is configured
+    try {
+        emailjs.init("MBiJ9GgH8vWVNX61M");
+    } catch(e) {
+        console.log('EmailJS not configured, skipping email send');
+        return;
+    }
     
-    // Prepare image HTML for email
+    // Compress and prepare image HTML for email
     let imagesHtml = '';
     if (images && images.length > 0) {
-        imagesHtml = '<div style="margin-top: 20px;"><strong>Attached Images:</strong><br><br>';
-        images.forEach((img, index) => {
-            imagesHtml += `<img src="${img.data}" alt="Attachment ${index + 1}" style="max-width: 300px; margin: 10px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">`;
-        });
-        imagesHtml += '</div>';
+        console.log('Compressing images...');
+        const compressedImages = [];
+        
+        for (let img of images) {
+            try {
+                const compressed = await compressImage(img.data, 300, 0.4);
+                compressedImages.push(compressed);
+            } catch (err) {
+                console.error('Image compression failed:', err);
+            }
+        }
+
+        if (compressedImages.length > 0) {
+            imagesHtml = '<div style="margin-top: 20px;"><strong>Attached Images:</strong><br><br>';
+            compressedImages.forEach((imgData, index) => {
+                imagesHtml += `<img src="${imgData}" alt="Attachment ${index + 1}" style="max-width: 300px; margin: 10px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">`;
+            });
+            imagesHtml += '</div>';
+        }
     }
     
     const templateParams = {
@@ -874,16 +921,18 @@ function sendEmailReply(message, reply, images = []) {
     notification.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending email to customer...';
     document.body.appendChild(notification);
     
-    emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", templateParams)
+    emailjs.send("service_omyj3ii", "template_k5cwcj8", templateParams)
         .then(function(response) {
+            console.log('✅ Email sent successfully!', response);
             notification.className = 'email-notification success';
             notification.innerHTML = `<i class="fas fa-check-circle"></i> ✅ Reply sent successfully to ${message.email}${images.length > 0 ? ' (with ' + images.length + ' image(s))' : ''}`;
             setTimeout(() => notification.remove(), 4000);
         }, function(error) {
+            console.error('❌ Email send failed:', error);
+            console.log('Template params sent:', templateParams);
             notification.className = 'email-notification error';
-            notification.innerHTML = '<i class="fas fa-exclamation-circle"></i> ⚠️ Reply saved but email failed to send. You may need to configure EmailJS.';
-            console.error('Email send failed:', error);
-            setTimeout(() => notification.remove(), 5000);
+            notification.innerHTML = `<i class="fas fa-exclamation-circle"></i> ⚠️ Reply saved but email failed: ${error.text || error.message || 'Unknown error'}`;
+            setTimeout(() => notification.remove(), 6000);
         });
 }
 

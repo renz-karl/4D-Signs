@@ -265,7 +265,22 @@
             <div class="modal-content">
                 <button class="modal-close-btn">&times;</button>
                 <div class="modal-body">
-                    <img src="" alt="Product Image" class="modal-product-img">
+                    <!-- Image Slider -->
+                    <div class="modal-image-slider">
+                        <div class="slider-container">
+                            <div class="slide active">
+                                <img src="" alt="Product Image" class="modal-product-img">
+                            </div>
+                            <!-- Additional slides will be added dynamically -->
+                        </div>
+                        <button class="slider-nav prev" onclick="moveSlide(-1)">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="slider-nav next" onclick="moveSlide(1)">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                        <div class="slider-indicators"></div>
+                    </div>
                     <div class="modal-product-details">
                         <h3 class="modal-product-title"></h3>
                         <div class="modal-product-price"></div>
@@ -500,7 +515,77 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function openModal(product) {
         console.log('Opening modal for product:', product.name); // Added console log
-        modal.querySelector('.modal-product-img').src = product.image;
+        
+        // Get picker sections
+        const colorPickerSection = modal.querySelector('.color-picker-section');
+        const sizePickerSection = modal.querySelector('.size-picker-section');
+        const designPickerSection = modal.querySelector('.design-picker-section');
+        const productsWithoutPickers = ['Giveaways', 'Bulk Packages', 'Pabitin'];
+        
+        // Initialize slider or single image based on product type
+        const imageSlider = modal.querySelector('.modal-image-slider');
+        const sliderContainer = imageSlider.querySelector('.slider-container');
+        const indicatorsContainer = imageSlider.querySelector('.slider-indicators');
+        
+        // Check if product has sizes (show slider for products with sizes)
+        const hasSize = !productsWithoutPickers.includes(product.name) && 
+                        product.name !== 'Custom Mugs' && 
+                        product.name !== 'Party Hats';
+        
+        if (hasSize) {
+            // Determine which size guide image to use based on product
+            let sizeGuideImage = '';
+            
+            if (product.name === 'Banners') {
+                sizeGuideImage = 'SizeGuide/Banners.png';
+            } else if (product.name === 'Calling Cards') {
+                sizeGuideImage = 'SizeGuide/Cards.png';
+            } else if (product.name === 'Invitations') {
+                sizeGuideImage = 'SizeGuide/Invitations.png';
+            } else if (product.name === 'Keychains') {
+                sizeGuideImage = 'SizeGuide/Keychain.png';
+            } else if (product.name === 'Custom Mugs') {
+                sizeGuideImage = 'SizeGuide/Mugs.png';
+            } else if (product.name === 'Custom Signage') {
+                sizeGuideImage = 'SizeGuide/Signage.png';
+            } else if (product.name === 'Stickers & Decals') {
+                sizeGuideImage = 'SizeGuide/Stickers.png';
+            } else if (product.name === 'T-Shirt Printing') {
+                sizeGuideImage = 'SizeGuide/T-shirts.png';
+            } else {
+                // Default fallback
+                sizeGuideImage = 'SizeGuide/Signage.png';
+            }
+            
+            // Setup slider with product image and size guide
+            sliderContainer.innerHTML = `
+                <div class="slide active">
+                    <img src="${product.image}" alt="Product Image" class="modal-product-img">
+                </div>
+                <div class="slide">
+                    <img src="${sizeGuideImage}" alt="Size Guide" class="modal-product-img">
+                </div>
+            `;
+            
+            // Setup indicators
+            indicatorsContainer.innerHTML = `
+                <span class="slider-dot active" onclick="goToSlide(0)"></span>
+                <span class="slider-dot" onclick="goToSlide(1)"></span>
+            `;
+            
+            // Show slider navigation
+            imageSlider.querySelectorAll('.slider-nav').forEach(nav => nav.style.display = 'flex');
+        } else {
+            // Single image only
+            sliderContainer.innerHTML = `
+                <div class="slide active">
+                    <img src="${product.image}" alt="Product Image" class="modal-product-img">
+                </div>
+            `;
+            indicatorsContainer.innerHTML = '';
+            imageSlider.querySelectorAll('.slider-nav').forEach(nav => nav.style.display = 'none');
+        }
+        
         modal.querySelector('.modal-product-title').textContent = product.name;
         modal.querySelector('.modal-product-price').textContent = product.price;
         modal.querySelector('.modal-product-reviews').textContent = product.reviews;
@@ -514,12 +599,6 @@ document.addEventListener('DOMContentLoaded', () => {
         selectedColor = null;
         selectedSize = null;
         selectedDesign = null;
-        
-        // Get picker sections
-        const colorPickerSection = modal.querySelector('.color-picker-section');
-        const sizePickerSection = modal.querySelector('.size-picker-section');
-        const designPickerSection = modal.querySelector('.design-picker-section');
-        const productsWithoutPickers = ['Giveaways', 'Bulk Packages', 'Pabitin'];
         
         // For Custom Mugs and Party Hats: Show design picker instead of color and size pickers
         if (product.name === 'Custom Mugs' || product.name === 'Party Hats') {
@@ -548,10 +627,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         modal.classList.add('show');
+        
+        // Start auto-slide if there are multiple images
+        currentSlideIndex = 0;
+        startAutoSlide();
     }
 
     function closeModal() {
         modal.classList.remove('show');
+        stopAutoSlide(); // Stop auto-slide when modal closes
     }
 
     closeBtn.addEventListener('click', closeModal);
@@ -617,6 +701,97 @@ document.addEventListener('DOMContentLoaded', () => {
         
         closeModal();
     });
+});
+</script>
+<script>
+// Image Slider Functions with Auto-play
+let currentSlideIndex = 0;
+let autoSlideInterval = null;
+
+function moveSlide(direction) {
+    const slides = document.querySelectorAll('.modal-image-slider .slide');
+    const dots = document.querySelectorAll('.slider-dot');
+    
+    if (slides.length === 0) return;
+    
+    slides[currentSlideIndex].classList.remove('active');
+    if (dots[currentSlideIndex]) dots[currentSlideIndex].classList.remove('active');
+    
+    currentSlideIndex += direction;
+    
+    if (currentSlideIndex >= slides.length) {
+        currentSlideIndex = 0;
+    } else if (currentSlideIndex < 0) {
+        currentSlideIndex = slides.length - 1;
+    }
+    
+    slides[currentSlideIndex].classList.add('active');
+    if (dots[currentSlideIndex]) dots[currentSlideIndex].classList.add('active');
+    
+    // Reset auto-slide timer when manually navigating
+    resetAutoSlide();
+}
+
+function goToSlide(index) {
+    const slides = document.querySelectorAll('.modal-image-slider .slide');
+    const dots = document.querySelectorAll('.slider-dot');
+    
+    if (slides.length === 0) return;
+    
+    slides[currentSlideIndex].classList.remove('active');
+    if (dots[currentSlideIndex]) dots[currentSlideIndex].classList.remove('active');
+    
+    currentSlideIndex = index;
+    
+    slides[currentSlideIndex].classList.add('active');
+    if (dots[currentSlideIndex]) dots[currentSlideIndex].classList.add('active');
+    
+    // Reset auto-slide timer when manually navigating
+    resetAutoSlide();
+}
+
+function startAutoSlide() {
+    const slides = document.querySelectorAll('.modal-image-slider .slide');
+    if (slides.length <= 1) return; // Don't auto-slide if only 1 image
+    
+    // Clear any existing interval
+    if (autoSlideInterval) {
+        clearInterval(autoSlideInterval);
+    }
+    
+    // Start auto-sliding every 3 seconds
+    autoSlideInterval = setInterval(() => {
+        moveSlide(1);
+    }, 3000);
+}
+
+function stopAutoSlide() {
+    if (autoSlideInterval) {
+        clearInterval(autoSlideInterval);
+        autoSlideInterval = null;
+    }
+}
+
+function resetAutoSlide() {
+    stopAutoSlide();
+    startAutoSlide();
+}
+
+// Pause auto-slide when hovering over slider
+document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('add-to-cart-modal');
+    
+    modal.addEventListener('mouseenter', (e) => {
+        if (e.target.closest('.modal-image-slider')) {
+            stopAutoSlide();
+        }
+    }, true);
+    
+    modal.addEventListener('mouseleave', (e) => {
+        if (e.target.closest('.modal-image-slider')) {
+            startAutoSlide();
+        }
+    }, true);
 });
 </script>
 </body>

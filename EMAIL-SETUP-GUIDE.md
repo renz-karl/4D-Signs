@@ -9,7 +9,7 @@ Your admin dashboard now has **automatic email notification** functionality! Whe
 
 ### Step 1: Create EmailJS Account (FREE)
 
-1. **Visit EmailJS**: Go to [https://www.emailjs.com](https://www.emailjs.com)
+1. **Visit EmailJS**: Go to [https://www.emailjs.com](https://www.emailjs.com) 
 2. **Sign Up**: Click "Sign Up" (100 emails/month FREE)
 3. **Verify Email**: Check your inbox and verify your account
 

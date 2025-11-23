@@ -107,6 +107,11 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             shirtDropArea.classList.remove('has-content');
         }
+        
+        // Update Done Design button state
+        if (typeof checkDesignContent === 'function') {
+            checkDesignContent();
+        }
     }
 
     previewImage.addEventListener('load', function() {
@@ -367,12 +372,12 @@ document.addEventListener('DOMContentLoaded', function() {
             shirtDropArea.insertBefore(img, designArea);
         } else if (dropdown.value === 'sign') {
             const img = document.createElement('img');
-            img.src = './images/sign-outline.jpg'; 
+            img.src = './LogoProducts/sign-outline.jpg'; 
             img.alt = 'Sign Outline';
             img.className = 'sign-img'; 
-            img.style.width = '290px';
-            img.style.height = 'auto';
-            img.style.display = 'block';
+            img.style.width = '450px';
+            img.style.height = '445px';
+            img.style.display = 'block'; 
             img.style.position = 'absolute';
             img.style.top = '55%';
             img.style.left = '50%';
@@ -1245,6 +1250,30 @@ document.addEventListener('DOMContentLoaded', function() {
     const cancelSizeBtn = document.getElementById('cancel-size-btn');
     const confirmSizeBtn = document.getElementById('confirm-size-btn');
 
+    // Function to check if design has content
+    function checkDesignContent() {
+        const images = shirtDropArea.querySelectorAll('.resizable-image');
+        const texts = shirtDropArea.querySelectorAll('.design-text, .draggable-custom-name');
+        const hasContent = images.length > 0 || texts.length > 0;
+        
+        if (doneDesignBtn) {
+            if (hasContent) {
+                doneDesignBtn.disabled = false;
+                doneDesignBtn.style.opacity = '1';
+                doneDesignBtn.style.cursor = 'pointer';
+                doneDesignBtn.title = 'Complete your design';
+            } else {
+                doneDesignBtn.disabled = true;
+                doneDesignBtn.style.opacity = '0.5';
+                doneDesignBtn.style.cursor = 'not-allowed';
+                doneDesignBtn.title = 'Add at least one image or text to continue';
+            }
+        }
+    }
+
+    // Initial check on page load
+    checkDesignContent();
+
     // Function to capture design data
     function captureDesignData() {
         const designData = {
@@ -1302,6 +1331,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (doneDesignBtn) {
         doneDesignBtn.addEventListener('click', function(e) {
             e.preventDefault();
+            
+            // Check if button is disabled
+            if (this.disabled) {
+                return;
+            }
             
             // Validate that design has content
             const designData = captureDesignData();
