@@ -1,3 +1,8 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
 body {
     font-family: 'Poppins', sans-serif;
@@ -8,26 +13,6 @@ body {
     margin: 0;
     padding: 0;
     overflow: auto;
-}
-
-/* Header Styles */
-.main-header {
-    background-color: rgba(40, 38, 58, 0.95);
-    backdrop-filter: blur(10px);
-    padding: 1rem 0;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
-}
-
-.header-content {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 2rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
 }
 
 /* Main Container */
@@ -69,84 +54,6 @@ body {
     color: rgba(255, 255, 255, 0.8);
     font-size: 0.85rem;
     margin: 0;
-}
-
-
-.logo {
-    color: #FFD700;
-    text-decoration: none;
-    font-size: 1.8rem;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-align: left;
-}
-
-
-.nav-bar {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-}
-
-.nav-link {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.6rem 1rem;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 8px;
-    color: #fff;
-    text-decoration: none;
-    font-weight: 500;
-    font-size: 0.9rem;
-    transition: all 0.3s ease;
-}
-
-.nav-link:hover {
-    background: rgba(255, 215, 0, 0.15);
-    border-color: rgba(255, 215, 0, 0.5);
-    color: #FFD700;
-    transform: translateY(-2px);
-}
-
-.nav-link.active {
-    background: #FFD700;
-    color: #28263A;
-    border-color: #FFD700;
-}
-
-.nav-link:hover i {
-    transform: scale(1.1);
-}
-
-.nav-link.active i {
-    transform: scale(1.05);
-}
-
-/* Cart Badge */
-.cart-badge {
-    position: absolute;
-    top: -8px;
-    right: -8px;
-    background: #ff4757;
-    color: white;
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px solid white;
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
 }
 
 /* 4D signs Navigation Effects */
@@ -1619,6 +1526,8 @@ body {
     padding: 1.5rem;
     margin-bottom: 1rem;
     transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
 }
 
 .size-option:hover {
@@ -1658,14 +1567,15 @@ body {
 }
 
 .size-controls {
-    opacity: 0.3;
-    pointer-events: none;
+    display: none;
     transition: all 0.3s ease;
+    margin-top: 0.5rem;
 }
 
 .size-controls.active {
-    opacity: 1;
-    pointer-events: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 }
 
 .control-row {
@@ -1673,6 +1583,7 @@ body {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1rem;
+    gap: 1rem;
 }
 
 .control-row:last-child {
@@ -1685,6 +1596,8 @@ body {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    min-width: 100px;
+    flex-shrink: 0;
 }
 
 .quantity-control {

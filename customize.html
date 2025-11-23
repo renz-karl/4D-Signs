@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Customize Your Sign - 4D Signs</title>
-    <link rel="stylesheet" href="Homepage.css">
+    <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="customize.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -19,6 +19,7 @@
                 <a href="cart.html" class="nav-link"><i class="fas fa-shopping-cart"></i> Cart</a>
                 <a href="customize.html" class="nav-link active"><i class="fas fa-palette"></i> Customize</a>
                 <a href="review.html" class="nav-link"><i class="fas fa-star"></i> Reviews</a>
+                <a href="contact.html" class="nav-link" title="Contact"><i class="fas fa-envelope"></i></a>
             </nav>
         </div>
     </header>
@@ -52,6 +53,10 @@
                             <button type="button" id="add-text-btn" class="element-btn">
                                 <i class="fas fa-font"></i>
                                 <span>Add Text</span>
+                            </button>
+                            <button type="button" id="add-shirt-icon-btn" class="element-btn">
+                                <i class="fas fa-shirt"></i>
+                                <span>Add T-Shirt Icon</span>
                             </button>
                             <div class="text-input-wrapper">
                                 <input type="text" id="text-input" placeholder="Type your text..." class="custom-input">
@@ -254,13 +259,21 @@
                             <option value="sticker">Sticker</option>
                         </select>
                     </div>
-s
                     <div class="design-canvas">
                         <div class="shirt-drop-area" id="shirtDropArea"> 
                             <div class="design-area">
                                 <img id="sign-image"
                                      src="LogoProducts/sign-outline.jpg"
                                      alt="Sign Preview" class="sign-preview" style="display:none; width:100%; height:auto; max-width:720px; margin:0 auto; pointer-events:none;"/>
+                                <img id="shirt-image"
+                                     src="LogoProducts/shirt-outline.jpg"
+                                     alt="T-Shirt Preview" class="shirt-preview" style="display:none; width:100%; height:auto; max-width:720px; margin:0 auto; pointer-events:none;"/>
+                                <img id="mug-image"
+                                     src="LogoProducts/mug-outline.jpg"
+                                     alt="Mug Preview" class="mug-preview" style="display:none; width:100%; height:auto; max-width:720px; margin:0 auto; pointer-events:none;"/>
+                                <img id="ecobag-image"
+                                     src="LogoProducts/ecobag-outline.jpg"
+                                     alt="Eco Bag Preview" class="ecobag-preview" style="display:none; width:100%; height:auto; max-width:720px; margin:0 auto; pointer-events:none;"/>
                                 <p class="hint-text"><i class="fas fa-info-circle"></i> Drag and drop your design here</p>
                             </div>
                         </div>
@@ -521,14 +534,41 @@ s
             // Show sign preview image when product type is "sign"
             const productSelect = document.getElementById('product-type');
             const signImage = document.getElementById('sign-image');
+            const shirtImage = document.getElementById('shirt-image');
+            const mugImage = document.getElementById('mug-image');
+            const ecobagImage = document.getElementById('ecobag-image');
             const hintText = document.querySelector('.design-area .hint-text');
             function updateProductPreview() {
-                if (!productSelect || !signImage) return;
+                if (!productSelect) return;
                 if (productSelect.value === 'sign') {
-                    signImage.style.display = 'block';
+                    if (signImage) signImage.style.display = 'block';
+                    if (shirtImage) shirtImage.style.display = 'none';
+                    if (mugImage) mugImage.style.display = 'none';
+                    if (ecobagImage) ecobagImage.style.display = 'none';
+                    if (hintText) hintText.style.display = 'none';
+                } else if (productSelect.value === 'shirt') {
+                    if (signImage) signImage.style.display = 'none';
+                    if (shirtImage) shirtImage.style.display = 'block';
+                    if (mugImage) mugImage.style.display = 'none';
+                    if (ecobagImage) ecobagImage.style.display = 'none';
+                    if (hintText) hintText.style.display = 'none';
+                } else if (productSelect.value === 'mug') {
+                    if (signImage) signImage.style.display = 'none';
+                    if (shirtImage) shirtImage.style.display = 'none';
+                    if (mugImage) mugImage.style.display = 'block';
+                    if (ecobagImage) ecobagImage.style.display = 'none';
+                    if (hintText) hintText.style.display = 'none';
+                } else if (productSelect.value === 'ecobag') {
+                    if (signImage) signImage.style.display = 'none';
+                    if (shirtImage) shirtImage.style.display = 'none';
+                    if (mugImage) mugImage.style.display = 'none';
+                    if (ecobagImage) ecobagImage.style.display = 'block';
                     if (hintText) hintText.style.display = 'none';
                 } else {
-                    signImage.style.display = 'none';
+                    if (signImage) signImage.style.display = 'none';
+                    if (shirtImage) shirtImage.style.display = 'none';
+                    if (mugImage) mugImage.style.display = 'none';
+                    if (ecobagImage) ecobagImage.style.display = 'none';
                     if (hintText) hintText.style.display = 'block';
                 }
             }

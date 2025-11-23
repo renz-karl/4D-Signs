@@ -312,10 +312,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (dropdown.value === 'shirt') {
             const img = document.createElement('img');
-            img.src = './images/shirt-outline.jpg'; 
+            img.src = './LogoProducts/shirt-outline.jpg'; 
             img.alt = 'Shirt Outline';
             img.className = 'shirt-img'; 
-            img.style.width = '550px'; 
+            img.style.width = '500px'; 
             img.style.height = 'auto';
             img.style.display = 'block';
             img.style.position = 'absolute';
@@ -332,15 +332,15 @@ document.addEventListener('DOMContentLoaded', function() {
             shirtDropArea.insertBefore(img, designArea);
         } else if (dropdown.value === 'mug') {
             const img = document.createElement('img');
-            img.src = './images/mug-outline.jpg'; 
+            img.src = './LogoProducts/mug-outline.jpg'; 
             img.alt = 'Mug Outline';
             img.className = 'mug-img'; 
-            img.style.width = '450px'; 
+            img.style.width = '550px'; 
             img.style.height = 'auto';
             img.style.display = 'block';
             img.style.position = 'absolute';
             img.style.top = '50%';
-            img.style.left = '67%';
+            img.style.left = '50%';
             img.style.transform = 'translate(-50%, -50%)';
             img.style.zIndex = '0'; 
 
