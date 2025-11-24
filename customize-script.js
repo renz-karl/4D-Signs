@@ -352,11 +352,11 @@ document.addEventListener('DOMContentLoaded', function() {
             shirtDropArea.insertBefore(img, designArea);
         } else if (dropdown.value === 'ecobag') {
             const img = document.createElement('img');
-            img.src = './images/ecobag-outline.jpg'; 
+            img.src = './LogoProducts/ecobag-outline.jpg'; 
             img.alt = 'Eco Bag Outline';
             img.className = 'ecobag-img'; 
             img.style.width = '310px';
-            img.style.height = '390px';
+            img.style.height = '400px';
             img.style.display = 'block';
             img.style.position = 'absolute';
             img.style.top = '50%';
