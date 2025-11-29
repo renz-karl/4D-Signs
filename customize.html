@@ -250,7 +250,7 @@
                     <div class="product-selector-bar">
                         <label for="product-type"><i class="fas fa-box-open"></i> Product Type</label>
                         <select class="custom-select-dropdown" id="product-type">
-                            <option value="sign">Custom Sign</option>
+                         <!--   <option value="sign">Custom Sign</option> -->
                             <option value="shirt">T-Shirt</option>
                             <option value="mug">Mug</option>
                             <option value="ecobag">Eco Bag</option>
@@ -264,16 +264,28 @@
                             <div class="design-area">
                                 <img id="sign-image"
                                      src="LogoProducts/sign-outline.jpg"
-                                     alt="Sign Preview" class="sign-preview" style="display:none; width:100%; height:auto; max-width:720px; margin:0 auto; pointer-events:none;"/>
+                                     alt="Sign Preview" 
+                                     class="sign-preview product-template-image" 
+                                     style="display:none; width:100%; height:auto; max-width:720px; margin:0 auto; pointer-events:none; user-select:none;"
+                                     draggable="false"/>
                                 <img id="shirt-image"
                                      src="LogoProducts/shirt-outline.jpg"
-                                     alt="T-Shirt Preview" class="shirt-preview" style="display:none; width:100%; height:auto; max-width:720px; margin:0 auto; pointer-events:none;"/>
+                                     alt="T-Shirt Preview" 
+                                     class="shirt-preview product-template-image" 
+                                     style="display:none; width:100%; height:auto; max-width:720px; margin:0 auto; pointer-events:none; user-select:none;"
+                                     draggable="false"/>
                                 <img id="mug-image"
                                      src="LogoProducts/mug-outline.jpg"
-                                     alt="Mug Preview" class="mug-preview" style="display:none; width:100%; height:auto; max-width:720px; margin:0 auto; pointer-events:none;"/>
+                                     alt="Mug Preview" 
+                                     class="mug-preview product-template-image" 
+                                     style="display:none; width:100%; height:auto; max-width:720px; margin:0 auto; pointer-events:none; user-select:none;"
+                                     draggable="false"/>
                                 <img id="ecobag-image"
                                      src="LogoProducts/ecobag-outline.jpg"
-                                     alt="Eco Bag Preview" class="ecobag-preview" style="display:none; width:100%; height:auto; max-width:720px; margin:0 auto; pointer-events:none;"/>
+                                     alt="Eco Bag Preview" 
+                                     class="ecobag-preview product-template-image" 
+                                     style="display:none; width:100%; height:auto; max-width:720px; margin:0 auto; pointer-events:none; user-select:none;"
+                                     draggable="false"/>
                                 <p class="hint-text"><i class="fas fa-info-circle"></i> Drag and drop your design here</p>
                             </div>
                         </div>
@@ -589,6 +601,19 @@
                     const arrow = section.querySelector('.arrow');
                     if (arrow) arrow.style.transform = 'rotate(-90deg)';
                 }
+            });
+            
+            // Prevent product template images from being interactive
+            const templateImages = document.querySelectorAll('.product-template-image, #sign-image, #shirt-image, #mug-image, #ecobag-image');
+            templateImages.forEach(img => {
+                img.style.pointerEvents = 'none';
+                img.style.userSelect = 'none';
+                img.draggable = false;
+                
+                // Prevent any click or drag events
+                img.addEventListener('mousedown', (e) => e.stopPropagation(), true);
+                img.addEventListener('click', (e) => e.stopPropagation(), true);
+                img.addEventListener('dragstart', (e) => e.preventDefault(), true);
             });
         });
     </script>

@@ -690,6 +690,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Helper functions to make elements interactive
     function makeImageInteractive(img) {
+        // Don't make product template images interactive
+        if (img.id === 'sign-image' || img.id === 'shirt-image' || 
+            img.id === 'mug-image' || img.id === 'ecobag-image' ||
+            img.classList.contains('sign-preview') || 
+            img.classList.contains('shirt-preview') ||
+            img.classList.contains('mug-preview') || 
+            img.classList.contains('ecobag-preview')) {
+            return; // Skip making these interactive
+        }
+        
         interact(img)
             .draggable({
                 inertia: true,
