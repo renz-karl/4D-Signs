@@ -1,4 +1,4 @@
-hhfunction togglePopup(element, event) {
+function togglePopup(element, event) {
     event.stopPropagation();
     const popup = element.querySelector('.address-popup');
     popup.classList.toggle('show');
@@ -276,7 +276,31 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function resolveUnitPrice(item){
+        // If cart item already carries a numeric price, use it (price captured at add-to-cart time)
         if (item.price != null && !isNaN(Number(item.price))) return Number(item.price);
+
+        // Otherwise, try to find product in storage and derive a unit price (apply promo if active)
+        try {
+            const products = getProductsFromStorage();
+            const prod = products.find(p => String(p.id) === String(item.id) || p.name === item.name);
+            if (prod && prod.price) {
+                // parse first numeric value from price string
+                const match = String(prod.price).replace(/,/g,'').match(/(\d+(?:\.\d+)?)/);
+                if (match) {
+                    let unit = Number(match[1]);
+                    try {
+                        const promo = JSON.parse(localStorage.getItem('promo') || '{"active":false,"percent":30}');
+                        if (promo && promo.active) {
+                            unit = Math.round(unit * (1 - (promo.percent || 0)/100) * 100) / 100;
+                        }
+                    } catch(e) { /* ignore */ }
+                    return unit;
+                }
+            }
+        } catch(e) {
+            console.warn('resolveUnitPrice: failed to derive price from products storage', e);
+        }
+
         console.warn('No unit price found for item', item);
         return 25.00; // Default price
     }
@@ -438,6 +462,44 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize payment methods on page load
     updatePaymentMethods();
 });// Place order function
+
+// --- Product stock helpers ---
+function getProductsFromStorage() {
+    try {
+        return JSON.parse(localStorage.getItem('products') || '[]');
+    } catch (e) {
+        return [];
+    }
+}
+
+function decrementStockForItems(items) {
+    if (!items || !items.length) return;
+    try {
+        const products = getProductsFromStorage();
+        let changed = false;
+        items.forEach(item => {
+            const qty = parseInt(item.quantity || item.qty || item.qty || 1, 10) || 1;
+            // Find by id or name
+            const idx = products.findIndex(p => String(p.id) === String(item.id) || p.name === item.name);
+            if (idx !== -1) {
+                const current = parseInt(products[idx].stock || 0, 10) || 0;
+                const updated = Math.max(0, current - qty);
+                if (updated !== current) {
+                    products[idx].stock = updated;
+                    changed = true;
+                }
+            }
+        });
+        if (changed) {
+            localStorage.setItem('products', JSON.stringify(products));
+            // Notify other parts of the app
+            window.dispatchEvent(new CustomEvent('products:updated', { detail: { products } }));
+        }
+    } catch (e) {
+        console.warn('decrementStockForItems failed', e);
+    }
+}
+
 function placeOrder() {
     try {
         // Validate form fields
@@ -554,7 +616,14 @@ function placeOrder() {
                 minute: '2-digit'
             })
         };
-        
+
+        // Decrement product stock based on ordered items (if products are stored)
+        try {
+            decrementStockForItems(checkoutItems);
+        } catch (e) {
+            console.warn('Could not decrement stock:', e);
+        }
+
         // Save order to localStorage
         const orders = JSON.parse(localStorage.getItem('orders')) || [];
         orders.push(order);

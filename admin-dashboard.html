@@ -341,6 +341,30 @@
                         </button>
                     </form>
                 </div>
+                <!-- Promo Settings -->
+                <div class="card" style="margin-top: 16px;">
+                    <h3>Storewide Promotion</h3>
+                    <form id="promo-form">
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="promo-active"> Enable Promo
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>Discount Percent (%)</label>
+                            <input type="number" id="promo-percent" min="0" max="100" value="30">
+                        </div>
+                        <div style="display:flex; gap:8px; margin-top:8px;">
+                            <button type="button" id="save-promo-btn" class="btn-primary">
+                                <i class="fas fa-save"></i> Save Promo
+                            </button>
+                            <button type="button" id="clear-promo-btn" class="btn-cancel">
+                                <i class="fas fa-trash"></i> Clear Promo
+                            </button>
+                        </div>
+                        <p style="margin-top:8px; font-size:0.9rem; color:#64748b;">When enabled, a storewide discount will be applied to product prices and reflected on the storefront and checkout.</p>
+                    </form>
+                </div>
             </section>
         </main>
     </div>

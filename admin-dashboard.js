@@ -12,6 +12,7 @@ window.addEventListener('DOMContentLoaded', () => {
     // Load dashboard data
     loadDashboardData();
     loadProducts();
+    loadPromoSettings();
     loadOrders();
     loadCustomers();
     loadReviews();
@@ -63,8 +64,8 @@ if (menuToggle) {
 
 // Load Dashboard Data
 function loadDashboardData() {
-    // Get products from page
-    const products = getProductsFromPage();
+    // Get products from storage
+    const products = getProducts();
     document.getElementById('total-products').textContent = products.length;
     
     // Get orders
@@ -183,26 +184,65 @@ function loadRecentActivity(orders) {
 }
 
 // Get products from the main page
-function getProductsFromPage() {
-    return [
-        { name: 'Giveaways', price: '₱100.00 - ₱400.00', stock: 30, reviews: 98, image: 'ProductPics/Giveaways.jpg' },
-        { name: 'Bulk Packages', price: '₱1,000.00 - ₱5,000.00', stock: 15, reviews: 54, image: '' },
-        { name: 'Custom Signage', price: '₱500.00 - ₱3,000.00', stock: 50, reviews: 120, image: '' },
-        { name: 'Banners', price: '₱300.00 - ₱1,500.00', stock: 80, reviews: 89, image: '' },
-        { name: 'Stickers & Decals', price: '₱50.00 - ₱300.00', stock: 150, reviews: 142, image: 'ProductPics/Sticker.jpg' },
-        { name: 'Custom Mugs', price: '₱250.00 - ₱600.00', stock: 60, reviews: 88, image: 'ProductPics/Mugs.jpg' },
-        { name: 'T-Shirt Printing', price: '₱350.00 - ₱800.00', stock: 100, reviews: 156, image: '' },
-        { name: 'Keychains', price: '₱80.00 - ₱250.00', stock: 200, reviews: 201, image: 'ProductPics/keychain.jpg' },
-        { name: 'Invitations', price: '₱200.00 - ₱800.00', stock: 90, reviews: 75, image: '' },
-        { name: 'Calling Cards', price: '₱150.00 - ₱500.00', stock: 120, reviews: 93, image: '' },
-        { name: 'Pabitin', price: '₱800.00 - ₱2,500.00', stock: 35, reviews: 67, image: 'ProductPics/Pabitin.jpg' },
-        { name: 'Party Hats', price: '₱150.00 - ₱500.00', stock: 120, reviews: 134, image: 'ProductPics/PartyHats.jpg' }
+// Products storage: read from localStorage if present, otherwise seed defaults
+function getProducts() {
+    try {
+        const stored = localStorage.getItem('products');
+        if (stored) return JSON.parse(stored);
+    } catch (e) {
+        console.error('Failed to parse products from storage', e);
+    }
+
+    // Seed default products (will be saved to localStorage)
+    const seed = [
+        { id: 'prod-giveaways', name: 'Giveaways', price: '₱100.00 - ₱400.00', stock: 30, reviews: 98, image: 'ProductPics/Giveaways.jpg' },
+        { id: 'prod-bulk', name: 'Bulk Packages', price: '₱1,000.00 - ₱5,000.00', stock: 15, reviews: 54, image: '' },
+        { id: 'prod-signage', name: 'Custom Signage', price: '₱500.00 - ₱3,000.00', stock: 50, reviews: 120, image: '' },
+        { id: 'prod-banners', name: 'Banners', price: '₱300.00 - ₱1,500.00', stock: 80, reviews: 89, image: '' },
+        { id: 'prod-stickers', name: 'Stickers & Decals', price: '₱50.00 - ₱300.00', stock: 150, reviews: 142, image: 'ProductPics/Sticker.jpg' },
+        { id: 'prod-mugs', name: 'Custom Mugs', price: '₱250.00 - ₱600.00', stock: 60, reviews: 88, image: 'ProductPics/Mugs.jpg' },
+        { id: 'prod-tshirt', name: 'T-Shirt Printing', price: '₱350.00 - ₱800.00', stock: 100, reviews: 156, image: '' },
+        { id: 'prod-keychains', name: 'Keychains', price: '₱80.00 - ₱250.00', stock: 200, reviews: 201, image: 'ProductPics/keychain.jpg' },
+        { id: 'prod-invites', name: 'Invitations', price: '₱200.00 - ₱800.00', stock: 90, reviews: 75, image: '' },
+        { id: 'prod-cards', name: 'Calling Cards', price: '₱150.00 - ₱500.00', stock: 120, reviews: 93, image: '' },
+        { id: 'prod-pabitin', name: 'Pabitin', price: '₱800.00 - ₱2,500.00', stock: 35, reviews: 67, image: 'ProductPics/Pabitin.jpg' },
+        { id: 'prod-hats', name: 'Party Hats', price: '₱150.00 - ₱500.00', stock: 120, reviews: 134, image: 'ProductPics/PartyHats.jpg' }
     ];
+
+    try {
+        localStorage.setItem('products', JSON.stringify(seed));
+    } catch (e) {
+        console.error('Failed to seed products to storage', e);
+    }
+    return seed;
+}
+
+// Save products array to localStorage
+function saveProducts(products) {
+    try {
+        localStorage.setItem('products', JSON.stringify(products));
+    } catch (e) {
+        console.error('Failed to save products', e);
+    }
+}
+
+// Adjust stock for a product by name or id
+function adjustStock(productIdentifier, delta) {
+    const products = getProducts();
+    const idx = products.findIndex(p => p.id === productIdentifier || p.name === productIdentifier);
+    if (idx === -1) {
+        alert('Product not found: ' + productIdentifier);
+        return;
+    }
+    products[idx].stock = Math.max(0, (parseInt(products[idx].stock || 0, 10) || 0) + parseInt(delta, 10));
+    saveProducts(products);
+    loadProducts();
+    loadDashboardData();
 }
 
 // Load Products Table
 function loadProducts() {
-    const products = getProductsFromPage();
+    const products = getProducts();
     const tableBody = document.getElementById('products-table');
     
     if (products.length === 0) {
@@ -217,7 +257,16 @@ function loadProducts() {
             </td>
             <td><strong>${product.name}</strong></td>
             <td><strong style="color: #059669; font-size: 1.05rem;">${product.price}</strong></td>
-            <td><span style="color: ${product.stock > 50 ? '#22c55e' : product.stock > 20 ? '#f59e0b' : '#ef4444'};">${product.stock} items</span></td>
+            <td>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <button class="btn" onclick="adjustStock('${product.id}', -1)" title="Decrease stock">-</button>
+                    <span style="color: ${product.stock > 50 ? '#22c55e' : product.stock > 20 ? '#f59e0b' : '#ef4444'}; font-weight:700;">${product.stock} items</span>
+                    <button class="btn" onclick="adjustStock('${product.id}', 1)" title="Increase stock">+</button>
+                </div>
+                <div style="margin-top:6px;">
+                    <input type="number" min="0" value="${product.stock}" style="width:80px;padding:4px;border:1px solid #e2e8f0;border-radius:6px;" onchange="setStock('${product.id}', this.value)">
+                </div>
+            </td>
             <td>⭐ ${product.reviews} reviews</td>
             <td>
                 <button class="btn-edit" onclick="editProduct('${product.name}')" style="padding: 6px 12px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; margin-right: 5px;">
@@ -231,9 +280,53 @@ function loadProducts() {
     `).join('');
 }
 
+// Set stock to specific value
+function setStock(productIdentifier, value) {
+    const v = parseInt(value, 10);
+    if (isNaN(v) || v < 0) {
+        alert('Invalid stock value');
+        loadProducts();
+        return;
+    }
+    const products = getProducts();
+    const idx = products.findIndex(p => p.id === productIdentifier || p.name === productIdentifier);
+    if (idx === -1) {
+        alert('Product not found');
+        return;
+    }
+    products[idx].stock = v;
+    saveProducts(products);
+    loadProducts();
+    loadDashboardData();
+}
+
 // Edit Product
-function editProduct(productName) {
-    alert(`Edit functionality for "${productName}" - Coming soon!`);
+// Edit Product - now supports updating price (and can be extended for other fields)
+function editProduct(productIdentifier) {
+    // productIdentifier may be id or name
+    const products = getProducts();
+    const idx = products.findIndex(p => p.id === productIdentifier || p.name === productIdentifier);
+    if (idx === -1) {
+        alert('Product not found: ' + productIdentifier);
+        return;
+    }
+
+    const product = products[idx];
+    // Prompt admin for new price (accepts string like '₱100.00 - ₱400.00')
+    const currentPrice = product.price || '';
+    const newPrice = prompt('Enter new price for "' + product.name + '" (e.g. "₱100.00 - ₱400.00"):', currentPrice);
+    if (newPrice === null) return; // cancelled
+    const trimmed = String(newPrice).trim();
+    if (!trimmed) {
+        alert('Price cannot be empty');
+        return;
+    }
+
+    products[idx].price = trimmed;
+    saveProducts(products);
+    loadProducts();
+    loadDashboardData();
+    alert('Price updated for ' + product.name + ' → ' + trimmed);
 }
 
 // Delete Product
@@ -269,6 +362,65 @@ document.getElementById('settings-form').addEventListener('submit', (e) => {
     alert('Password change functionality requires backend implementation.\n\nTo change password:\n1. Open admin-login.js\n2. Find ADMIN_ACCOUNT object\n3. Change the password value\n4. Save the file');
     document.getElementById('settings-form').reset();
 });
+
+// --- Promo settings helpers ---
+function getPromo() {
+    try {
+        const p = localStorage.getItem('promo');
+        if (!p) return { active: false, percent: 30 };
+        return JSON.parse(p);
+    } catch (e) {
+        console.error('Failed to read promo from storage', e);
+        return { active: false, percent: 30 };
+    }
+}
+
+function savePromo(promo) {
+    try {
+        localStorage.setItem('promo', JSON.stringify(promo));
+        // Notify other parts of the app
+        window.dispatchEvent(new CustomEvent('promo:updated', { detail: promo }));
+        // Also notify product renderers to refresh prices
+        window.dispatchEvent(new CustomEvent('products:updated', { detail: { products: getProducts() } }));
+    } catch (e) {
+        console.error('Failed to save promo', e);
+    }
+}
+
+function loadPromoSettings() {
+    const promo = getPromo();
+    const activeEl = document.getElementById('promo-active');
+    const percentEl = document.getElementById('promo-percent');
+    if (activeEl) activeEl.checked = !!promo.active;
+    if (percentEl) percentEl.value = Number(promo.percent || 30);
+
+    // Hook up buttons
+    const saveBtn = document.getElementById('save-promo-btn');
+    const clearBtn = document.getElementById('clear-promo-btn');
+
+    if (saveBtn) {
+        saveBtn.onclick = function() {
+            const active = !!(document.getElementById('promo-active') && document.getElementById('promo-active').checked);
+            const percent = Math.max(0, Math.min(100, parseInt(document.getElementById('promo-percent')?.value || '30', 10) || 0));
+            savePromo({ active, percent });
+            alert('Promo settings saved');
+            loadProducts();
+            loadDashboardData();
+        };
+    }
+
+    if (clearBtn) {
+        clearBtn.onclick = function() {
+            if (!confirm('Clear promo settings? This will disable any active promotion.')) return;
+            savePromo({ active: false, percent: 30 });
+            if (document.getElementById('promo-active')) document.getElementById('promo-active').checked = false;
+            if (document.getElementById('promo-percent')) document.getElementById('promo-percent').value = 30;
+            alert('Promo cleared');
+            loadProducts();
+            loadDashboardData();
+        };
+    }
+}
 
 // Load Orders Table
 function loadOrders() {

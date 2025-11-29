@@ -62,8 +62,8 @@
         <br>
         <br>
         <br>
-        <div class="product-list">
-                <div class="product-item">
+    <div class="product-list">
+        <div class="product-item" data-product-id="prod-giveaways">
                     <div class="product-image-container">
                         <img src="ProductPics/Giveaway8.jpg" class="product-image" id="giveaway-img">
                     </div>
@@ -79,7 +79,7 @@
                         <button class="add-to-cart-btn" data-product="Giveaways" type="button">Add to Cart</button>
                     </div>
                 </div>
-                <div class="product-item">
+                <div class="product-item" data-product-id="prod-bulk">
                     <div class="product-image-container">
                         <img src="ProductPics/cards2.jpg" class="product-image" id="bulk-img">
                     </div>
@@ -111,7 +111,7 @@
                         <button class="add-to-cart-btn" data-product="Custom Signage" type="button">Add to Cart</button>
                     </div>
                 </div>-->
-                <div class="product-item">
+                <div class="product-item" data-product-id="prod-banners">
                     <div class="product-image-container">
                         <img src="ProductPics/Banner2.jpg" class="product-image">
                     </div>
@@ -127,7 +127,7 @@
                         <button class="add-to-cart-btn" data-product="Banners" type="button">Add to Cart</button>
                     </div>
                 </div>
-                <div class="product-item">
+                <div class="product-item" data-product-id="prod-stickers">
                     <div class="product-image-container">
                         <img src="ProductPics/Sticker.jpg" class="product-image" id="sticker-img">
                     </div>
@@ -143,7 +143,7 @@
                         <button class="add-to-cart-btn" data-product="Stickers & Decals" type="button">Add to Cart</button>
                     </div>
                 </div>
-                <div class="product-item">
+                <div class="product-item" data-product-id="prod-mugs">
                     <div class="product-image-container">
                         <img src="ProductPics/Mugs.jpg" class="product-image" id="mugs-img">
                     </div>
@@ -159,7 +159,7 @@
                         <button class="add-to-cart-btn" data-product="Custom Mugs" type="button">Add to Cart</button>
                     </div>
                 </div>
-                <div class="product-item">
+                <div class="product-item" data-product-id="prod-tshirt">
                     <div class="product-image-container">
                         <img src="ProductPics/shirt.jpg" class="product-image">
                     </div>
@@ -175,7 +175,7 @@
                         <button class="add-to-cart-btn" data-product="T-Shirt Printing" type="button">Add to Cart</button>
                     </div>
                 </div>
-                <div class="product-item">
+                <div class="product-item" data-product-id="prod-keychains">
                     <div class="product-image-container">
                         <img src="ProductPics/keychain.jpg" class="product-image" id="keychain-img">
                     </div>
@@ -191,7 +191,7 @@
                         <button class="add-to-cart-btn" data-product="Keychains" type="button">Add to Cart</button>
                     </div>
                 </div>
-                <div class="product-item">
+                <div class="product-item" data-product-id="prod-invites">
                     <div class="product-image-container">
                         <img src="ProductPics/invitations.jpg" class="product-image">
                     </div>
@@ -207,7 +207,7 @@
                         <button class="add-to-cart-btn" data-product="Invitations" type="button">Add to Cart</button>
                     </div>
                 </div>
-                <div class="product-item">
+                <div class="product-item" data-product-id="prod-cards">
                     <div class="product-image-container">
                         <img src="ProductPics/cards.jpg" class="product-image">
                     </div>
@@ -223,7 +223,7 @@
                         <button class="add-to-cart-btn" data-product="Calling Cards" type="button">Add to Cart</button>
                     </div>
                 </div>
-                <div class="product-item">
+                <div class="product-item" data-product-id="prod-pabitin">
                     <div class="product-image-container">
                         <img src="ProductPics/Pabitin.jpg" class="product-image">
                     </div>
@@ -239,7 +239,7 @@
                         <button class="add-to-cart-btn" data-product="Pabitin" type="button">Add to Cart</button>
                     </div>
                 </div>
-                <div class="product-item">
+                <div class="product-item" data-product-id="prod-hats">
                     <div class="product-image-container">
                         <img src="ProductPics/partyhats.jpg" class="product-image">
                     </div>
@@ -257,6 +257,88 @@
                 </div>
             </div>
         <script>
+        // Render stock counts from localStorage products and listen for updates
+        (function(){
+            function getProducts(){
+                try { return JSON.parse(localStorage.getItem('products') || '[]'); } catch(e){ return []; }
+            }
+
+            function getPromo(){
+                try { return JSON.parse(localStorage.getItem('promo') || '{"active":false,"percent":30}'); } catch(e){ return { active:false, percent:30 }; }
+            }
+
+            function parsePriceString(priceStr){
+                if (!priceStr) return null;
+                const match = priceStr.replace(/,/g,'').match(/(\d+(?:\.\d+)?)/);
+                if (match) return Number(match[1]);
+                return null;
+            }
+
+            function formatCurrency(n){
+                if (n == null || isNaN(n)) return '';
+                return '₱' + Number(n).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+
+            function renderPromoBanner(promo){
+                let banner = document.getElementById('promo-banner');
+                if (!banner) {
+                    banner = document.createElement('div');
+                    banner.id = 'promo-banner';
+                    banner.style.cssText = 'background: linear-gradient(90deg,#ffecd2,#fcb69f); padding:12px; text-align:center; font-weight:700; color:#7a2e0f;';
+                    banner.setAttribute('aria-live', 'polite');
+                    const header = document.querySelector('header.main-header');
+                    if (header && header.parentNode) header.parentNode.insertBefore(banner, header.nextSibling);
+                }
+                if (promo && promo.active) {
+                    banner.textContent = `SALE: ${promo.percent}% OFF on selected products — Shop now!`;
+                    banner.style.display = 'block';
+                } else {
+                    banner.style.display = 'none';
+                }
+            }
+
+            function renderStocks(){
+                const products = getProducts();
+                const promo = getPromo();
+                // For each product-item with data-product-id, update its .stock-count and .product-price
+                document.querySelectorAll('.product-item[data-product-id]').forEach(itemEl => {
+                    const pid = itemEl.getAttribute('data-product-id');
+                    const product = products.find(p => p.id === pid || p.name === itemEl.querySelector('h3')?.textContent);
+                    const countEl = itemEl.querySelector('.stock-count');
+                    const priceEl = itemEl.querySelector('.product-price');
+                    if (countEl) {
+                        if (product && typeof product.stock !== 'undefined') countEl.textContent = product.stock;
+                    }
+                    if (priceEl) {
+                        if (product && typeof product.price !== 'undefined') {
+                            // If promo active, show discounted unit price (first numeric in range)
+                            if (promo && promo.active) {
+                                const unit = parsePriceString(product.price);
+                                if (unit != null) {
+                                    const discounted = Math.round(unit * (1 - (promo.percent || 0) / 100) * 100) / 100;
+                                    priceEl.textContent = `${formatCurrency(discounted)}  (Promo ${promo.percent}% OFF)`;
+                                } else {
+                                    priceEl.textContent = product.price;
+                                }
+                            } else {
+                                priceEl.textContent = product.price;
+                            }
+                        }
+                    }
+                });
+                renderPromoBanner(promo);
+            }
+
+            // Initial render on load
+            document.addEventListener('DOMContentLoaded', renderStocks);
+
+            // Update when products or promo change
+            window.addEventListener('products:updated', function(){ renderStocks(); });
+            window.addEventListener('promo:updated', function(){ renderStocks(); });
+
+            // Also update when storage changes
+            window.addEventListener('storage', function(e){ if (e.key === 'products' || e.key === 'promo') renderStocks(); });
+        })();
         </script>
         </section>
     </main>
@@ -500,14 +582,45 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.add-to-cart-btn').forEach(button => {
         button.addEventListener('click', () => {
             const productItem = button.closest('.product-item');
-            const priceText = productItem.querySelector('.product-price').textContent;
+            // If product has an id, prefer reading data from localStorage.products so admin changes are reflected
+            const pid = productItem.getAttribute('data-product-id');
+            let priceText = productItem.querySelector('.product-price').textContent;
+            let stockText = productItem.querySelector('.stock-count').textContent;
+            let imageSrc = productItem.querySelector('.product-image').src;
+
+            if (pid) {
+                try {
+                    const products = JSON.parse(localStorage.getItem('products') || '[]');
+                    const prod = products.find(p => p.id === pid || p.name === productItem.querySelector('h3')?.textContent);
+                    if (prod) {
+                        if (prod.price) priceText = prod.price;
+                        if (typeof prod.stock !== 'undefined') stockText = String(prod.stock);
+                        if (prod.image) imageSrc = prod.image;
+                    }
+                } catch (e) {
+                    console.warn('Failed to load product from storage', e);
+                }
+            }
+
             currentProduct = {
                 name: productItem.querySelector('h3').textContent,
-                image: productItem.querySelector('.product-image').src,
+                image: imageSrc,
                 reviews: productItem.querySelector('.reviews').textContent,
-                stock: productItem.querySelector('.stock-count').textContent,
+                stock: stockText,
                 price: priceText,
-                unitPrice: parsePriceString(priceText) // numeric unit price (first number in range)
+                unitPrice: (function(){
+                    const raw = parsePriceString(priceText);
+                    try {
+                        const promo = JSON.parse(localStorage.getItem('promo') || '{"active":false,"percent":30}');
+                        if (promo && promo.active && raw != null) {
+                            const discounted = Math.round(raw * (1 - (promo.percent || 0) / 100) * 100) / 100;
+                            return discounted;
+                        }
+                    } catch(e) {
+                        // ignore
+                    }
+                    return raw;
+                })()
             };
             openModal(currentProduct);
         });

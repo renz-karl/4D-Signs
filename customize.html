@@ -9,6 +9,276 @@
     <link rel="stylesheet" href="customize.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+    <style>
+    /* Size & Quantity Modal */
+    #size-qty-modal {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(3px);
+        z-index: 2000;
+        animation: fadeIn 0.2s ease;
+    }
+    #size-qty-modal.active { display: flex; }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    .size-qty-content {
+        background: linear-gradient(145deg, #1e1f26 0%, #2a2b35 100%);
+        border-radius: 14px;
+        width: 500px;
+        max-width: 90%;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
+        animation: slideUp 0.3s ease;
+        overflow: hidden;
+    }
+    
+    @keyframes slideUp {
+        from { transform: translateY(30px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .size-qty-body {
+        padding: 32px 28px;
+    }
+    
+    .size-row {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 20px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    
+    .size-row:last-child {
+        border-bottom: none;
+    }
+    
+    .size-header-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .size-label {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #FFD700;
+    }
+    
+    .add-color-btn {
+        padding: 6px 14px;
+        border-radius: 6px;
+        background: rgba(255, 215, 0, 0.1);
+        border: 1px solid rgba(255, 215, 0, 0.3);
+        color: #FFD700;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+    
+    .add-color-btn:hover {
+        background: rgba(255, 215, 0, 0.2);
+        border-color: rgba(255, 215, 0, 0.5);
+    }
+    
+    .color-variants {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .color-variant-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 12px;
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 8px;
+    }
+    
+    .color-picker-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex: 1;
+    }
+    
+    .color-input {
+        width: 45px;
+        height: 35px;
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        cursor: pointer;
+        background: transparent;
+    }
+    
+    .color-name {
+        font-size: 0.9rem;
+        color: rgba(230, 230, 230, 0.8);
+        font-weight: 500;
+    }
+    
+    .qty-controls {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .qty-btn {
+        width: 42px;
+        height: 42px;
+        border-radius: 8px;
+        background: linear-gradient(145deg, #2a2b35, #1e1f26);
+        border: 2px solid rgba(255, 215, 0, 0.2);
+        color: #FFD700;
+        font-size: 20px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+    
+    .qty-btn:hover {
+        background: linear-gradient(145deg, rgba(255, 215, 0, 0.1), rgba(255, 215, 0, 0.05));
+        border-color: rgba(255, 215, 0, 0.4);
+        transform: scale(1.08);
+    }
+    
+    .qty-btn:active {
+        transform: scale(0.95);
+    }
+    
+    .remove-color-btn {
+        width: 30px;
+        height: 30px;
+        border-radius: 6px;
+        background: rgba(220, 53, 69, 0.1);
+        border: 1px solid rgba(220, 53, 69, 0.3);
+        color: #dc3545;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+    
+    .remove-color-btn:hover {
+        background: rgba(220, 53, 69, 0.2);
+        border-color: rgba(220, 53, 69, 0.5);
+    }
+    
+    .qty-value {
+        min-width: 50px;
+        text-align: center;
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #fff;
+        background: rgba(0, 0, 0, 0.4);
+        padding: 8px 14px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    
+    .size-qty-footer {
+        padding: 20px 28px;
+        background: rgba(0, 0, 0, 0.3);
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+    }
+    
+    .modal-action-btn {
+        padding: 12px 28px;
+        border-radius: 9px;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border: none;
+    }
+    
+    .cancel-action {
+        background: rgba(255, 255, 255, 0.05);
+        color: #ccc;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .cancel-action:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+    }
+    
+    .confirm-action {
+        background: linear-gradient(135deg, #FFD700 0%, #FFC107 100%);
+        color: #1e1f26;
+        box-shadow: 0 4px 16px rgba(255, 215, 0, 0.3);
+    }
+    
+    .confirm-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 24px rgba(255, 215, 0, 0.4);
+    }
+    
+    /* Icon Library Styles */
+    .icon-library {
+        gap: 10px;
+        margin-bottom: 12px;
+    }
+    .icon-btn {
+        background: #23243a;
+        border: 1px solid #FFD700;
+        border-radius: 8px;
+        color: #FFD700;
+        font-size: 1.3rem;
+        padding: 10px 12px;
+        cursor: pointer;
+        transition: background 0.15s, box-shadow 0.15s;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .icon-btn:hover {
+        background: #FFD700;
+        color: #23243a;
+        box-shadow: 0 4px 16px rgba(255,215,0,0.15);
+    }
+    #logo-upload {
+        background: #23243a;
+        color: #FFD700;
+        border: 1px solid #FFD700;
+        border-radius: 6px;
+        padding: 6px 8px;
+        margin-top: 4px;
+        width: 100%;
+    }
+    @media (max-width: 640px) {
+        .size-qty-content { width: 95%; }
+        .size-row { flex-wrap: wrap; gap: 12px; }
+        .qty-controls { width: 100%; justify-content: center; }
+    }
+    .template-img {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.25;
+      pointer-events: none;
+      z-index: 1;
+    }
+    </style>
 </head>
 <body>
     <header class="main-header">
@@ -44,19 +314,15 @@
                 <div class="sidebar-content">
                     <!-- Elements Section -->
                     <div class="tool-section">
-                        <button class="section-btn" onclick="toggleSection(this)">
+                        <button type="button" class="section-btn" onclick="toggleSection(this)">
                             <i class="fas fa-shapes"></i>
                             <span>Elements</span>
                             <i class="fas fa-chevron-down arrow"></i>
                         </button>
-                        <div class="section-content active">
+                        <div class="section-content">
                             <button type="button" id="add-text-btn" class="element-btn">
                                 <i class="fas fa-font"></i>
                                 <span>Add Text</span>
-                            </button>
-                            <button type="button" id="add-shirt-icon-btn" class="element-btn">
-                                <i class="fas fa-shirt"></i>
-                                <span>Add T-Shirt Icon</span>
                             </button>
                             <div class="text-input-wrapper">
                                 <input type="text" id="text-input" placeholder="Type your text..." class="custom-input">
@@ -64,9 +330,74 @@
                         </div>
                     </div>
 
+                    <!-- Logos Section -->
+                    <div class="tool-section collapsed">
+                        <button type="button" class="section-btn" onclick="toggleSection(this)">
+                            <i class="fas fa-icons"></i>
+                            <span>Logos</span>
+                            <i class="fas fa-chevron-down arrow"></i>
+                        </button>
+                        <div class="section-content">
+                            <div class="icon-library" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+                                <button type="button" class="icon-btn" data-icon="fa-briefcase" title="Business"><i class="fas fa-briefcase"></i></button>
+                                <button type="button" class="icon-btn" data-icon="fa-building" title="Office"><i class="fas fa-building"></i></button>
+                                <button type="button" class="icon-btn" data-icon="fa-graduation-cap" title="Education"><i class="fas fa-graduation-cap"></i></button>
+                                <button type="button" class="icon-btn" data-icon="fa-stethoscope" title="Medical"><i class="fas fa-stethoscope"></i></button>
+                                <button type="button" class="icon-btn" data-icon="fa-car" title="Automotive"><i class="fas fa-car"></i></button>
+                                <button type="button" class="icon-btn" data-icon="fa-utensils" title="Restaurant"><i class="fas fa-utensils"></i></button>
+                                <button type="button" class="icon-btn" data-icon="fa-tshirt" title="Apparel"><i class="fas fa-tshirt"></i></button>
+                                <button type="button" class="icon-btn" data-icon="fa-dumbbell" title="Fitness"><i class="fas fa-dumbbell"></i></button>
+                                <button type="button" class="icon-btn" data-icon="fa-tree" title="Nature"><i class="fas fa-tree"></i></button>
+                                <button type="button" class="icon-btn" data-icon="fa-cogs" title="Industry"><i class="fas fa-cogs"></i></button>
+                                <button type="button" class="icon-btn" data-icon="fa-bolt" title="Energy"><i class="fas fa-bolt"></i></button>
+                                <button type="button" class="icon-btn" data-icon="fa-heart" title="Charity"><i class="fas fa-heart"></i></button>
+                                <button type="button" class="icon-btn" data-icon="fa-music" title="Music"><i class="fas fa-music"></i></button>
+                                <button type="button" class="icon-btn" data-icon="fa-plane" title="Travel"><i class="fas fa-plane"></i></button>
+                                <button type="button" class="icon-btn" data-icon="fa-shopping-cart" title="E-commerce"><i class="fas fa-shopping-cart"></i></button>
+                            </div>
+                            <div style="margin-top: 10px;">
+                                <label for="file-input" style="font-size: 14px;">Upload your own logo/image:</label>
+                                <input type="file" id="file-input" accept="image/*">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- End Logos Section -->
+
+                    <!-- Template Color Section -->
+                    <div class="tool-section collapsed">
+                        <button type="button" class="section-btn" onclick="toggleSection(this)">
+                            <i class="fas fa-palette"></i>
+                            <span>Template Color</span>
+                            <i class="fas fa-chevron-down arrow"></i>
+                        </button>
+                        <div class="section-content">
+                            <div class="style-row">
+                                <label><i class="fas fa-shirt"></i> Product Background</label>
+                                <div class="template-color-grid">
+                                    <button type="button" class="template-color-btn" data-color="#FFFFFF" style="background: #FFFFFF;" title="White"></button>
+                                    <button type="button" class="template-color-btn" data-color="#000000" style="background: #000000;" title="Black"></button>
+                                    <button type="button" class="template-color-btn" data-color="#FF0000" style="background: #FF0000;" title="Red"></button>
+                                    <button type="button" class="template-color-btn" data-color="#00FF00" style="background: #00FF00;" title="Green"></button>
+                                    <button type="button" class="template-color-btn" data-color="#0000FF" style="background: #0000FF;" title="Blue"></button>
+                                    <button type="button" class="template-color-btn" data-color="#FFFF00" style="background: #FFFF00;" title="Yellow"></button>
+                                    <button type="button" class="template-color-btn" data-color="#FF00FF" style="background: #FF00FF;" title="Magenta"></button>
+                                    <button type="button" class="template-color-btn" data-color="#00FFFF" style="background: #00FFFF;" title="Cyan"></button>
+                                    <button type="button" class="template-color-btn" data-color="#FFA500" style="background: #FFA500;" title="Orange"></button>
+                                    <button type="button" class="template-color-btn" data-color="#800080" style="background: #800080;" title="Purple"></button>
+                                    <button type="button" class="template-color-btn" data-color="#FFC0CB" style="background: #FFC0CB;" title="Pink"></button>
+                                    <button type="button" class="template-color-btn" data-color="#808080" style="background: #808080;" title="Gray"></button>
+                                </div>
+                                <div class="color-input-wrapper" style="margin-top: 12px;">
+                                    <input type="color" id="template-color-picker" value="#FFFFFF" class="custom-color">
+                                    <span class="color-hex" id="template-color-hex">#FFFFFF</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Text Styles Section -->
-                    <div class="tool-section">
-                        <button class="section-btn" onclick="toggleSection(this)">
+                    <div class="tool-section collapsed">
+                        <button type="button" class="section-btn" onclick="toggleSection(this)">
                             <i class="fas fa-text-height"></i>
                             <span>Text Styles</span>
                             <i class="fas fa-chevron-down arrow"></i>
@@ -111,9 +442,9 @@
                     </div>
 
                     <!-- Position Section -->
-                    <div class="tool-section">
-                        <button class="section-btn" onclick="toggleSection(this)">
-                            <i class="fas fa-up-down-left-right"></i>
+                    <div class="tool-section collapsed">
+                        <button type="button" class="section-btn" onclick="toggleSection(this)">
+                            <i class="fas fa-arrows-alt"></i>
                             <span>Position</span>
                             <i class="fas fa-chevron-down arrow"></i>
                         </button>
@@ -146,8 +477,8 @@
                     </div>
 
                     <!-- Effects Section -->
-                    <div class="tool-section">
-                        <button class="section-btn" onclick="toggleSection(this)">
+                    <div class="tool-section collapsed">
+                        <button type="button" class="section-btn" onclick="toggleSection(this)">
                             <i class="fas fa-wand-magic-sparkles"></i>
                             <span>Effects</span>
                             <i class="fas fa-chevron-down arrow"></i>
@@ -188,8 +519,8 @@
                     </div>
 
                     <!-- Layers Section -->
-                    <div class="tool-section">
-                        <button class="section-btn" onclick="toggleSection(this)">
+                    <div class="tool-section collapsed">
+                        <button type="button" class="section-btn" onclick="toggleSection(this)">
                             <i class="fas fa-layer-group"></i>
                             <span>Layers</span>
                             <i class="fas fa-chevron-down arrow"></i>
@@ -217,8 +548,8 @@
                     </div>
 
                     <!-- History Section -->
-                    <div class="tool-section">
-                        <button class="section-btn" onclick="toggleSection(this)">
+                    <div class="tool-section collapsed">
+                        <button type="button" class="section-btn" onclick="toggleSection(this)">
                             <i class="fas fa-history"></i>
                             <span>History</span>
                             <i class="fas fa-chevron-down arrow"></i>
@@ -286,6 +617,9 @@
                                      class="ecobag-preview product-template-image" 
                                      style="display:none; width:100%; height:auto; max-width:720px; margin:0 auto; pointer-events:none; user-select:none;"
                                      draggable="false"/>
+                                <img id="shirt-template" src="ProductPics/shirt-template.png" class="template-img" style="display: none;">
+                                <img id="mug-template" src="ProductPics/mug-template.png" class="template-img" style="display: none;">
+                                <img id="sign-template" src="ProductPics/sign-template.png" class="template-img" style="display: none;">
                                 <p class="hint-text"><i class="fas fa-info-circle"></i> Drag and drop your design here</p>
                             </div>
                         </div>
@@ -304,118 +638,47 @@
                 </div>
             </div>
 
-            <!-- Size Selection Modal -->
-            <div id="size-modal" class="size-modal">
-                <div class="size-modal-content">
-                    <div class="size-modal-header">
-                        <h2><i class="fas fa-ruler-combined"></i> Select Sizes & Quantities</h2>
-                        <button type="button" class="close-modal" id="close-size-modal">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                    <div class="size-modal-body">
-                        <!-- Small Size -->
-                        <div class="size-option">
-                            <div class="size-header">
-                                <h3>Small (S)</h3>
-                                <label class="enable-checkbox">
-                                    <input type="checkbox" id="enable-small" class="size-enable">
-                                    <span>Enable</span>
-                                </label>
+            <!-- Size & Quantity Modal -->
+            <div id="size-qty-modal">
+                <div class="size-qty-content">
+                    <div class="size-qty-body">
+                        <!-- Small -->
+                        <div class="size-row">
+                            <div class="size-header-row">
+                                <div class="size-label">Small (S)</div>
+                                <button type="button" class="add-color-btn" onclick="addColorVariant('small')">
+                                    <i class="fas fa-plus"></i> Add Color
+                                </button>
                             </div>
-                            <div class="size-controls" id="small-controls">
-                                <div class="control-row">
-                                    <label><i class="fas fa-hashtag"></i> Quantity:</label>
-                                    <div class="quantity-control">
-                                        <button type="button" class="qty-btn minus" data-size="small">
-                                            <i class="fas fa-minus"></i>
-                                        </button>
-                                        <input type="number" id="qty-small" class="qty-input" value="0" min="0" readonly>
-                                        <button type="button" class="qty-btn plus" data-size="small">
-                                            <i class="fas fa-plus"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="control-row">
-                                    <label><i class="fas fa-palette"></i> Color:</label>
-                                    <div class="color-picker-wrapper">
-                                        <input type="color" id="color-small" class="size-color-picker" value="#ffffff">
-                                        <span class="color-label" id="color-small-label">#FFFFFF</span>
-                                    </div>
-                                </div>
-                            </div>
+                            <div class="color-variants" id="small-variants"></div>
                         </div>
-
-                        <!-- Medium Size -->
-                        <div class="size-option">
-                            <div class="size-header">
-                                <h3>Medium (M)</h3>
-                                <label class="enable-checkbox">
-                                    <input type="checkbox" id="enable-medium" class="size-enable">
-                                    <span>Enable</span>
-                                </label>
+                        <!-- Medium -->
+                        <div class="size-row">
+                            <div class="size-header-row">
+                                <div class="size-label">Medium (M)</div>
+                                <button type="button" class="add-color-btn" onclick="addColorVariant('medium')">
+                                    <i class="fas fa-plus"></i> Add Color
+                                </button>
                             </div>
-                            <div class="size-controls" id="medium-controls">
-                                <div class="control-row">
-                                    <label><i class="fas fa-hashtag"></i> Quantity:</label>
-                                    <div class="quantity-control">
-                                        <button type="button" class="qty-btn minus" data-size="medium">
-                                            <i class="fas fa-minus"></i>
-                                        </button>
-                                        <input type="number" id="qty-medium" class="qty-input" value="0" min="0" readonly>
-                                        <button type="button" class="qty-btn plus" data-size="medium">
-                                            <i class="fas fa-plus"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="control-row">
-                                    <label><i class="fas fa-palette"></i> Color:</label>
-                                    <div class="color-picker-wrapper">
-                                        <input type="color" id="color-medium" class="size-color-picker" value="#ffffff">
-                                        <span class="color-label" id="color-medium-label">#FFFFFF</span>
-                                    </div>
-                                </div>
-                            </div>
+                            <div class="color-variants" id="medium-variants"></div>
                         </div>
-
-                        <!-- Large Size -->
-                        <div class="size-option">
-                            <div class="size-header">
-                                <h3>Large (L)</h3>
-                                <label class="enable-checkbox">
-                                    <input type="checkbox" id="enable-large" class="size-enable">
-                                    <span>Enable</span>
-                                </label>
+                        <!-- Large -->
+                        <div class="size-row">
+                            <div class="size-header-row">
+                                <div class="size-label">Large (L)</div>
+                                <button type="button" class="add-color-btn" onclick="addColorVariant('large')">
+                                    <i class="fas fa-plus"></i> Add Color
+                                </button>
                             </div>
-                            <div class="size-controls" id="large-controls">
-                                <div class="control-row">
-                                    <label><i class="fas fa-hashtag"></i> Quantity:</label>
-                                    <div class="quantity-control">
-                                        <button type="button" class="qty-btn minus" data-size="large">
-                                            <i class="fas fa-minus"></i>
-                                        </button>
-                                        <input type="number" id="qty-large" class="qty-input" value="0" min="0" readonly>
-                                        <button type="button" class="qty-btn plus" data-size="large">
-                                            <i class="fas fa-plus"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="control-row">
-                                    <label><i class="fas fa-palette"></i> Color:</label>
-                                    <div class="color-picker-wrapper">
-                                        <input type="color" id="color-large" class="size-color-picker" value="#ffffff">
-                                        <span class="color-label" id="color-large-label">#FFFFFF</span>
-                                    </div>
-                                </div>
-                            </div>
+                            <div class="color-variants" id="large-variants"></div>
                         </div>
                     </div>
-                    <div class="size-modal-footer">
-                        <button type="button" id="cancel-size-btn" class="cancel-btn">
-                            <i class="fas fa-times-circle"></i> Cancel
+                    <div class="size-qty-footer">
+                        <button type="button" class="modal-action-btn cancel-action" onclick="closeSizeQtyModal()">
+                            <i class="fas fa-times"></i> Cancel
                         </button>
-                        <button type="button" id="confirm-size-btn" class="confirm-btn">
-                            <i class="fas fa-check-circle"></i> Add to Cart
+                        <button type="button" class="modal-action-btn confirm-action" onclick="confirmAddToCart()">
+                            <i class="fas fa-check"></i> Add to Cart
                         </button>
                     </div>
                 </div>
@@ -451,6 +714,132 @@
     </main>
 
     <script>
+        // Size & Quantity Modal Functions
+        let colorVariantCounter = 0;
+        
+        function addColorVariant(size) {
+            const variantsContainer = document.getElementById(`${size}-variants`);
+            const variantId = `variant-${size}-${colorVariantCounter++}`;
+            
+            const variantRow = document.createElement('div');
+            variantRow.className = 'color-variant-row';
+            variantRow.id = variantId;
+            variantRow.innerHTML = `
+                <div class="color-picker-group">
+                    <input type="color" class="color-input" value="#ffffff" onchange="updateColorName(this)">
+                    <span class="color-name">#FFFFFF</span>
+                </div>
+                <div class="qty-controls">
+                    <button type="button" class="qty-btn" onclick="adjustVariantQty('${variantId}', -1)">−</button>
+                    <div class="qty-value" data-qty="1">1</div>
+                    <button type="button" class="qty-btn" onclick="adjustVariantQty('${variantId}', 1)">+</button>
+                </div>
+                <button type="button" class="remove-color-btn" onclick="removeColorVariant('${variantId}')">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            variantsContainer.appendChild(variantRow);
+        }
+        
+        function updateColorName(input) {
+            const colorName = input.nextElementSibling;
+            colorName.textContent = input.value.toUpperCase();
+        }
+        
+        function adjustVariantQty(variantId, delta) {
+            const variant = document.getElementById(variantId);
+            const qtyEl = variant.querySelector('.qty-value');
+            let currentQty = parseInt(qtyEl.dataset.qty);
+            currentQty = Math.max(1, currentQty + delta);
+            qtyEl.dataset.qty = currentQty;
+            qtyEl.textContent = currentQty;
+        }
+        
+        function removeColorVariant(variantId) {
+            document.getElementById(variantId).remove();
+        }
+        
+        function closeSizeQtyModal() {
+            document.getElementById('size-qty-modal').classList.remove('active');
+            // Clear all variants
+            document.getElementById('small-variants').innerHTML = '';
+            document.getElementById('medium-variants').innerHTML = '';
+            document.getElementById('large-variants').innerHTML = '';
+            colorVariantCounter = 0;
+        }
+        
+        function confirmAddToCart() {
+            const items = [];
+            
+            ['small', 'medium', 'large'].forEach(size => {
+                const variantsContainer = document.getElementById(`${size}-variants`);
+                const variants = variantsContainer.querySelectorAll('.color-variant-row');
+                
+                variants.forEach(variant => {
+                    const color = variant.querySelector('.color-input').value;
+                    const qty = parseInt(variant.querySelector('.qty-value').dataset.qty);
+                    
+                    items.push({
+                        size: size.charAt(0).toUpperCase() + size.slice(1),
+                        color: color,
+                        quantity: qty
+                    });
+                });
+            });
+            
+            if (items.length === 0) {
+                alert('Please add at least one color variant');
+                return;
+            }
+            
+            // Get product info
+            const productType = document.getElementById('product-type')?.value || 'custom';
+            const productName = document.getElementById('custom-text')?.value || 'Custom Product';
+            
+            // Get existing cart items
+            let cartItems = [];
+            try {
+                cartItems = JSON.parse(localStorage.getItem('cartItems') || '[]');
+            } catch(e) {
+                cartItems = [];
+            }
+            
+            // Add each color variant as separate cart item
+            items.forEach(variant => {
+                const cartItem = {
+                    id: Date.now() + Math.random(),
+                    name: productName,
+                    category: productType,
+                    size: variant.size,
+                    color: variant.color,
+                    qty: variant.quantity,
+                    price: 150, // Default price
+                    image: 'BGDS.jpg', // Default image
+                    isCustom: true
+                };
+                
+                cartItems.push(cartItem);
+            });
+            
+            // Save to localStorage
+            localStorage.setItem('cartItems', JSON.stringify(cartItems));
+            
+            // Update cart count
+            const totalQty = cartItems.reduce((sum, item) => sum + (parseInt(item.qty) || 0), 0);
+            localStorage.setItem('cartCount', String(totalQty));
+            
+            // Trigger cart update event
+            window.dispatchEvent(new CustomEvent('cart:updated', { 
+                detail: { count: totalQty, items: cartItems } 
+            }));
+            
+            closeSizeQtyModal();
+            
+            // Redirect to cart page
+            window.location.href = 'cart.html';
+        }
+        
         function toggleSection(button) {
             const section = button.closest('.tool-section');
             const content = section.querySelector('.section-content');
@@ -468,156 +857,26 @@
                 arrow.style.transform = 'rotate(0deg)';
             }
         }
-
-        // Update slider values and color hex display
+        
+        // Initialize all sections as collapsed on page load
         document.addEventListener('DOMContentLoaded', function() {
-            // Text size slider
-            const textSizeSlider = document.getElementById('text-size');
-            const textSizeValue = document.getElementById('text-size-value');
-            if (textSizeSlider && textSizeValue) {
-                textSizeSlider.addEventListener('input', function() {
-                    textSizeValue.textContent = this.value;
-                });
-            }
-
-            // Rotation slider
-            const rotationSlider = document.getElementById('rotation-slider');
-            const rotationValue = document.getElementById('rotation-value');
-            if (rotationSlider && rotationValue) {
-                rotationSlider.addEventListener('input', function() {
-                    rotationValue.textContent = this.value + '°';
-                });
-            }
-
-            // Opacity slider
-            const opacitySlider = document.getElementById('opacity-slider');
-            const opacityValue = document.getElementById('opacity-value');
-            if (opacitySlider && opacityValue) {
-                opacitySlider.addEventListener('input', function() {
-                    opacityValue.textContent = this.value + '%';
-                });
-            }
-
-            // Brightness slider
-            const brightnessSlider = document.getElementById('brightness-slider');
-            const brightnessValue = document.getElementById('brightness-value');
-            if (brightnessSlider && brightnessValue) {
-                brightnessSlider.addEventListener('input', function() {
-                    brightnessValue.textContent = this.value;
-                });
-            }
-
-            // Contrast slider
-            const contrastSlider = document.getElementById('contrast-slider');
-            const contrastValue = document.getElementById('contrast-value');
-            if (contrastSlider && contrastValue) {
-                contrastSlider.addEventListener('input', function() {
-                    contrastValue.textContent = this.value;
-                });
-            }
-
-            // Saturation slider
-            const saturationSlider = document.getElementById('saturation-slider');
-            const saturationValue = document.getElementById('saturation-value');
-            if (saturationSlider && saturationValue) {
-                saturationSlider.addEventListener('input', function() {
-                    saturationValue.textContent = this.value;
-                });
-            }
-
-            // Blur slider
-            const blurSlider = document.getElementById('blur-slider');
-            const blurValue = document.getElementById('blur-value');
-            if (blurSlider && blurValue) {
-                blurSlider.addEventListener('input', function() {
-                    blurValue.textContent = this.value;
-                });
-            }
-
-            // Color picker hex display
-            const textColor = document.getElementById('text-color');
-            const colorHex = document.querySelector('.color-hex');
-            if (textColor && colorHex) {
-                textColor.addEventListener('input', function() {
-                    colorHex.textContent = this.value.toUpperCase();
-                });
-            }
-
-            // Show sign preview image when product type is "sign"
-            const productSelect = document.getElementById('product-type');
-            const signImage = document.getElementById('sign-image');
-            const shirtImage = document.getElementById('shirt-image');
-            const mugImage = document.getElementById('mug-image');
-            const ecobagImage = document.getElementById('ecobag-image');
-            const hintText = document.querySelector('.design-area .hint-text');
-            function updateProductPreview() {
-                if (!productSelect) return;
-                if (productSelect.value === 'sign') {
-                    if (signImage) signImage.style.display = 'block';
-                    if (shirtImage) shirtImage.style.display = 'none';
-                    if (mugImage) mugImage.style.display = 'none';
-                    if (ecobagImage) ecobagImage.style.display = 'none';
-                    if (hintText) hintText.style.display = 'none';
-                } else if (productSelect.value === 'shirt') {
-                    if (signImage) signImage.style.display = 'none';
-                    if (shirtImage) shirtImage.style.display = 'block';
-                    if (mugImage) mugImage.style.display = 'none';
-                    if (ecobagImage) ecobagImage.style.display = 'none';
-                    if (hintText) hintText.style.display = 'none';
-                } else if (productSelect.value === 'mug') {
-                    if (signImage) signImage.style.display = 'none';
-                    if (shirtImage) shirtImage.style.display = 'none';
-                    if (mugImage) mugImage.style.display = 'block';
-                    if (ecobagImage) ecobagImage.style.display = 'none';
-                    if (hintText) hintText.style.display = 'none';
-                } else if (productSelect.value === 'ecobag') {
-                    if (signImage) signImage.style.display = 'none';
-                    if (shirtImage) shirtImage.style.display = 'none';
-                    if (mugImage) mugImage.style.display = 'none';
-                    if (ecobagImage) ecobagImage.style.display = 'block';
-                    if (hintText) hintText.style.display = 'none';
-                } else {
-                    if (signImage) signImage.style.display = 'none';
-                    if (shirtImage) shirtImage.style.display = 'none';
-                    if (mugImage) mugImage.style.display = 'none';
-                    if (ecobagImage) ecobagImage.style.display = 'none';
-                    if (hintText) hintText.style.display = 'block';
-                }
-            }
-            if (productSelect) {
-                productSelect.addEventListener('change', updateProductPreview);
-                // initialize on load
-                updateProductPreview();
-            }
-
-            // Initialize section states - keep Elements section open by default
-            const sections = document.querySelectorAll('.tool-section');
-            sections.forEach((section, index) => {
+            const sections = document.querySelectorAll('.tool-section.collapsed');
+            sections.forEach(section => {
                 const content = section.querySelector('.section-content');
-                if (index !== 0) { // Keep first section (Elements) open
-                    section.classList.add('collapsed');
+                const arrow = section.querySelector('.arrow');
+                if (content) {
                     content.style.maxHeight = '0';
                     content.style.opacity = '0';
-                    const arrow = section.querySelector('.arrow');
-                    if (arrow) arrow.style.transform = 'rotate(-90deg)';
+                }
+                if (arrow) {
+                    arrow.style.transform = 'rotate(-90deg)';
                 }
             });
-            
-            // Prevent product template images from being interactive
-            const templateImages = document.querySelectorAll('.product-template-image, #sign-image, #shirt-image, #mug-image, #ecobag-image');
-            templateImages.forEach(img => {
-                img.style.pointerEvents = 'none';
-                img.style.userSelect = 'none';
-                img.draggable = false;
-                
-                // Prevent any click or drag events
-                img.addEventListener('mousedown', (e) => e.stopPropagation(), true);
-                img.addEventListener('click', (e) => e.stopPropagation(), true);
-                img.addEventListener('dragstart', (e) => e.preventDefault(), true);
-            });
         });
+
+        // All event listeners are now handled in customize-script.js to avoid duplication
+        // This includes: slider updates, color pickers, template switching, etc.
     </script>
     <script src="customize-script.js"></script>
 </body>
 </html>
-

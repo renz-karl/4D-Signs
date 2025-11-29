@@ -702,7 +702,14 @@
             <img class="item-thumb" src="${img}" alt="${it.name}">
             <div class="item-details">
                 <div class="item-name">${it.name || 'Custom Design'}</div>
-                <div class="item-category">${it.productType || 'Custom'}</div>
+                <div class="item-category">${it.productType || it.category || 'Custom'}</div>
+                ${it.size ? `<div style="display: inline-flex; align-items: center; gap: 8px; margin-top: 4px;">
+                    <span style="padding: 3px 10px; background: rgba(255, 215, 0, 0.2); border: 1px solid rgba(255, 215, 0, 0.4); border-radius: 6px; color: #FFD700; font-size: 0.75rem; font-weight: 700;">SIZE: ${it.size.toUpperCase()}</span>
+                    ${it.color ? `<span style="display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 6px; font-size: 0.75rem;">
+                        <span style="width: 14px; height: 14px; border-radius: 50%; background: ${it.color}; border: 1px solid rgba(255, 255, 255, 0.3);"></span>
+                        <span style="color: rgba(255, 255, 255, 0.9); font-weight: 600;">${it.color.toUpperCase()}</span>
+                    </span>` : ''}
+                </div>` : ''}
                 ${it.isCustom ? '<span class="custom-badge"><i class="fas fa-magic"></i> Customized</span>' : ''}
                 <div style="margin-top: 0.5rem; color: #FFD700; font-weight: 600;">
                     ₱${itemPrice.toFixed(2)} × ${it.qty} = ₱${itemTotal.toFixed(2)}

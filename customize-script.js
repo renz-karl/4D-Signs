@@ -1,13 +1,9 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const dropZone = document.getElementById('drop-zone');
-    const fileInput = document.getElementById('file-input');
-    const previewImage = document.getElementById('preview-image');
-    const uploadContainer = document.querySelector('.upload-container');
-    const uploadIcon = document.querySelector('.upload-icon');
-    const dropText = document.getElementById('drop-text');
     const dropdown = document.querySelector('.custom-select-dropdown');
     const shirtDropArea = document.getElementById('shirtDropArea');
     const designArea = document.querySelector('.design-area');
+    // If we're editing an existing custom cart item, keep context here so we can update it on save
+    let editingContext = null;
 
     // ====== LOAD EDITING DATA ======
     // Check if we're editing an existing item
@@ -16,21 +12,23 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const editData = JSON.parse(editingItemData);
             const itemToEdit = editData.item;
-            
+            // Keep the editing context so confirm can update the original cart item
+            editingContext = editData;
             console.log('Loading item for editing:', itemToEdit);
-            
+
             // Set product type if available
             const productTypeDropdown = document.getElementById('product-type');
             if (productTypeDropdown && itemToEdit.productType) {
                 productTypeDropdown.value = itemToEdit.productType;
             }
-            
+
             // Set product name if available
             const customTextInput = document.getElementById('custom-text');
             if (customTextInput && itemToEdit.name) {
-                customTextInput.value = itemToEdit.name;
+                // If the stored name includes size suffix added in cart, try to strip it
+                customTextInput.value = typeof itemToEdit.name === 'string' ? itemToEdit.name.replace(/ - Size .*$/,'') : itemToEdit.name;
             }
-            
+
             // Load design data if available
             if (itemToEdit.designData) {
                 // Load images
@@ -42,22 +40,22 @@ document.addEventListener('DOMContentLoaded', function() {
                         designImage.style.width = imgData.width;
                         designImage.style.height = imgData.height;
                         designImage.style.transform = imgData.transform || `translate(${imgData.x}, ${imgData.y})`;
-                        
+
                         // Extract x and y from transform or use provided values
                         const match = (imgData.transform || '').match(/translate\(([^,]+),\s*([^)]+)\)/);
-                        const x = match ? parseFloat(match[1]) : parseFloat(imgData.x);
-                        const y = match ? parseFloat(match[2]) : parseFloat(imgData.y);
-                        
+                        const x = match ? parseFloat(match[1]) : parseFloat(imgData.x) || 0;
+                        const y = match ? parseFloat(match[2]) : parseFloat(imgData.y) || 0;
+
                         designImage.dataset.x = x;
                         designImage.dataset.y = y;
-                        
+
                         shirtDropArea.insertBefore(designImage, designArea);
-                        
+
                         // Make interactive
                         makeImageInteractive(designImage);
                     });
                 }
-                
+
                 // Load texts
                 if (itemToEdit.designData.texts && itemToEdit.designData.texts.length > 0) {
                     itemToEdit.designData.texts.forEach(txtData => {
@@ -68,32 +66,30 @@ document.addEventListener('DOMContentLoaded', function() {
                         designText.style.fontWeight = txtData.fontWeight || 'normal';
                         designText.style.color = txtData.color || '#FFD700';
                         designText.style.transform = txtData.transform || `translate(${txtData.x}, ${txtData.y})`;
-                        
+
                         // Extract x and y from transform or use provided values
                         const match = (txtData.transform || '').match(/translate\(([^,]+),\s*([^)]+)\)/);
-                        const x = match ? parseFloat(match[1]) : parseFloat(txtData.x);
-                        const y = match ? parseFloat(match[2]) : parseFloat(txtData.y);
-                        
+                        const x = match ? parseFloat(match[1]) : parseFloat(txtData.x) || 0;
+                        const y = match ? parseFloat(match[2]) : parseFloat(txtData.y) || 0;
+
                         designText.dataset.x = x;
                         designText.dataset.y = y;
-                        
+
                         shirtDropArea.appendChild(designText);
-                        
+
                         // Make interactive
                         makeTextInteractive(designText);
                     });
                 }
-                
+
                 updateContentClass();
             }
-            
+
             console.log('Item loaded successfully for editing');
         } catch (e) {
             console.error('Error loading item for editing:', e);
         }
-        
-        // Clear the editing data after loading to prevent it from persisting
-        localStorage.removeItem('editingCustomItem');
+        // Note: do NOT remove editingCustomItem from localStorage yet; we need it when saving
     }
     // ====== END LOAD EDITING DATA ======
 
@@ -135,279 +131,105 @@ document.addEventListener('DOMContentLoaded', function() {
     shirtDropArea.addEventListener('drop', function(e) {
         e.preventDefault();
         this.classList.remove('drag-over');
-
         if (previewImage.src) {
             const designImage = document.createElement('img');
             designImage.src = previewImage.src;
             designImage.className = 'resizable-image';
-            
-            // Set initial size
+            designImage.style.position = 'absolute';
             designImage.style.width = '150px';
             designImage.style.height = 'auto';
-            
-            // Calculate drop position relative to shirt drop area
+
+            // Record drop coordinates and container rect for use after image loads
             const rect = shirtDropArea.getBoundingClientRect();
-            const x = e.clientX - rect.left - 75; // half of 150px
-            const y = e.clientY - rect.top - 75;
-            
-            // Set initial position
-            designImage.style.transform = `translate(${x}px, ${y}px)`;
-            designImage.dataset.x = x;
-            designImage.dataset.y = y;
-            
-            shirtDropArea.insertBefore(designImage, designArea);
-            updateContentClass();
-            
-            // Make the image both resizable and draggable
-            makeImageInteractive(designImage);
-            selectElement(designImage);
-            saveState();
-        }
-    });
+            const dropX = e.clientX;
+            const dropY = e.clientY;
 
-    function dragMoveListener(event) {
-        const target = event.target;
-        const x = (parseFloat(target.dataset.x) || 0) + event.dx;
-        const y = (parseFloat(target.dataset.y) || 0) + event.dy;
+            function placeImage() {
+                // Determine actual size (may differ if CSS affects it)
+                const iw = designImage.getBoundingClientRect().width || 150;
+                const ih = designImage.getBoundingClientRect().height || (iw * (designImage.naturalHeight / designImage.naturalWidth || 1));
 
-        target.style.transform = `translate(${x}px, ${y}px)`;
-        target.dataset.x = x;
-        target.dataset.y = y;
-    }
+                // Center image at drop point
+                let x = dropX - rect.left - (iw / 2);
+                let y = dropY - rect.top - (ih / 2);
 
-    function resizeListener(event) {
-        const target = event.target;
-        let x = parseFloat(target.dataset.x) || 0;
-        let y = parseFloat(target.dataset.y) || 0;
+                // Clamp so image stays within the drop area
+                x = Math.max(0, Math.min(x, rect.width - iw));
+                y = Math.max(0, Math.min(y, rect.height - ih));
 
-        // Update position based on resize
-        x += event.deltaRect.left;
-        y += event.deltaRect.top;
+                designImage.style.transform = `translate(${x}px, ${y}px)`;
+                designImage.dataset.x = x;
+                designImage.dataset.y = y;
 
-        Object.assign(target.style, {
-            width: `${event.rect.width}px`,
-            height: `${event.rect.height}px`,
-            transform: `translate(${x}px, ${y}px)`
-        });
+                shirtDropArea.insertBefore(designImage, designArea);
+                updateContentClass();
+                makeImageInteractive(designImage);
+                selectElement(designImage);
+                saveState();
+            }
 
-        Object.assign(target.dataset, { x, y });
-    }
-
-    
-    fileInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        console.log('File selected:', file);
-        if (file) {
-            handleFile(file);
-        }
-    });
-
-    
-    dropZone.addEventListener('dragover', function(e) {
-        e.preventDefault();
-        dropZone.classList.add('drag-over');
-    });
-
-    dropZone.addEventListener('dragleave', function(e) {
-        e.preventDefault();
-        dropZone.classList.remove('drag-over');
-    });
-
-    dropZone.addEventListener('drop', function(e) {
-        e.preventDefault();
-        dropZone.classList.remove('drag-over');
-        const file = e.dataTransfer.files[0];
-        console.log('File dropped:', file);
-        if (file) {
-            handleFile(file);
-        }
-    });
-
-    
-    function handleFile(file) {
-        console.log('handleFile called with:', file);
-        if (file && file.type.startsWith('image/')) {
-            const reader = new FileReader();
-
-            reader.onload = function(e) {
-                console.log('File loaded successfully');
-                previewImage.src = e.target.result;
-                previewImage.style.display = 'block';
-                previewImage.style.maxWidth = '100%';
-                previewImage.style.maxHeight = '200px';
-                uploadContainer.classList.add('has-image');
-
-                
-                if (uploadIcon) uploadIcon.style.display = 'none';
-                if (dropText) dropText.style.display = 'none';
-                
-                // Hide the or-text
-                const orText = document.querySelector('.or-text');
-                if (orText) orText.style.display = 'none';
-                
-                // Hide browse button
-                const browseBtn = document.querySelector('.browse-btn-custom');
-                if (browseBtn) browseBtn.style.display = 'none';
-
-                
-                const chooseAgainBtn = document.getElementById('choose-again');
-                if (chooseAgainBtn) {
-                    chooseAgainBtn.style.display = 'block';
-                }
-                
-                console.log('Preview image set:', previewImage.src.substring(0, 50));
-            };
-
-            reader.onerror = function() {
-                console.error('Error reading file');
-                alert('Error uploading image. Please try again.');
-            };
-
-            reader.readAsDataURL(file);
-        } else {
-            alert('Please upload an image file');
-        }
-    }
-
-    
-    const chooseAgainBtn = document.getElementById('choose-again');
-    if (chooseAgainBtn) {
-        chooseAgainBtn.addEventListener('click', function() {
-            
-            previewImage.src = '';
-            previewImage.style.display = 'none';
-            uploadContainer.classList.remove('has-image');
-            fileInput.value = '';
-
-            
-            if (uploadIcon) uploadIcon.style.display = 'block';
-            if (dropText) dropText.style.display = 'block';
-            
-            // Show or-text and browse button
-            const orText = document.querySelector('.or-text');
-            if (orText) orText.style.display = 'block';
-            
-            const browseBtn = document.querySelector('.browse-btn-custom');
-            if (browseBtn) browseBtn.style.display = 'block';
-
-            
-            this.style.display = 'none';
-        });
-    }
+            // If image is already cached and complete, place immediately
+            if (designImage.complete) {
+                placeImage();
+            }
 
     function updateDropArea() {
         console.log('Dropdown value:', dropdown.value);
 
-        const existingShirtImg = shirtDropArea.querySelector('.shirt-img');
-        const existingMugImg = shirtDropArea.querySelector('.mug-img');
-        const existingEcoBagImg = shirtDropArea.querySelector('.ecobag-img');
-        const existingSignImg = shirtDropArea.querySelector('.sign-img');
-        if (existingShirtImg) existingShirtImg.remove();
-        if (existingMugImg) existingMugImg.remove();
-        if (existingEcoBagImg) existingEcoBagImg.remove();
-        if (existingSignImg) existingSignImg.remove();
-
-        // Clear the design area
-        designArea.innerHTML = '';
-
-        if (dropdown.value === 'shirt') {
-            const img = document.createElement('img');
-            img.src = './LogoProducts/shirt-outline.jpg'; 
-            img.alt = 'Shirt Outline';
-            img.className = 'shirt-img'; 
-            img.style.width = '500px'; 
-            img.style.height = 'auto';
-            img.style.display = 'block';
-            img.style.position = 'absolute';
-            img.style.top = '50%';
-            img.style.left = '50%';
-            img.style.transform = 'translate(-50%, -50%)';
-            img.style.zIndex = '0'; 
-
-            img.onerror = function() {
-                console.error('Error loading shirt image from:', this.src);
-                this.src = 'shirt-outline.jpg';
-            };
-
-            shirtDropArea.insertBefore(img, designArea);
-        } else if (dropdown.value === 'mug') {
-            const img = document.createElement('img');
-            img.src = './LogoProducts/mug-outline.jpg'; 
-            img.alt = 'Mug Outline';
-            img.className = 'mug-img'; 
-            img.style.width = '550px'; 
-            img.style.height = 'auto';
-            img.style.display = 'block';
-            img.style.position = 'absolute';
-            img.style.top = '50%';
-            img.style.left = '50%';
-            img.style.transform = 'translate(-50%, -50%)';
-            img.style.zIndex = '0'; 
-
-            img.onerror = function() {
-                console.error('Error loading mug image from:', this.src);
-                this.src = 'mug-outline.jpg';
-            };
-
-            shirtDropArea.insertBefore(img, designArea);
-        } else if (dropdown.value === 'ecobag') {
-            const img = document.createElement('img');
-            img.src = './LogoProducts/ecobag-outline.jpg'; 
-            img.alt = 'Eco Bag Outline';
-            img.className = 'ecobag-img'; 
-            img.style.width = '310px';
-            img.style.height = '400px';
-            img.style.display = 'block';
-            img.style.position = 'absolute';
-            img.style.top = '50%';
-            img.style.left = '50%';
-            img.style.transform = 'translate(-50%, -50%)';
-            img.style.zIndex = '0'; 
-
-            img.onerror = function() {
-                console.error('Error loading eco bag image from:', this.src);
-                this.src = 'ecobag-outline.jpg';
-            };
-
-            shirtDropArea.insertBefore(img, designArea);
-        } else if (dropdown.value === 'sign') {
-            const img = document.createElement('img');
-            img.src = './LogoProducts/sign-outline.jpg'; 
-            img.alt = 'Sign Outline';
-            img.className = 'sign-img'; 
-            img.style.width = '450px';
-            img.style.height = '445px';
-            img.style.display = 'block'; 
-            img.style.position = 'absolute';
-            img.style.top = '55%';
-            img.style.left = '50%';
-            img.style.transform = 'translate(-50%, -50%)';
-            img.style.zIndex = '0'; 
-
-            img.onerror = function() {
-                console.error('Error loading sign image from:', this.src);
-                this.src = 'sign-outline.jpg';
-            };
-
-            shirtDropArea.insertBefore(img, designArea);
+        // Don't clear designArea - preserve user's design elements!
+        // Just hide/show the appropriate template images that are already in the HTML
+        
+        // Use the template images already defined in HTML instead of creating new ones
+        const signImg = document.getElementById('sign-image');
+        const shirtImg = document.getElementById('shirt-image');
+        const mugImg = document.getElementById('mug-image');
+        const ecobagImg = document.getElementById('ecobag-image');
+        
+        // Hide all templates first
+        if (signImg) signImg.style.display = 'none';
+        if (shirtImg) shirtImg.style.display = 'none';
+        if (mugImg) mugImg.style.display = 'none';
+        if (ecobagImg) ecobagImg.style.display = 'none';
+        
+        // Show only the selected template
+        if (dropdown.value === 'shirt' && shirtImg) {
+            shirtImg.style.display = 'block';
+        } else if (dropdown.value === 'mug' && mugImg) {
+            mugImg.style.display = 'block';
+        } else if (dropdown.value === 'ecobag' && ecobagImg) {
+            ecobagImg.style.display = 'block';
+        } else if (dropdown.value === 'sign' && signImg) {
+            signImg.style.display = 'block';
         }
+        
+        // Remove any old dynamically created template images (legacy cleanup)
+        const existingDynamicImages = shirtDropArea.querySelectorAll('.shirt-img, .mug-img, .ecobag-img, .sign-img');
+        existingDynamicImages.forEach(img => img.remove());
     }
 
     dropdown.addEventListener('change', updateDropArea);
 
     updateDropArea();
 
+    // DEPRECATED - Form submit handling is now done via Done Design button and modal
+    // This old code was causing issues with form elements triggering alerts
+    /*
     const customizeForm = document.querySelector('form.customize');
     if (customizeForm) {
         customizeForm.addEventListener('submit', function(e) {
             e.preventDefault();
 
             const productType = dropdown.value;
-            const customName = document.querySelector('.custom-name input').value;
-            const customImage = previewImage.src;
+            // Use the correct input id
+            const customName = (document.getElementById('custom-text') || {}).value || '';
 
-            if (!customImage || customImage.endsWith('#')) {
-                alert('Please upload an image for customization.');
+            // Allow form submission even if no preview image is present, as long as the design canvas has content
+            const designData = captureDesignData();
+            const hasDesignContent = (designData.images && designData.images.length > 0) || (designData.texts && designData.texts.length > 0);
+            const customImage = (previewImage && previewImage.src && !previewImage.src.endsWith('#')) ? previewImage.src : '';
+
+            if (!customImage && !hasDesignContent) {
+                alert('Please upload an image or create a design before adding to cart.');
                 return;
             }
 
@@ -418,7 +240,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 isCustom: true,
                 productType: productType,
                 customName: customName,
-                customImage: customImage
+                customImage: customImage,
+                designData: designData
             };
 
             if (typeof getCartItems === 'function' && typeof setCartItems === 'function') {
@@ -428,7 +251,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('Customized item added to cart!');
                 window.location.href = 'cart.html';
             } else {
-               
                 let items = JSON.parse(localStorage.getItem('cartItems') || '[]');
                 items.push(cartItem);
                 localStorage.setItem('cartItems', JSON.stringify(items));
@@ -437,9 +259,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+    */
 
 
-    const customNameInput = document.querySelector('.custom-name input');
+    const customNameInput = document.getElementById('custom-text');
     let customNameText = null;
 
     // Clear the custom name input on page load (prevent cached values)
@@ -853,14 +676,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Show helpful notification on first load
-    const hasSeenTutorial = localStorage.getItem('customizeTutorialSeen');
-    if (!hasSeenTutorial) {
-        setTimeout(() => {
-            alert('💡 Quick Tips:\n\n• Upload an image or add text to get started\n• Click elements to select them\n• Use keyboard shortcuts: Ctrl+Z (Undo), Ctrl+D (Duplicate)\n• Drag elements to position them\n• Use the sidebar tools to customize further!');
-            localStorage.setItem('customizeTutorialSeen', 'true');
-        }, 1000);
-    }
+    // Show helpful notification on first load - DISABLED
+    // const hasSeenTutorial = localStorage.getItem('customizeTutorialSeen');
+    // if (!hasSeenTutorial) {
+    //     setTimeout(() => {
+    //         alert('💡 Quick Tips:\n\n• Upload an image or add text to get started\n• Click elements to select them\n• Use keyboard shortcuts: Ctrl+Z (Undo), Ctrl+D (Duplicate)\n• Drag elements to position them\n• Use the sidebar tools to customize further!');
+    //         localStorage.setItem('customizeTutorialSeen', 'true');
+    //     }, 1000);
+    // }
 
 
     // Add Text Tool
@@ -1251,14 +1074,66 @@ document.addEventListener('DOMContentLoaded', function() {
         element.style.transform = `translate(${x}px, ${y}px) scale(${scaleX}, ${scaleY}) rotate(${rotation}deg)`;
     }
 
-    // ====== END NEW TOOLS ======
+    // --- Professional Logo/Icons ---
+    // Add icon from library
+    document.querySelectorAll('.icon-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const icon = this.dataset.icon;
+            if (!icon || !shirtDropArea) return;
+            const iconDiv = document.createElement('div');
+            iconDiv.className = 'draggable-element icon-element';
+            iconDiv.style.position = 'absolute';
+            iconDiv.style.left = '50px';
+            iconDiv.style.top = '50px';
+            iconDiv.style.fontSize = '48px';
+            iconDiv.style.color = '#FFD700';
+            iconDiv.innerHTML = `<i class="fas ${icon}"></i>`;
+            iconDiv.dataset.x = 50;
+            iconDiv.dataset.y = 50;
+            shirtDropArea.appendChild(iconDiv);
+            if (typeof makeShapeInteractive === 'function') {
+                makeShapeInteractive(iconDiv);
+            } else if (typeof makeTextInteractive === 'function') {
+                makeTextInteractive(iconDiv);
+            }
+            selectElement(iconDiv);
+            saveState && saveState();
+        });
+    });
+
+    // Logo upload
+    const logoUpload = document.getElementById('logo-upload');
+    if (logoUpload) {
+        logoUpload.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const img = document.createElement('img');
+                img.src = evt.target.result;
+                img.className = 'resizable-image draggable-element';
+                img.style.position = 'absolute';
+                img.style.left = '50px';
+                img.style.top = '50px';
+                img.style.width = '120px';
+                img.style.height = '120px';
+                img.dataset.x = 50;
+                img.dataset.y = 50;
+                shirtDropArea.appendChild(img);
+                makeImageInteractive && makeImageInteractive(img);
+                selectElement && selectElement(img);
+                saveState && saveState();
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+    // --- End Professional Logo/Icons ---
 
     // ====== DONE DESIGN BUTTON & SIZE MODAL FUNCTIONALITY ======
     const doneDesignBtn = document.getElementById('done-design-btn');
-    const sizeModal = document.getElementById('size-modal');
-    const closeSizeModal = document.getElementById('close-size-modal');
-    const cancelSizeBtn = document.getElementById('cancel-size-btn');
-    const confirmSizeBtn = document.getElementById('confirm-size-btn');
+    const sizeModal = document.getElementById('size-qty-modal');
+    const cancelSizeBtn = document.querySelector('.cancel-action');
+    const confirmSizeBtn = document.querySelector('.confirm-action');
 
     // Function to check if design has content
     function checkDesignContent() {
@@ -1411,12 +1286,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Open modal on Done Design click
-    if (doneDesignBtn) {
-        doneDesignBtn.addEventListener('click', function() {
-            sizeModal.classList.add('active');
-        });
-    }
+    // REMOVED DUPLICATE - Open modal on Done Design click is already handled above (line 1371)
+    // if (doneDesignBtn) {
+    //     doneDesignBtn.addEventListener('click', function() {
+    //         sizeModal.classList.add('active');
+    //     });
+    // }
 
     // Close modal functions
     function closeSizeModalFunc() {
@@ -1490,15 +1365,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 : 'BGDS.jpg';
 
             // Add each size as a separate cart item
-            const cartItems = getCartItems();
-            
+            let cartItems = getCartItems();
+
+            // If editing an existing custom item, remove the original item(s) by id so we replace them
+            if (editingContext && editingContext.item && editingContext.item.id) {
+                cartItems = cartItems.filter(ci => String(ci.id) !== String(editingContext.item.id));
+            }
+
             sizeData.forEach(sizeInfo => {
                 const item = {
                     id: Date.now() + Math.random(),
                     name: `${productName} - Size ${sizeInfo.size}`,
                     productType: productType,
                     qty: sizeInfo.quantity,
-                    price: 25.00, // Base price
+                    price: 25.00, // Base price (could be improved by product type)
                     size: sizeInfo.size,
                     color: sizeInfo.color,
                     image: thumbnailImage,  // Add thumbnail image
@@ -1512,18 +1392,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
             setCartItems(cartItems);
             console.log('Cart updated. Total items:', cartItems.length);
-            
+
+            // If we were editing, clear the editing marker so future opens start fresh
+            if (editingContext) {
+                try { localStorage.removeItem('editingCustomItem'); } catch(e){}
+                editingContext = null;
+            }
+
             // Close modal and show success
             closeSizeModalFunc();
             alert(`Successfully added ${sizeData.length} item(s) to cart!`);
-            
+
             // Optional: redirect to cart
             setTimeout(() => {
                 window.location.href = 'cart.html';
             }, 500);
         });
-    }
-});
+
 
 
 function getCartItems() {
@@ -1536,4 +1421,29 @@ function setCartItems(items) {
   localStorage.setItem('cartCount', String(count));
   window.dispatchEvent(new CustomEvent('cart:updated', { detail: { count, items } }));
 }
+
+// Restore file upload logic for logo/image
+const fileInput = document.getElementById('file-input');
+if (fileInput) {
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file && file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const img = document.createElement('img');
+                img.src = evt.target.result;
+                img.className = 'resizable-image';
+                img.style.width = '120px';
+                img.style.height = '120px';
+                img.style.position = 'absolute';
+                img.style.left = '50px';
+                img.style.top = '50px';
+                // Insert into design area
+                const designArea = document.querySelector('.design-area');
+                if (designArea) {
+                    designArea.appendChild(img);
+                    if (typeof makeImageInteractive === 'function') {
+                        makeImageInteractive(img);
+                    }
+                }
 
