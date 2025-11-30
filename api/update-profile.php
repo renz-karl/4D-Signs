@@ -203,17 +203,13 @@ if ($pp && strpos($pp, 'http') !== 0 && strpos($pp, '/') !== 0) {
 }
 $_SESSION['username'] = $updated['username'];
 $_SESSION['phone'] = $updated['phone'];
-// Keep both keys set for backwards and forwards compatibility
 $_SESSION['profile_pic'] = $pp ?: ($_SESSION['profile_pic'] ?? '');
-$_SESSION['profile_pic_path'] = $pp ?: ($_SESSION['profile_pic_path'] ?? $_SESSION['profile_pic'] ?? '');
 $_SESSION['created_at'] = isset($updated['created_at']) ? $updated['created_at'] : $_SESSION['created_at'] ?? null;
 $_SESSION['loggedInAt'] = $_SESSION['created_at'] ?? $_SESSION['loggedInAt'] ?? null;
 
 $response['success'] = true;
 $updated['profile_pic_path'] = $pp;
 $response['session_user'] = $updated;
-// Debug log: successful update
-error_log("[UPDATE-PROFILE] user={$userId} profile_pic_path={$pp}\n", 3, __DIR__ . '/../notifications.log');
 echo json_encode($response);
 exit();
 ?>

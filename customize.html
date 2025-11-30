@@ -269,15 +269,21 @@
         .size-row { flex-wrap: wrap; gap: 12px; }
         .qty-controls { width: 100%; justify-content: center; }
     }
-    .template-img {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%;
-      height: 100%;
-      opacity: 0.25;
-      pointer-events: none;
-      z-index: 1;
-    }
+        .template-img {
+            /* Center and scale templates inside the design canvas */
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: auto;
+            height: 80%;
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+            opacity: 0.25;
+            pointer-events: none;
+            z-index: 1;
+        }
     </style>
 </head>
 <body>
@@ -538,12 +544,12 @@
                                      class="sign-preview product-template-image" 
                                      style="display:none; width:100%; height:auto; max-width:720px; margin:0 auto; pointer-events:none; user-select:none;"
                                      draggable="false"/>
-                                <img id="shirt-image"
-                                     src="LogoProducts/shirt-outline.jpg"
-                                     alt="T-Shirt Preview" 
-                                     class="shirt-preview product-template-image" 
-                                     style="display:block; width:200%; height:auto; max-width:none; margin:0 auto; pointer-events:none; user-select:none; object-fit:contain;"
-                                     draggable="false"/>
+                          <img id="shirt-image"
+                              src="LogoProducts/shirt-outline.jpg"
+                              alt="T-Shirt Preview" 
+                              class="shirt-preview product-template-image" 
+                              style="display:block; width:auto; height:auto; max-width:600px; margin:0 auto; pointer-events:none; user-select:none; object-fit:contain;"
+                              draggable="false"/>
                                 <img id="mug-image"
                                      src="LogoProducts/mug-outline.jpg"
                                      alt="Mug Preview" 
@@ -899,6 +905,19 @@
                 if (imageId) {
                     const img = document.getElementById(imageId);
                     if (img) img.style.display = 'block';
+                }
+                // Also toggle template overlay images - only show the template for the selected product type
+                const allTemplates = document.querySelectorAll('.template-img');
+                allTemplates.forEach(t => t.style.display = 'none');
+                const templateMap = {
+                    'shirt': 'shirt-template',
+                    'mug': 'mug-template',
+                    'sign': 'sign-template'
+                };
+                const templateId = templateMap[selectedType];
+                if (templateId) {
+                    const tmpl = document.getElementById(templateId);
+                    if (tmpl) tmpl.style.display = 'block';
                 }
             }
         });

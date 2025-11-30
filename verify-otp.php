@@ -140,20 +140,6 @@ if ($isPending) {
 $_SESSION['user_id'] = $id;
 $_SESSION['username'] = $username;
 $_SESSION['email'] = $email;
-// Try to fetch the user's profile picture (if any) and set both session keys
-$ppStmt = $conn->prepare('SELECT profile_pic_path, profile_pic FROM users WHERE id = ? LIMIT 1');
-$ppStmt->bind_param('i', $id);
-$ppStmt->execute();
-$ppRes = $ppStmt->get_result();
-if ($ppRes && ($ppRow = $ppRes->fetch_assoc())) {
-    $ppath = $ppRow['profile_pic_path'] ?: $ppRow['profile_pic'] ?: '';
-    if ($ppath && strpos($ppath, 'http') !== 0 && strpos($ppath, '/') !== 0) $ppath = '/4D-Signs/' . ltrim($ppath, '/\\');
-    if ($ppath) {
-        $_SESSION['profile_pic'] = $ppath;
-        $_SESSION['profile_pic_path'] = $ppath;
-    }
-}
-if ($ppStmt) $ppStmt->close();
 header('Location: 4Dsigns.php');
 exit();
 ?>

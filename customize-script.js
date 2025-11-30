@@ -165,25 +165,35 @@
 
     function updateDropArea() {
         console.log('Dropdown value:', dropdown.value);
-
-        const signImg = document.getElementById('sign-image');
-        const shirtImg = document.getElementById('shirt-image');
-        const mugImg = document.getElementById('mug-image');
-        const ecobagImg = document.getElementById('ecobag-image');
-        
-        if (signImg) signImg.style.display = 'none';
-        if (shirtImg) shirtImg.style.display = 'none';
-        if (mugImg) mugImg.style.display = 'none';
-        if (ecobagImg) ecobagImg.style.display = 'none';
-        
-        if (dropdown.value === 'shirt' && shirtImg) {
-            shirtImg.style.display = 'block';
-        } else if (dropdown.value === 'mug' && mugImg) {
-            mugImg.style.display = 'block';
-        } else if (dropdown.value === 'ecobag' && ecobagImg) {
-            ecobagImg.style.display = 'block';
-        } else if (dropdown.value === 'sign' && signImg) {
-            signImg.style.display = 'block';
+        // Hide all base product images and only show the selected product
+        const allImages = document.querySelectorAll('.product-template-image');
+        allImages.forEach(img => img.style.display = 'none');
+        const imageMap = {
+            'shirt': 'shirt-image',
+            'mug': 'mug-image',
+            'ecobag': 'ecobag-image',
+            'key-chain': 'key-chain-image',
+            'ref-magnet': 'ref-magnet-image',
+            'sticker': 'sticker-image',
+            'sign': 'sign-image'
+        };
+        const imageId = imageMap[dropdown.value];
+        if (imageId) {
+            const img = document.getElementById(imageId);
+            if (img) img.style.display = 'block';
+        }
+        // Toggle the template overlay images to match selected product type
+        const allTemplates = document.querySelectorAll('.template-img');
+        allTemplates.forEach(t => t.style.display = 'none');
+        const templateMap = {
+            'shirt': 'shirt-template',
+            'mug': 'mug-template',
+            'sign': 'sign-template'
+        };
+        const templateId = templateMap[dropdown.value];
+        if (templateId) {
+            const tmpl = document.getElementById(templateId);
+            if (tmpl) tmpl.style.display = 'block';
         }
         
         const existingDynamicImages = shirtDropArea.querySelectorAll('.shirt-img, .mug-img, .ecobag-img, .sign-img');
@@ -455,64 +465,50 @@
             img.classList.contains('ecobag-preview')) {
             return;
         }
-        
-        interact(img)
-            .draggable({
-                inertia: true,
-                modifiers: [
-                    interact.modifiers.restrictRect({
-                        restriction: shirtDropArea,
-                        endOnly: true
-                    })
-                ],
-                listeners: {
-                    move: dragMoveListener,
-                    end: () => saveState()
-                }
-            })
-            .resizable({
-                edges: { left: true, right: true, bottom: true, top: true },
-                preserveAspectRatio: true,
-                inertia: true,
-                modifiers: [
-                    interact.modifiers.restrictEdges({
-                        outer: shirtDropArea
-                    }),
-                    interact.modifiers.restrictSize({
-                        min: { width: 50, height: 50 }
-                    })
-                },
-                listeners: {
-                    move: resizeListener,
-                    end: () => saveState()
-                }
-            });
 
-        img.addEventListener('click', (e) => {
+        img.addEventListener('click', function(e) {
             e.stopPropagation();
             selectElement(img);
         });
-    }}
+    }
 
     function makeTextInteractive(txt) {
-        interact(txt).draggable({
-            listeners: { 
-                move: dragMoveListener,
-                end: () => saveState()
-            },
-            inertia: true,
-            modifiers: [
-                interact.modifiers.restrictRect({
-                    restriction: shirtDropArea,
-                    endOnly: true
+        // Put back drag & resize for text using interact.js
+        try {
+            interact(txt)
+                .draggable({
+                    inertia: true,
+                    modifiers: [
+                        interact.modifiers.restrictRect({
+                            restriction: shirtDropArea,
+                            endOnly: true
+                        })
+                    ],
+                    listeners: {
+                        move: dragMoveListener,
+                        end: function() { saveState(); }
+                    }
                 })
-            ]
-        });
-
-        txt.addEventListener('click', (e) => {
-            e.stopPropagation();
-            selectElement(txt);
-        });
+                .resizable({
+                    edges: { left: true, right: true, bottom: true, top: true },
+                    preserveAspectRatio: false,
+                    inertia: true,
+                    modifiers: [
+                        interact.modifiers.restrictEdges({ outer: shirtDropArea }),
+                        interact.modifiers.restrictSize({ min: { width: 30, height: 20 } })
+                    ],
+                    listeners: {
+                        move: resizeTextListener,
+                        end: function() { saveState(); }
+                    }
+                });
+        } catch (err) {
+            // If Interact.js isn't available or throws, fall back to simple click handler
+            txt.addEventListener('click', function(e) {
+                e.stopPropagation();
+                selectElement(txt);
+            });
+        }
     }
 
     function dragMoveListener(event) {
