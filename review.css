@@ -56,6 +56,30 @@ body {
     transition: all 0.3s ease;
 }
 
+/* Cancel ribbon */
+.order-card { position: relative; }
+.order-cancel-ribbon {
+    position: absolute;
+    top: 12px;
+    right: -50px;
+    transform: rotate(45deg);
+    background: linear-gradient(90deg,#ff6b6b,#ff4757);
+    color: #fff;
+    /* increase left padding so the first letter isn't cut off */
+    padding: 6px 70px 6px 100px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    font-size: 0.85rem;
+    box-shadow: 0 8px 24px rgba(255,75,85,0.12);
+    border-radius: 4px;
+    z-index: 5;
+    transform-origin: center;
+}
+
+@media (max-width: 768px) {
+    .order-cancel-ribbon { right: -28px; padding: 6px 50px 6px 68px; font-size:0.8rem; }
+}
+
 .order-card:hover {
     transform: translateY(-3px);
     box-shadow: 0 8px 24px rgba(255, 215, 0, 0.2);
@@ -116,6 +140,12 @@ body {
     background: rgba(255, 152, 0, 0.2);
     color: #ff9800;
     border: 1px solid rgba(255, 152, 0, 0.4);
+}
+
+.status-cancelled {
+    background: linear-gradient(90deg, rgba(255,107,107,0.12), rgba(255,71,87,0.12));
+    color: #ff6b6b;
+    border: 1px solid rgba(255,107,107,0.2);
 }
 
 .status-delivered,
@@ -378,6 +408,51 @@ body {
     background: rgba(255, 215, 0, 0.2);
 }
 
+/* Cancel modal close button */
+.close-cancel {
+    position: absolute;
+    right: 1.2rem;
+    top: 1.2rem;
+    font-size: 1.6rem;
+    cursor: pointer;
+    color: #ffd700;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255, 215, 0, 0.08);
+}
+.close-cancel:hover { transform: rotate(90deg); background: rgba(255,215,0,0.16); color:#fff; }
+
+/* Cancel modal radios */
+#cancel-modal label { cursor: pointer; }
+#cancel-modal input[type="radio"] { margin-right: 0.6rem; accent-color: #ffd700; }
+
+/* Cancel modal polished layout */
+.cancel-modal .modal-content {
+    max-width: 560px;
+    padding: 1.6rem 1.6rem;
+}
+.cancel-header { display:flex; gap:14px; align-items:center; margin-bottom:10px; }
+.cancel-icon { width:56px; height:56px; border-radius:12px; display:flex; align-items:center; justify-content:center; background: linear-gradient(135deg,#ff9a9e,#ff6b6b); color:#fff; font-size:22px; box-shadow: 0 8px 24px rgba(255,75,85,0.12); }
+.cancel-desc { color: rgba(255,255,255,0.85); margin:0; font-size:0.95rem; }
+.cancel-options { display:flex; flex-direction:column; gap:8px; margin-top:6px; }
+.cancel-option { display:flex; align-items:center; gap:12px; padding:10px; border-radius:10px; border:1px solid rgba(255,255,255,0.03); background: rgba(255,255,255,0.02); transition: all 0.16s ease; }
+.cancel-option:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,0.45); }
+.cancel-option input[type="radio"] { width:18px; height:18px; }
+.opt-icon { width:40px; height:40px; border-radius:8px; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.03); color:#ffd700; border:1px solid rgba(255,215,0,0.06); }
+.opt-text { color:#fff; font-weight:600; }
+.cancel-option.selected { background: linear-gradient(90deg, rgba(255,215,0,0.06), rgba(255,215,0,0.03)); border-color: rgba(255,215,0,0.12); box-shadow: 0 12px 36px rgba(255,215,0,0.04); }
+
+#cancel-other { width:100%; min-height:90px; margin-top:8px; padding:12px; border-radius:10px; border:1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.02); color:#fff; display:none; }
+#cancel-other:focus { outline:none; box-shadow: 0 8px 30px rgba(255,215,0,0.06); border-color:#ffd700; }
+
+.cancel-actions { display:flex; gap:0.6rem; justify-content:flex-end; margin-top:8px; }
+.cancel-modal .cancel-btn { padding:0.8rem 1.1rem; border-radius:10px; }
+.cancel-modal .track-btn { padding:0.7rem 1.1rem; border-radius:10px; }
+
 .modal-content h2 {
     color: #ffd700;
     text-align: center;
@@ -563,6 +638,29 @@ body {
     margin: 0.5rem 0;
     font-size: 0.95rem;
 }
+
+/* Cancellation info panel */
+.cancel-info-panel {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.45);
+    border: 1px solid rgba(255,255,255,0.04);
+    background: linear-gradient(180deg, rgba(127,29,29,0.95), rgba(86,20,20,0.9));
+    padding: 12px;
+    margin-bottom: 16px;
+}
+.cancel-info-header { display:flex; gap:12px; align-items:center; }
+.cancel-icon { width:52px; height:52px; border-radius:10px; display:flex; align-items:center; justify-content:center; background: linear-gradient(135deg,#ff9a9e,#ff6b6b); color:#fff; font-size:20px; box-shadow: 0 6px 18px rgba(255,75,85,0.18); border: 1px solid rgba(255,255,255,0.06); }
+.cancel-meta h4 { color:#fff; margin:0; font-size:1.05rem; }
+.cancel-sub { color: rgba(255,255,255,0.75); font-size:0.9rem; margin-top:4px; }
+.cancel-info-body { margin-top:10px; padding-top:8px; border-top:1px dashed rgba(255,255,255,0.06); color:#fff; }
+.cancel-reason { margin-bottom:6px; color: #ffecec; }
+.cancel-refund { margin-top:6px; color:#ffdede; font-weight:600; }
+
+/* Make cancelled timeline step stronger */
+.tracking-step.cancelled .tracking-icon { background: linear-gradient(135deg,#ff9a9e,#ff6b6b); color: #fff; border-color: #ff6b6b; box-shadow: 0 6px 18px rgba(255,75,85,0.18); }
+.tracking-step.cancelled .tracking-content h4 { color:#ffb6b6; }
+.tracking-step.cancelled .tracking-content p { color: rgba(255,200,200,0.9); }
 
 .tracking-order-info strong {
     color: #ffd700;

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Settings - 4D Signs</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header class="main-header">
+        <div class="header-content">
+            <div class="left-section">
+                <div class="profile-dropdown">
+                    <button class="profile-btn" id="profile-btn"><img src="https://via.placeholder.com/32x32/FFD700/28263A?text=U" alt="Profile" class="profile-img"></button>
+                    <div class="dropdown-menu" id="dropdown-menu">
+                        <a href="contact.html"><i class="fas fa-envelope"></i>Contact</a>
+                        <a href="account-settings.html"><i class="fas fa-cog"></i>Settings</a>
+                        <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i>Logout</a>
+                    </div>
+                </div>
+                <a href="Homepage.html" class="logo">4D Signs</a>
+            </div>
+            <nav class="nav-bar">
+                <a href="4Dsigns.html" class="nav-link"><i class="fas fa-home"></i> Home</a>
+                <a href="customize.html" class="nav-link"><i class="fas fa-palette"></i> Customize</a>
+                <a href="review.html" class="nav-link"><i class="fas fa-star"></i> <span>Orders/Reviews</span></a>
+                <a href="cart.html" class="nav-link" title="Cart"><i class="fas fa-shopping-cart"></i></a>
+                <a href="contact.html" class="nav-link" title="Contact"><i class="fas fa-envelope"></i></a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="account-settings-section">
+            <div class="container">
+                <div class="settings-header">
+                    <h1><i class="fas fa-user-cog"></i> Account Settings</h1>
+                    <p>Manage your account information and preferences</p>
+                </div>
+
+                <div class="settings-content">
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-user"></i> Account Information</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="account-info">
+                                <div class="info-item">
+                                    <label>Username:</label>
+                                    <span id="current-username">johndoe</span>
+                                </div>
+                                <div class="info-item">
+                                    <label>Email:</label>
+                                    <span id="current-email">john.doe@example.com</span>
+                                </div>
+                                <div class="info-item">
+                                    <label>Member Since:</label>
+                                    <span id="member-since">January 2024</span>
+                                </div>
+                                <div class="info-item">
+                                    <label>Account Status:</label>
+                                    <span class="status-active">Active</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-edit"></i> Update Account Details</h2>
+                        </div>
+                        <div class="card-body">
+                            <form id="account-form" class="settings-form">
+                                <div class="form-group">
+                                    <label for="new-username">New Username:</label>
+                                    <input type="text" id="new-username" name="username" placeholder="Enter new username">
+                                    <small>Leave blank to keep current username</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="current-password">Current Password:</label>
+                                    <input type="password" id="current-password" name="current_password" placeholder="Enter current password" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="new-password">New Password:</label>
+                                    <input type="password" id="new-password" name="new_password" placeholder="Enter new password">
+                                    <small>Leave blank to keep current password</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="confirm-password">Confirm New Password:</label>
+                                    <input type="password" id="confirm-password" name="confirm_password" placeholder="Confirm new password">
+                                </div>
+
+                                <div class="form-actions">
+                                    <button type="submit" class="btn-primary">Update Account</button>
+                                    <button type="button" class="btn-secondary" onclick="resetForm()">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="settings-card danger-zone">
+                        <div class="card-header">
+                            <h2><i class="fas fa-exclamation-triangle"></i> Danger Zone</h2>
+                        </div>
+                        <div class="card-body">
+                            <p>Once you delete your account, there is no going back. Please be certain.</p>
+                            <button class="btn-danger" onclick="confirmDeleteAccount()">
+                                <i class="fas fa-trash"></i> Delete Account
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-wrap">
+            <div class="footer-col brand">
+                <h3>4D signs</h3>
+                <p>Your vision, our signs. Premium custom signage and souvenirs.</p>
+                <div class="footer-social">
+                    <a href="https://www.facebook.com/FourDsigns" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+            <nav class="footer-col links" aria-label="Footer navigation">
+                <h4>Explore</h4>
+                <ul>
+                    <li><a href="Homepage.html">Home</a></li>
+                    <li><a href="customize.html">Customize</a></li>
+                    <li><a href="review.html"><span>Orders/Reviews</span></a></li>
+                    <li><a href="cart.html">Cart</a></li>
+                </ul>
+            </nav>
+            <div class="footer-col contact">
+                <h4>Contact</h4>
+                <ul>
+                    <li><i class="fa fa-map-marker-alt"></i> 352 Zone 4 Tangos, Baliuag, Philippines, 3006</li>
+                    <li><i class="fa fa-envelope"></i>cheriz20domingo@gmail.com</li>
+                    <li><i class="fa fa-phone"></i> +63 917 582 5483</li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© <span id="footer-year"></span> 4D signs · All rights reserved</p>
+        </div>
+    </footer>
+
+    <script>
+// Profile dropdown functionality
+document.getElementById('profile-btn').addEventListener('click', function(e) {
+    e.stopPropagation();
+    const menu = document.getElementById('dropdown-menu');
+    menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+});
+
+window.addEventListener('click', function(e) {
+    if (!e.target.closest('.profile-dropdown')) {
+        document.getElementById('dropdown-menu').style.display = 'none';
+    }
+});
+
+function logout() {
+    localStorage.removeItem('loggedInUser');
+    alert('You have been logged out.');
+    window.location.href = 'login.html';
+}
+
+// Account settings functionality
+document.getElementById('account-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const loggedInUser = JSON.parse(localStorage.getItem('loggedInUser') || 'null');
+    if (!loggedInUser) {
+        alert('Session expired. Please login again.');
+        window.location.href = 'login.html';
+        return;
+    }
+
+    const newUsername = document.getElementById('new-username').value.trim();
+    const currentPassword = document.getElementById('current-password').value;
+    const newPassword = document.getElementById('new-password').value;
+    const confirmPassword = document.getElementById('confirm-password').value;
+
+    // Basic validation
+    if (!currentPassword) {
+        alert('Please enter your current password.');
+        return;
+    }
+
+    if (newPassword && newPassword !== confirmPassword) {
+        alert('New passwords do not match.');
+        return;
+    }
+
+    // Get all users and find current user
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    const userIndex = users.findIndex(u => u.id === loggedInUser.id);
+
+    if (userIndex === -1) {
+        alert('User not found. Please login again.');
+        window.location.href = 'login.html';
+        return;
+    }
+
+    const user = users[userIndex];
+
+    // Verify current password
+    if (user.password !== currentPassword) {
+        alert('Current password is incorrect.');
+        return;
+    }
+
+    // Check if new username is already taken (if provided)
+    if (newUsername && newUsername !== user.username) {
+        const usernameExists = users.some(u => u.username === newUsername && u.id !== user.id);
+        if (usernameExists) {
+            alert('Username already exists. Please choose a different username.');
+            return;
+        }
+        user.username = newUsername;
+    }
+
+    // Update password if provided
+    if (newPassword) {
+        if (newPassword.length < 6) {
+            alert('New password must be at least 6 characters long.');
+            return;
+        }
+        user.password = newPassword;
+    }
+
+    // Save updated user data
+    users[userIndex] = user;
+    localStorage.setItem('users', JSON.stringify(users));
+
+    // Update logged in user data
+    const updatedLoggedInUser = {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        loggedInAt: loggedInUser.loggedInAt
+    };
+    localStorage.setItem('loggedInUser', JSON.stringify(updatedLoggedInUser));
+
+    // Update display
+    document.getElementById('current-username').textContent = user.username;
+
+    alert('Account settings updated successfully!');
+    resetForm();
+});
+
+function resetForm() {
+    document.getElementById('account-form').reset();
+}
+
+function confirmDeleteAccount() {
+    if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+        if (confirm('This will permanently delete your account and all associated data. Are you absolutely sure?')) {
+            const loggedInUser = JSON.parse(localStorage.getItem('loggedInUser') || 'null');
+            if (!loggedInUser) {
+                alert('Session expired.');
+                return;
+            }
+
+            // Remove user from users array
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            const updatedUsers = users.filter(u => u.id !== loggedInUser.id);
+            localStorage.setItem('users', JSON.stringify(updatedUsers));
+
+            // Clear logged in user data
+            localStorage.removeItem('loggedInUser');
+
+            alert('Account deleted successfully.');
+            window.location.href = 'login.html';
+        }
+    }
+}
+
+// Load saved username on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const loggedInUser = JSON.parse(localStorage.getItem('loggedInUser') || 'null');
+
+    if (!loggedInUser) {
+        alert('Please login first to access account settings.');
+        window.location.href = 'login.html';
+        return;
+    }
+
+    // Update profile button with user's initials
+    const profileImg = document.querySelector('.profile-img');
+    if (profileImg && loggedInUser.username) {
+        const initials = loggedInUser.username.charAt(0).toUpperCase();
+        profileImg.src = `https://via.placeholder.com/32x32/FFD700/28263A?text=${initials}`;
+        profileImg.alt = `${loggedInUser.username}'s profile`;
+    }
+
+    // Display real user information
+    document.getElementById('current-username').textContent = loggedInUser.username;
+    document.getElementById('current-email').textContent = loggedInUser.email;
+
+    // Format the member since date
+    const createdDate = new Date(loggedInUser.loggedInAt);
+    const memberSince = createdDate.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long'
+    });
+    document.getElementById('member-since').textContent = memberSince;
+
+    document.getElementById('footer-year').textContent = new Date().getFullYear();
+});
+    </script>
+</body>
+</html>

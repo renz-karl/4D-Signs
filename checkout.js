@@ -97,9 +97,29 @@ function updatePaymentOptions() {
     }
 
     // Show GCash details if GCash is selected
-    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
-    if (paymentMethod === 'gcash') {
+    const paymentMethod1 = document.querySelector('input[name="paymentMethod"]:checked').value;
+    const downpaymentRow1 = document.getElementById('downpayment-row');
+    const gcashDownSection = document.getElementById('gcash-downpayment-section');
+    if (paymentMethod1 === 'gcash') {
         gcashDetails.style.display = 'block';
+        downpaymentRow1.style.display = 'flex';
+        gcashDownSection.style.display = 'block';
+    } else {
+        gcashDetails.style.display = 'none';
+        downpaymentRow1.style.display = 'none';
+        gcashDownSection.style.display = 'none';
+    }
+    // Calculate and show downpayment if GCash is selected
+    const paymentMethod2 = document.querySelector('input[name="paymentMethod"]:checked')?.value;
+    const downpaymentRow2 = document.getElementById('downpayment-row');
+    const downpaymentSpan = document.getElementById('downpayment');
+    const total = parseFloat(document.getElementById('total').textContent.replace('₱','').replace(/,/g,'')) || 0;
+    if (paymentMethod2 === 'gcash') {
+        const down = Math.round(total * 0.3);
+        downpaymentSpan.textContent = `₱${down.toLocaleString('en-PH', {minimumFractionDigits:2})}`;
+        downpaymentRow2.style.display = 'flex';
+    } else {
+        downpaymentRow2.style.display = 'none';
     }
 }
 
@@ -150,6 +170,16 @@ document.addEventListener('DOMContentLoaded', function() {
     // Place order button handler
     const placeOrderBtn = document.querySelector('.place-order-btn');
     placeOrderBtn.addEventListener('click', function() {
+        // If GCash, require reference number
+        const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+        if (paymentMethod === 'gcash') {
+            const ref = document.getElementById('gcash-ref').value.trim();
+            if (!ref) {
+                alert('Please enter your GCash reference number for downpayment.');
+                document.getElementById('gcash-ref').focus();
+                return;
+            }
+        }
         if (validateOrder()) {
             placeOrder();
         }

@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const dropdown = document.querySelector('.custom-select-dropdown');
     const shirtDropArea = document.getElementById('shirtDropArea');
     const designArea = document.querySelector('.design-area');
+    const previewImage = document.getElementById('preview-image');
     // If we're editing an existing custom cart item, keep context here so we can update it on save
     let editingContext = null;
 
@@ -171,7 +172,11 @@ document.addEventListener('DOMContentLoaded', function() {
             // If image is already cached and complete, place immediately
             if (designImage.complete) {
                 placeImage();
+            } else {
+                designImage.onload = placeImage;
             }
+        }
+    });
 
     function updateDropArea() {
         console.log('Dropdown value:', dropdown.value);
@@ -582,6 +587,41 @@ document.addEventListener('DOMContentLoaded', function() {
             e.stopPropagation();
             selectElement(txt);
         });
+    }
+
+    // Utility listeners for interact.js
+    function dragMoveListener(event) {
+        const target = event.target;
+        let x = parseFloat(target.dataset.x || 0) + event.dx;
+        let y = parseFloat(target.dataset.y || 0) + event.dy;
+        target.dataset.x = x;
+        target.dataset.y = y;
+        const rotation = (function() {
+            const t = target.style.transform || '';
+            const m = t.match(/rotate\((-?\d+)deg\)/);
+            return m ? parseInt(m[1], 10) : 0;
+        })();
+        const scaleX = target.dataset.scaleX || 1;
+        const scaleY = target.dataset.scaleY || 1;
+        target.style.transform = `translate(${x}px, ${y}px) scale(${scaleX}, ${scaleY}) rotate(${rotation}deg)`;
+    }
+
+    function resizeListener(event) {
+        const target = event.target;
+        let x = parseFloat(target.dataset.x || 0) + event.deltaRect.left;
+        let y = parseFloat(target.dataset.y || 0) + event.deltaRect.top;
+        target.style.width = `${event.rect.width}px`;
+        target.style.height = `${event.rect.height}px`;
+        target.dataset.x = x;
+        target.dataset.y = y;
+        const rotation = (function() {
+            const t = target.style.transform || '';
+            const m = t.match(/rotate\((-?\d+)deg\)/);
+            return m ? parseInt(m[1], 10) : 0;
+        })();
+        const scaleX = target.dataset.scaleX || 1;
+        const scaleY = target.dataset.scaleY || 1;
+        target.style.transform = `translate(${x}px, ${y}px) scale(${scaleX}, ${scaleY}) rotate(${rotation}deg)`;
     }
 
     // Duplicate selected element
@@ -1329,7 +1369,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Confirm and add to cart
-    if (confirmSizeBtn) {
+    if (confirmSizeBtn && typeof confirmAddToCart !== 'function') {
         confirmSizeBtn.addEventListener('click', function() {
             // Collect size data
             const sizeData = [];
@@ -1422,28 +1462,112 @@ function setCartItems(items) {
   window.dispatchEvent(new CustomEvent('cart:updated', { detail: { count, items } }));
 }
 
-// Restore file upload logic for logo/image
-const fileInput = document.getElementById('file-input');
-if (fileInput) {
-    fileInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file && file.type.startsWith('image/')) {
+    // Restore file upload logic for right panel preview and auto-insert to canvas
+    const fileInput = document.getElementById('file-input');
+    const dropZone = document.getElementById('drop-zone');
+    const uploadIcon = document.getElementById('upload-icon');
+    const dropText = document.getElementById('drop-text');
+
+    if (fileInput && previewImage) {
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file || !file.type || !file.type.startsWith('image/')) return;
             const reader = new FileReader();
             reader.onload = function(evt) {
+                // Show preview on the right panel
+                previewImage.src = evt.target.result;
+                previewImage.style.display = 'block';
+                uploadIcon.style.display = 'none';
+                dropText.textContent = 'Image ready! Drag to canvas or drop another.';
+                
+                // Also auto-insert into the canvas at a default position
                 const img = document.createElement('img');
                 img.src = evt.target.result;
                 img.className = 'resizable-image';
-                img.style.width = '120px';
-                img.style.height = '120px';
+                img.style.width = '150px';
+                img.style.height = 'auto';
                 img.style.position = 'absolute';
-                img.style.left = '50px';
-                img.style.top = '50px';
-                // Insert into design area
-                const designArea = document.querySelector('.design-area');
-                if (designArea) {
-                    designArea.appendChild(img);
-                    if (typeof makeImageInteractive === 'function') {
-                        makeImageInteractive(img);
-                    }
+                // place roughly in the center of the drop area
+                const rect = shirtDropArea.getBoundingClientRect();
+                const x = Math.max(0, rect.width/2 - 75); // center minus half width
+                const y = Math.max(0, rect.height/2 - 75);
+                img.dataset.x = x;
+                img.dataset.y = y;
+                img.style.transform = `translate(${x}px, ${y}px)`;
+                shirtDropArea.insertBefore(img, designArea);
+                if (typeof makeImageInteractive === 'function') {
+                    makeImageInteractive(img);
                 }
+                updateContentClass();
+                selectElement && selectElement(img);
+                saveState && saveState();
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // Add drag and drop handlers to the upload panel drop zone
+    if (dropZone) {
+        dropZone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('drag-over');
+            dropText.textContent = 'Drop image here';
+            uploadIcon.style.color = '#FFD700';
+        });
+
+        dropZone.addEventListener('dragleave', function(e) {
+            this.classList.remove('drag-over');
+            dropText.textContent = 'Drop image here';
+            uploadIcon.style.color = '';
+        });
+
+        dropZone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+            dropText.textContent = 'Drop image here';
+            uploadIcon.style.color = '';
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.type && file.type.startsWith('image/')) {
+                    // Manually trigger the file input change
+                    const reader = new FileReader();
+                    reader.onload = function(evt) {
+                        previewImage.src = evt.target.result;
+                        previewImage.style.display = 'block';
+                        uploadIcon.style.display = 'none';
+                        dropText.textContent = 'Image ready! Drag to canvas or drop another.';
+                        
+                        // Also auto-insert into the canvas
+                        const img = document.createElement('img');
+                        img.src = evt.target.result;
+                        img.className = 'resizable-image';
+                        img.style.width = '150px';
+                        img.style.height = 'auto';
+                        img.style.position = 'absolute';
+                        const rect = shirtDropArea.getBoundingClientRect();
+                        const x = Math.max(0, rect.width/2 - 75);
+                        const y = Math.max(0, rect.height/2 - 75);
+                        img.dataset.x = x;
+                        img.dataset.y = y;
+                        img.style.transform = `translate(${x}px, ${y}px)`;
+                        shirtDropArea.insertBefore(img, designArea);
+                        if (typeof makeImageInteractive === 'function') {
+                            makeImageInteractive(img);
+                        }
+                        updateContentClass();
+                        selectElement && selectElement(img);
+                        saveState && saveState();
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    alert('Please drop an image file.');
+                }
+            }
+        });
+    }
+
+// Close DOMContentLoaded handler
+});
 

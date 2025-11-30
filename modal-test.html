@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Modal Test</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div style="padding: 20px; text-align: center;">
+        <h1>Product Modal Test</h1>
+        <p>Click the button below to test the enhanced product modal:</p>
+        <button class="add-to-cart-btn" data-product="Test Product">Test Modal</button>
+    </div>
+
+    <!-- Product Modal -->
+    <div id="add-to-cart-modal" class="modal-backdrop">
+        <div class="modal-content">
+            <button class="modal-close-btn">&times;</button>
+            <div class="modal-body">
+                <!-- Image Slider -->
+                <div class="modal-image-slider">
+                    <div class="slider-container">
+                        <div class="slide active">
+                            <img src="ProductPics/Giveaway8.jpg" alt="Product Image" class="modal-product-img">
+                        </div>
+                        <div class="slide">
+                            <img src="SizeGuide/Signage.png" alt="Size Guide" class="modal-product-img">
+                        </div>
+                    </div>
+                    <button class="slider-nav prev" onclick="moveSlide(-1)">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button class="slider-nav next" onclick="moveSlide(1)">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    <div class="slider-indicators">
+                        <span class="slider-dot active" onclick="goToSlide(0)"></span>
+                        <span class="slider-dot" onclick="goToSlide(1)"></span>
+                    </div>
+                </div>
+                <div class="modal-product-details">
+                    <h3 class="modal-product-title">Test Product</h3>
+                    <div class="modal-product-price">₱100.00 - ₱400.00</div>
+                    <div class="modal-product-reviews">(98 reviews)</div>
+                    <div class="modal-product-stock">Items left: 30</div>
+
+                    <!-- Color Picker -->
+                    <div class="color-picker-section">
+                        <label class="color-picker-label">Choose Color:</label>
+                        <div class="color-options">
+                            <div class="color-option" data-color="white" style="background-color: #ffffff; border: 2px solid #ddd;" title="White"></div>
+                            <div class="color-option" data-color="black" style="background-color: #000000;" title="Black"></div>
+                            <div class="color-option" data-color="yellow" style="background-color: #FFD700;" title="Yellow"></div>
+                            <div class="color-option" data-color="blue" style="background-color: #0066FF;" title="Blue"></div>
+                            <div class="color-option" data-color="pink" style="background-color: #FF69B4;" title="Pink"></div>
+                        </div>
+                    </div>
+
+                    <!-- Size Selector -->
+                    <div class="size-picker-section">
+                        <label class="size-picker-label">Choose Size:</label>
+                        <div class="size-options">
+                            <div class="size-option" data-size="S">S</div>
+                            <div class="size-option" data-size="M">M</div>
+                            <div class="size-option" data-size="L">L</div>
+                            <div class="size-option" data-size="XL">XL</div>
+                            <div class="size-option" data-size="XXL">XXL</div>
+                        </div>
+                    </div>
+
+                    <div class="quantity-selector">
+                        <button class="quantity-btn minus-btn">-</button>
+                        <input type="text" class="quantity-input" value="1" readonly>
+                        <button class="quantity-btn plus-btn">+</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="add-to-cart-confirm-btn">Add to Cart</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Modal functionality
+    document.addEventListener('DOMContentLoaded', () => {
+        const modal = document.getElementById('add-to-cart-modal');
+        const closeBtn = modal.querySelector('.modal-close-btn');
+        const confirmBtn = modal.querySelector('.add-to-cart-confirm-btn');
+        const minusBtn = modal.querySelector('.minus-btn');
+        const plusBtn = modal.querySelector('.plus-btn');
+        const quantityInput = modal.querySelector('.quantity-input');
+        const colorOptions = modal.querySelectorAll('.color-option');
+        const sizeOptions = modal.querySelectorAll('.size-option');
+
+        let selectedColor = null;
+        let selectedSize = null;
+
+        // Test button to open modal
+        document.querySelector('.add-to-cart-btn').addEventListener('click', () => {
+            modal.classList.add('show');
+            startAutoSlide();
+        });
+
+        // Color picker functionality
+        colorOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                colorOptions.forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+                selectedColor = option.getAttribute('data-color');
+            });
+        });
+
+        // Size picker functionality
+        sizeOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                sizeOptions.forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+                selectedSize = option.getAttribute('data-size');
+            });
+        });
+
+        function closeModal() {
+            modal.classList.remove('show');
+            stopAutoSlide();
+        }
+
+        closeBtn.addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+
+        minusBtn.addEventListener('click', () => {
+            let quantity = parseInt(quantityInput.value);
+            if (quantity > 1) {
+                quantityInput.value = quantity - 1;
+            }
+        });
+
+        plusBtn.addEventListener('click', () => {
+            let quantity = parseInt(quantityInput.value);
+            quantityInput.value = quantity + 1;
+        });
+
+        confirmBtn.addEventListener('click', () => {
+            if (!selectedColor) {
+                alert('Please select a color before adding to cart!');
+                return;
+            }
+            if (!selectedSize) {
+                alert('Please select a size before adding to cart!');
+                return;
+            }
+            alert(`Added to cart: Color: ${selectedColor}, Size: ${selectedSize}, Quantity: ${quantityInput.value}`);
+            closeModal();
+        });
+    });
+
+    // Image Slider Functions
+    let currentSlideIndex = 0;
+    let autoSlideInterval = null;
+
+    function moveSlide(direction) {
+        const slides = document.querySelectorAll('.modal-image-slider .slide');
+        const dots = document.querySelectorAll('.slider-dot');
+
+        if (slides.length === 0) return;
+
+        slides[currentSlideIndex].classList.remove('active');
+        if (dots[currentSlideIndex]) dots[currentSlideIndex].classList.remove('active');
+
+        currentSlideIndex += direction;
+
+        if (currentSlideIndex >= slides.length) {
+            currentSlideIndex = 0;
+        } else if (currentSlideIndex < 0) {
+            currentSlideIndex = slides.length - 1;
+        }
+
+        slides[currentSlideIndex].classList.add('active');
+        if (dots[currentSlideIndex]) dots[currentSlideIndex].classList.add('active');
+
+        resetAutoSlide();
+    }
+
+    function goToSlide(index) {
+        const slides = document.querySelectorAll('.modal-image-slider .slide');
+        const dots = document.querySelectorAll('.slider-dot');
+
+        if (slides.length === 0) return;
+
+        slides[currentSlideIndex].classList.remove('active');
+        if (dots[currentSlideIndex]) dots[currentSlideIndex].classList.remove('active');
+
+        currentSlideIndex = index;
+
+        slides[currentSlideIndex].classList.add('active');
+        if (dots[currentSlideIndex]) dots[currentSlideIndex].classList.add('active');
+
+        resetAutoSlide();
+    }
+
+    function startAutoSlide() {
+        const slides = document.querySelectorAll('.modal-image-slider .slide');
+        if (slides.length <= 1) return;
+
+        if (autoSlideInterval) {
+            clearInterval(autoSlideInterval);
+        }
+
+        autoSlideInterval = setInterval(() => {
+            moveSlide(1);
+        }, 3000);
+    }
+
+    function stopAutoSlide() {
+        if (autoSlideInterval) {
+            clearInterval(autoSlideInterval);
+            autoSlideInterval = null;
+        }
+    }
+
+    function resetAutoSlide() {
+        stopAutoSlide();
+        startAutoSlide();
+    }
+    </script>
+</body>
+</html>

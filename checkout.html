@@ -15,7 +15,7 @@
             <nav class="nav-bar">
                 <a href="4Dsigns.html" class="nav-link"><i class="fas fa-home"></i> Home</a>
                 <a href="customize.html" class="nav-link"><i class="fas fa-palette"></i> Customize</a>
-                <a href="review.html" class="nav-link"><i class="fas fa-star"></i> Reviews</a>
+                <a href="review.html" class="nav-link"><i class="fas fa-star"></i> <span>Orders/Reviews</span></a>
                 <a href="cart.html" class="nav-link" title="Cart"><i class="fas fa-shopping-cart"></i></a>
                 <a href="contact.html" class="nav-link" title="Contact"><i class="fas fa-envelope"></i></a>
             </nav>
@@ -212,6 +212,10 @@
                             <span>Shipping</span>
                             <span id="shipping">₱0.00</span>
                         </div>
+                        <div class="summary-row" id="downpayment-row" style="display:none;">
+                            <span>Downpayment (30%)</span>
+                            <span id="downpayment">₱0.00</span>
+                        </div>
                         <div class="summary-row total">
                             <span>Total</span>
                             <span id="total">₱0.00</span>
@@ -221,6 +225,13 @@
                         <i class="fas fa-lock"></i>
                         Place Order
                     </button>
+                    <div id="gcash-downpayment-section" style="display:none; margin-top:1.5rem; text-align:center;">
+                        <h3 style="color:#FFD700; font-size:1.1rem; margin-bottom:0.5rem;">GCash Downpayment Required</h3>
+                        <img src="https://i.imgur.com/2nCt3Sbl.png" alt="GCash QR" style="width:120px; height:120px; border-radius:12px; border:2px solid #FFD700; margin-bottom:0.5rem;">
+                        <div style="margin-bottom:0.5rem; color:#fff;">Scan QR or send to <b>09XXXXXXXXX</b></div>
+                        <input type="text" id="gcash-ref" placeholder="Enter GCash Reference Number" style="width:80%;padding:8px 10px;border-radius:8px;border:1px solid #FFD700;margin-bottom:0.5rem;">
+                        <div style="color:#FFD700;font-size:0.95rem;">* Required before placing order</div>
+                    </div>
                 </div>
             </div>
         </div>

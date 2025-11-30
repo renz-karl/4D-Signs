@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="register.css">
     <style>
-        .auth-card { width:100%; max-width:520px; margin:0 auto; background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:26px; box-shadow:0 12px 40px rgba(2,6,23,0.6); }
+    .auth-card { width:100%; max-width:520px; margin:48px auto 0 auto; background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:26px; box-shadow:0 12px 40px rgba(2,6,23,0.6); }
         body, input, button, label, h1, p { font-family: 'Poppins', sans-serif; }
         label { display:block; font-size:13px; color: rgba(255,255,255,0.85); margin-bottom:6px; }
         input[type="text"], input[type="password"], input[type="email"]{ width:100%; padding: 10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02); color:#fff; margin-bottom:12px }
@@ -33,24 +33,33 @@
 
                 <form id="registerForm" autocomplete="on">
                     <div class="form-grid">
+                        <div style="grid-column: 1 / -1; text-align:center; margin-bottom:10px;">
+                            <label for="profilePic">Profile Picture <span style="color:#FFD700">*</span></label>
+                            <div style="position:relative; display:inline-block; margin-bottom:8px;">
+                                <img id="profilePicPreview" src="https://ui-avatars.com/api/?name=Profile&background=FFD700&color=28263A&rounded=true&size=96" alt="Profile Preview" style="width:96px;height:96px;border-radius:50%;object-fit:cover;border:3px solid #FFD700;box-shadow:0 2px 8px #0002;display:block;">
+                                <input type="file" id="profilePic" name="profilePic" accept="image/*" required style="position:absolute;top:0;left:0;width:96px;height:96px;opacity:0;cursor:pointer;border-radius:50%;">
+                                <span style="position:absolute;bottom:4px;right:4px;background:#FFD700;color:#28263A;border-radius:50%;padding:6px 7px 5px 7px;font-size:1.1rem;box-shadow:0 1px 4px #0003;pointer-events:none;z-index:2;"><i class="fas fa-camera"></i></span>
+                            </div>
+                        </div>
                         <div>
                             <label for="username">Username</label>
                             <input type="text" id="username" name="username" placeholder="username" required>
                         </div>
-
                         <div>
                             <label for="email">Email</label>
                             <input type="email" id="email" name="email" placeholder="you@example.com" required>
                         </div>
-
                         <div>
                             <label for="password">Password</label>
                             <input type="password" id="password" name="password" placeholder="Choose a strong password" required>
                         </div>
-
                         <div>
                             <label for="confirm-password">Confirm Password</label>
                             <input type="password" id="confirm-password" name="confirm-password" placeholder="Repeat password" required>
+                        </div>
+                        <div style="grid-column: 1 / -1;">
+                            <label for="phone" style="display:block;font-size:13px;color:rgba(255,255,255,0.85);margin-bottom:6px;">Phone Number</label>
+                            <input type="tel" id="phone" name="phone" placeholder="09XXXXXXXXX" pattern="09[0-9]{9}" maxlength="11" required style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.02);color:#fff;margin-bottom:12px;">
                         </div>
                     </div>
 
@@ -62,22 +71,87 @@
     </section>
 
     <script>
-        
+        // Profile picture preview logic
+        document.getElementById('profilePic').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const preview = document.getElementById('profilePicPreview');
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    preview.src = evt.target.result;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                preview.src = 'https://ui-avatars.com/api/?name=Profile&background=FFD700&color=28263A&rounded=true&size=96';
+            }
+        });
+
         document.getElementById('registerForm').addEventListener('submit', function(e){
+            e.preventDefault();
+
+            var username = document.getElementById('username').value.trim();
+            var email = document.getElementById('email').value.trim();
             var pw = document.getElementById('password').value;
             var cpw = document.getElementById('confirm-password').value;
+            var profilePicInput = document.getElementById('profilePic');
+            var phone = document.getElementById('phone').value.trim();
+            if (!/^09\d{9}$/.test(phone)) {
+                alert('Please enter a valid phone number (format: 09XXXXXXXXX)');
+                document.getElementById('phone').focus();
+                return false;
+            }
+
             if (pw !== cpw) {
-                e.preventDefault();
                 alert('Passwords do not match. Please check and try again.');
                 document.getElementById('confirm-password').focus();
                 return false;
             }
-            
 
-            e.preventDefault();
-            
+            if (username.length < 3) {
+                alert('Username must be at least 3 characters long.');
+                return false;
+            }
 
-            window.location.href = 'login.html';
+            if (pw.length < 6) {
+                alert('Password must be at least 6 characters long.');
+                return false;
+            }
+
+            if (!profilePicInput.files || profilePicInput.files.length === 0) {
+                alert('Please select a profile picture.');
+                profilePicInput.focus();
+                return false;
+            }
+
+            // Check if user already exists
+            var users = JSON.parse(localStorage.getItem('users') || '[]');
+            var existingUser = users.find(user => user.username === username || user.email === email);
+
+            if (existingUser) {
+                alert('Username or email already exists. Please choose different credentials.');
+                return false;
+            }
+
+            // Read the profile picture as a data URL
+            var reader = new FileReader();
+            reader.onload = function(evt) {
+                var profilePicData = evt.target.result;
+                var newUser = {
+                    id: Date.now(),
+                    username: username,
+                    email: email,
+                    phone: phone,
+                    password: pw, // In a real app, this would be hashed
+                    profilePic: profilePicData,
+                    createdAt: new Date().toISOString(),
+                    status: 'active'
+                };
+                users.push(newUser);
+                localStorage.setItem('users', JSON.stringify(users));
+                alert('Account created successfully! Please login with your credentials.');
+                window.location.href = 'login.html';
+            };
+            reader.readAsDataURL(profilePicInput.files[0]);
         });
     </script>
 </body>

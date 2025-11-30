@@ -3,6 +3,18 @@ document.addEventListener('DOMContentLoaded', () => {
     let orders = JSON.parse(localStorage.getItem('orders')) || [];
     let reviews = JSON.parse(localStorage.getItem('reviews')) || [];
 
+    // Show all orders for admin, or only user's orders if logged in
+    function getLoggedInUser() {
+        try { return JSON.parse(localStorage.getItem('loggedInUser') || 'null'); } catch(e){ return null; }
+    }
+    const user = getLoggedInUser();
+    if (user && user.email) {
+        orders = orders.filter(o => o.customer && o.customer.email === user.email);
+    } else {
+        // If not logged in, show all orders (for admin or demo)
+        // orders = orders; // No filter
+    }
+
     const ordersList = document.getElementById('orders-list');
     const modal = document.getElementById('review-modal');
     const closeModal = document.querySelector('.close-modal');
@@ -27,16 +39,22 @@ document.addEventListener('DOMContentLoaded', () => {
         ordersList.innerHTML = orders.map((order, index) => {
             const hasReview = reviews.some(r => r.orderId === order.orderId);
             const canReview = order.status === 'Completed' || order.status === 'Delivered';
+            const canCancel = order.status === 'Pending' || order.status === 'Processing';
+            const cancelable = canCancel && ((Date.now() - new Date(order.orderDate)) / (1000 * 60 * 60) <= 24);
             
             return `
                 <div class="order-card">
+                    ${order.status === 'Cancelled' ? `<div class="order-cancel-ribbon">CANCELLED</div>` : ''}
                     <div class="order-header">
                         <div class="order-id-section">
                             <h3><i class="fas fa-receipt"></i> Order #${order.orderId}</h3>
                             <p class="order-date">${order.orderDateFormatted || new Date(order.orderDate).toLocaleDateString('en-PH')}</p>
                         </div>
                         <div class="order-status-section">
-                            <span class="status-badge status-${order.status.toLowerCase().replace(' ', '-')}">${order.status}</span>
+                            ${order.status === 'Cancelled' ?
+                                `<span class="status-badge status-cancelled"><i class="fas fa-ban"></i></span>` :
+                                `<span class="status-badge status-${order.status.toLowerCase().replace(' ', '-')}">${order.status}</span>`
+                            }
                         </div>
                     </div>
                     
@@ -76,6 +94,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <i class="fas fa-shipping-fast"></i> Track Order
                                 </button>`
                             }
+                            ${canCancel ? 
+                                `<button class="cancel-btn" onclick="requestCancelOrder('${order.orderId}')" ${!cancelable ? 'disabled' : ''}><i class='fas fa-ban'></i> Cancel Order</button>` : 
+                                ''
+                            }
                         </div>
                     </div>
                 </div>
@@ -103,18 +125,81 @@ document.addEventListener('DOMContentLoaded', () => {
     window.trackOrder = (orderId) => {
         const order = orders.find(o => o.orderId === orderId);
         if (!order) return;
-        
         const trackingSteps = {
             'Pending': 1,
             'Processing': 2,
             'Shipped': 3,
             'Out for Delivery': 4,
             'Delivered': 5,
-            'Completed': 5
+            'Completed': 5,
+            'Cancelled': 0
         };
-        
         const currentStep = trackingSteps[order.status] || 1;
-        
+
+        // Build a clear cancellation info if present
+        let cancelInfoHTML = '';
+        if (order.status === 'Cancelled' || order.cancelRequest) {
+            const req = order.cancelRequest || {};
+            const when = req.requestedAt ? new Date(req.requestedAt).toLocaleString('en-PH', {year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : 'Unknown time';
+            const by = req.by || (order.customer && order.customer.email) || 'Unknown';
+            const reason = req.reason || 'No reason provided.';
+            const refund = order.refundStatus ? `<div class="cancel-refund"><strong>Refund status:</strong> ${order.refundStatus}</div>` : '';
+            cancelInfoHTML = `
+                <div class="cancel-info-panel">
+                    <div class="cancel-info-header">
+                        <div class="cancel-icon"><i class="fas fa-ban"></i></div>
+                        <div class="cancel-meta">
+                            <h4>Order Cancelled</h4>
+                            <div class="cancel-sub">${when} • by ${by}</div>
+                        </div>
+                    </div>
+                    <div class="cancel-info-body">
+                        <div class="cancel-reason"><strong>Reason:</strong> ${reason}</div>
+                        ${refund}
+                    </div>
+                </div>
+            `;
+        }
+
+        // If cancelled, show a simplified timeline with Cancelled as the main state
+        let timelineHTML = '';
+        if (order.status === 'Cancelled') {
+            timelineHTML = `
+                <div class="tracking-step completed cancelled">
+                    <div class="tracking-icon">
+                        <i class="fas fa-ban"></i>
+                    </div>
+                    <div class="tracking-content">
+                        <h4>Cancelled</h4>
+                        <p>The order has been cancelled and will not be processed further.</p>
+                    </div>
+                </div>
+            `;
+        } else {
+            timelineHTML = `
+                <div class="tracking-step ${currentStep >= 1 ? 'completed' : ''}">
+                    <div class="tracking-icon"><i class="fas fa-clipboard-check"></i></div>
+                    <div class="tracking-content"><h4>Order Placed</h4><p>Your order has been received</p></div>
+                </div>
+                <div class="tracking-step ${currentStep >= 2 ? 'completed' : ''}">
+                    <div class="tracking-icon"><i class="fas fa-cogs"></i></div>
+                    <div class="tracking-content"><h4>Processing</h4><p>Your order is being prepared</p></div>
+                </div>
+                <div class="tracking-step ${currentStep >= 3 ? 'completed' : ''}">
+                    <div class="tracking-icon"><i class="fas fa-box"></i></div>
+                    <div class="tracking-content"><h4>Shipped</h4><p>Your order has been dispatched</p></div>
+                </div>
+                <div class="tracking-step ${currentStep >= 4 ? 'completed' : ''}">
+                    <div class="tracking-icon"><i class="fas fa-truck"></i></div>
+                    <div class="tracking-content"><h4>Out for Delivery</h4><p>Your order is on the way</p></div>
+                </div>
+                <div class="tracking-step ${currentStep >= 5 ? 'completed' : ''}">
+                    <div class="tracking-icon"><i class="fas fa-check-circle"></i></div>
+                    <div class="tracking-content"><h4>Delivered</h4><p>Your order has been delivered</p></div>
+                </div>
+            `;
+        }
+
         let trackingHTML = `
             <div class="tracking-modal-overlay" onclick="closeTrackingModal()">
                 <div class="tracking-modal-content" onclick="event.stopPropagation()">
@@ -124,65 +209,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         <p><strong>Order ID:</strong> ${order.orderId}</p>
                         <p><strong>Order Date:</strong> ${order.orderDateFormatted}</p>
                         <p><strong>Delivery Method:</strong> ${order.customer.deliveryMethod === 'delivery' ? 'Home Delivery' : 'Store Pick-up'}</p>
+                        ${cancelInfoHTML}
                     </div>
-                    
                     <div class="tracking-timeline">
-                        <div class="tracking-step ${currentStep >= 1 ? 'completed' : ''}">
-                            <div class="tracking-icon">
-                                <i class="fas fa-clipboard-check"></i>
-                            </div>
-                            <div class="tracking-content">
-                                <h4>Order Placed</h4>
-                                <p>Your order has been received</p>
-                            </div>
-                        </div>
-                        
-                        <div class="tracking-step ${currentStep >= 2 ? 'completed' : ''}">
-                            <div class="tracking-icon">
-                                <i class="fas fa-cogs"></i>
-                            </div>
-                            <div class="tracking-content">
-                                <h4>Processing</h4>
-                                <p>Your order is being prepared</p>
-                            </div>
-                        </div>
-                        
-                        <div class="tracking-step ${currentStep >= 3 ? 'completed' : ''}">
-                            <div class="tracking-icon">
-                                <i class="fas fa-box"></i>
-                            </div>
-                            <div class="tracking-content">
-                                <h4>Shipped</h4>
-                                <p>Your order has been dispatched</p>
-                            </div>
-                        </div>
-                        
-                        <div class="tracking-step ${currentStep >= 4 ? 'completed' : ''}">
-                            <div class="tracking-icon">
-                                <i class="fas fa-truck"></i>
-                            </div>
-                            <div class="tracking-content">
-                                <h4>Out for Delivery</h4>
-                                <p>Your order is on the way</p>
-                            </div>
-                        </div>
-                        
-                        <div class="tracking-step ${currentStep >= 5 ? 'completed' : ''}">
-                            <div class="tracking-icon">
-                                <i class="fas fa-check-circle"></i>
-                            </div>
-                            <div class="tracking-content">
-                                <h4>Delivered</h4>
-                                <p>Your order has been delivered</p>
-                            </div>
-                        </div>
+                        ${timelineHTML}
                     </div>
-                    
                     <button class="close-tracking-btn" onclick="closeTrackingModal()">Close</button>
                 </div>
             </div>
         `;
-        
         document.body.insertAdjacentHTML('beforeend', trackingHTML);
     };
 
@@ -276,6 +311,81 @@ document.addEventListener('DOMContentLoaded', () => {
         alert('✅ Thank you for your review!\n\nYour feedback helps us improve our service.');
     });
 
-    // Initial display of orders
+    // Cancel modal controller
+    let currentCancelOrderId = null;
+    const cancelModal = document.getElementById('cancel-modal');
+    const closeCancelEl = document.querySelector('.close-cancel');
+
+    window.requestCancelOrder = (orderId) => {
+        // Open the cancel modal and set current order
+        currentCancelOrderId = orderId;
+        // Reset form
+        const radios = document.getElementsByName('cancel-reason');
+        radios.forEach(r => r.checked = false);
+        if (radios[0]) radios[0].checked = true;
+        document.getElementById('cancel-other').value = '';
+        document.getElementById('cancel-other').style.display = 'none';
+        if (cancelModal) cancelModal.style.display = 'block';
+    };
+
+    // Close handlers
+    if (closeCancelEl) closeCancelEl.onclick = () => { if (cancelModal) cancelModal.style.display = 'none'; };
+    document.getElementById('cancel-cancel')?.addEventListener('click', () => { if (cancelModal) cancelModal.style.display = 'none'; });
+
+    // Show other textbox when Other is selected
+    document.addEventListener('change', (e) => {
+        if (e.target && e.target.name === 'cancel-reason') {
+            const other = document.getElementById('cancel-other');
+            if (e.target.value === 'Other') other.style.display = 'block'; else other.style.display = 'none';
+            // visual selected state for option cards
+            document.querySelectorAll('.cancel-option').forEach(lbl => lbl.classList.remove('selected'));
+            const lbl = e.target.closest('.cancel-option');
+            if (lbl) lbl.classList.add('selected');
+        }
+    });
+
+    // Submit cancellation from modal
+    document.getElementById('submit-cancel').addEventListener('click', () => {
+        if (!currentCancelOrderId) return alert('No order selected.');
+        const radios = document.getElementsByName('cancel-reason');
+        let reason = '';
+        radios.forEach(r => { if (r.checked) reason = r.value; });
+        if (reason === 'Other') {
+            const text = document.getElementById('cancel-other').value.trim();
+            if (!text) return alert('Please provide a reason for cancellation.');
+            reason = text;
+        }
+        performCancelOrder(currentCancelOrderId, reason);
+        if (cancelModal) cancelModal.style.display = 'none';
+    });
+
+    function performCancelOrder(orderId, reason) {
+        const order = orders.find(o => o.orderId === orderId);
+        if (!order) return alert('Order not found.');
+        // Only allow cancel if Pending or Processing
+        if (order.status !== 'Pending' && order.status !== 'Processing') return alert('Cannot cancel this order.');
+        // Check if within 24 hours
+        const placed = new Date(order.orderDate);
+        const now = new Date();
+        const diffHrs = (now - placed) / (1000*60*60);
+        if (diffHrs > 24) return alert('Cancellation only allowed within 24 hours of order placement.');
+        if (!confirm('Are you sure you want to request cancellation for this order?')) return;
+        // Mark as cancellation requested
+        order.status = 'Cancelled';
+        order.cancelRequest = {
+            requestedAt: new Date().toISOString(),
+            by: order.customer?.email || 'unknown',
+            reason: reason || 'User requested cancellation.'
+        };
+        // Update orders in localStorage
+        const idx = orders.findIndex(o => o.orderId === orderId);
+        if (idx !== -1) {
+            orders[idx] = order;
+            localStorage.setItem('orders', JSON.stringify(orders));
+        }
+        alert('Your cancellation request has been submitted.');
+        displayOrders();
+    }
+
     displayOrders();
 });

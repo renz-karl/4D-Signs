@@ -435,9 +435,19 @@ function loadOrders() {
     // Reverse to show newest first
     const sortedOrders = [...orders].reverse();
     
-    tableBody.innerHTML = sortedOrders.map(order => `
+    tableBody.innerHTML = sortedOrders.map(order => {
+        // Show cancel info if present
+        let cancelInfo = '';
+        if (order.status === 'Cancelled' && order.cancelRequest) {
+            cancelInfo = `<div style="color:#b91c1c; font-size:0.92em; margin-top:4px;">
+                <i class='fas fa-ban'></i> Cancelled by: ${order.cancelRequest.by || 'User'}<br>
+                <span>At: ${new Date(order.cancelRequest.requestedAt).toLocaleString('en-PH', {year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</span><br>
+                <span>Reason: ${order.cancelRequest.reason || 'N/A'}</span>
+            </div>`;
+        }
+        return `
         <tr>
-            <td><strong>${order.orderId}</strong></td>
+            <td><strong>${order.orderId}</strong>${cancelInfo}</td>
             <td>${order.customer.name}<br><small style="color: #64748b;">${order.customer.email}</small></td>
             <td>${order.items.map(item => `${item.name} (x${item.quantity || item.qty || 1})`).join(', ')}</td>
             <td>${order.items.reduce((sum, item) => sum + (item.quantity || item.qty || 1), 0)} items</td>
@@ -460,7 +470,8 @@ function loadOrders() {
                 </button>
             </td>
         </tr>
-    `).join('');
+        `;
+    }).join('');
 }
 
 // Get status color

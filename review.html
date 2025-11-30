@@ -16,7 +16,7 @@
             <nav class="nav-bar">
                 <a href="4Dsigns.html" class="nav-link"><i class="fas fa-home"></i> Home</a>
                 <a href="customize.html" class="nav-link"><i class="fas fa-palette"></i> Customize</a>
-                <a href="review.html" class="nav-link active"><i class="fas fa-star"></i> Reviews</a>
+                <a href="review.html" class="nav-link active"><i class="fas fa-star"></i> <span>Orders/Reviews</span></a>
                 <a href="cart.html" class="nav-link" title="Cart"><i class="fas fa-shopping-cart"></i></a>
                 <a href="contact.html" class="nav-link" title="Contact"><i class="fas fa-envelope"></i></a>
             </nav>
@@ -27,13 +27,16 @@
         <div class="page-header">
             <h1><i class="fas fa-star-half-alt"></i> My Orders & Reviews</h1>
             <p class="subtitle">Share your experience with our products</p>
+            <div class="policy-reminder" style="background: linear-gradient(90deg, #28263A 0%, #3a365d 100%); color: #FFD700; border: 1.5px solid #FFD700; border-radius: 12px; box-shadow: 0 2px 12px rgba(40,38,58,0.10); font-size: 1.01rem; font-weight: 600; margin: 2rem auto 0 auto; max-width: 700px; text-align: center; padding: 0.95rem 1.2rem; display: flex; align-items: center; gap: 0.8rem; justify-content: center; letter-spacing: 0.1px; z-index: 10; position: relative;">
+                <i class="fas fa-exclamation-triangle" style="color:#FFD700; background:rgba(40,38,58,0.7); border-radius:50%; padding:0.25rem; font-size:1.1rem; box-shadow:0 1px 4px #FFD70033;"></i>
+                <span>Reminder: <b style="color:#FFD700; background:transparent;">Downpayment is non-refundable</b> if you do not cancel your order within <b style="color:#FFD700; background:transparent;">24 hours</b> of placement.</span>
+            </div>
         </div>
         <div id="orders-list">
             
         </div>
     </div>
 
-    
     <div id="review-modal" class="modal">
         <div class="modal-content">
             <span class="close-modal">&times;</span>
@@ -54,6 +57,34 @@
             </div>
             <textarea id="review-comment" placeholder="Write your review here..." required></textarea>
             <button id="submit-review">Submit Review</button>
+        </div>
+    </div>
+    <!-- Cancel modal (restored) -->
+    <div id="cancel-modal" class="modal cancel-modal">
+        <div class="modal-content">
+            <span class="close-cancel" aria-label="Close cancel dialog">&times;</span>
+            <div class="cancel-header">
+                <div class="cancel-icon"><i class="fas fa-ban"></i></div>
+                <div>
+                    <h2>Request Cancellation</h2>
+                    <p class="cancel-desc">Please select a reason for cancelling your order. Cancellation is allowed within <strong>24 hours</strong> of order placement.</p>
+                </div>
+            </div>
+
+            <div class="cancel-options" role="radiogroup" aria-label="Cancellation reasons">
+                <label class="cancel-option"><input type="radio" name="cancel-reason" value="Changed my mind" checked><span class="opt-icon"><i class="fas fa-retweet"></i></span><span class="opt-text">Changed my mind</span></label>
+                <label class="cancel-option"><input type="radio" name="cancel-reason" value="Found a better price elsewhere"><span class="opt-icon"><i class="fas fa-tags"></i></span><span class="opt-text">Found a better price elsewhere</span></label>
+                <label class="cancel-option"><input type="radio" name="cancel-reason" value="Ordered wrong size/color"><span class="opt-icon"><i class="fas fa-tshirt"></i></span><span class="opt-text">Ordered wrong size/color</span></label>
+                <label class="cancel-option"><input type="radio" name="cancel-reason" value="Wrong shipping address"><span class="opt-icon"><i class="fas fa-map-marker-alt"></i></span><span class="opt-text">Wrong shipping address</span></label>
+                <label class="cancel-option"><input type="radio" name="cancel-reason" value="Other"><span class="opt-icon"><i class="fas fa-ellipsis-h"></i></span><span class="opt-text">Other (please specify)</span></label>
+            </div>
+
+            <textarea id="cancel-other" placeholder="If other, please explain..." aria-label="Other cancellation reason"></textarea>
+
+            <div class="cancel-actions">
+                <button id="submit-cancel" class="cancel-btn">Submit Cancellation</button>
+                <button id="cancel-cancel" class="track-btn">Close</button>
+            </div>
         </div>
     </div>
     <script src="review.js"></script>
