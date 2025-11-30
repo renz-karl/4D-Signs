@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Account — 4D signs</title>
-    <link rel="stylesheet" href="Homepage.css">
+    <link rel="stylesheet" href="/4D-Signs/Homepage.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="register.css">
+    <link rel="stylesheet" href="/4D-Signs/register.css">
     <style>
     .auth-card { width:100%; max-width:520px; margin:48px auto 0 auto; background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:26px; box-shadow:0 12px 40px rgba(2,6,23,0.6); }
         body, input, button, label, h1, p { font-family: 'Poppins', sans-serif; }
@@ -24,14 +24,14 @@
         </div>
     </header>
 
-    <section class="hero">
+    <section class="hero"> 1
         <div class="hero-overlay"></div>
         <div class="hero-content">
             <div class="auth-card">
                 <h1 style="margin:0 0 8px 0; color:#fff;">Create an account</h1>
                 <p style="margin:0 0 16px 0; color:rgba(255,255,255,0.85)">Join 4D signs — customize, preview and order your designs.</p>
 
-                <form id="registerForm" autocomplete="on">
+                <form id="registerForm" action="register.php" method="POST" enctype="multipart/form-data" autocomplete="on">
                     <div class="form-grid">
                         <div style="grid-column: 1 / -1; text-align:center; margin-bottom:10px;">
                             <label for="profilePic">Profile Picture <span style="color:#FFD700">*</span></label>
@@ -49,6 +49,7 @@
                             <label for="email">Email</label>
                             <input type="email" id="email" name="email" placeholder="you@example.com" required>
                         </div>
+                        <!-- OTP delivery is SMS-only; removed email option -->
                         <div>
                             <label for="password">Password</label>
                             <input type="password" id="password" name="password" placeholder="Choose a strong password" required>
@@ -60,11 +61,12 @@
                         <div style="grid-column: 1 / -1;">
                             <label for="phone" style="display:block;font-size:13px;color:rgba(255,255,255,0.85);margin-bottom:6px;">Phone Number</label>
                             <input type="tel" id="phone" name="phone" placeholder="09XXXXXXXXX" pattern="09[0-9]{9}" maxlength="11" required style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.02);color:#fff;margin-bottom:12px;">
+                            <small style="color:rgba(255,255,255,0.7);">OTP verification is SMS-only; we'll send a 6-digit code to this phone number.</small>
                         </div>
                     </div>
 
                     <button type="submit" class="cta-button primary" style="width:100%; margin-top:8px">Create account</button>
-                    <p style="margin-top:10px; color:rgba(255,255,255,0.9)">Already have an account? <a href="login.html">Login here</a></p>
+                    <p style="margin-top:10px; color:rgba(255,255,255,0.9)">Already have an account? <a href="/4D-Signs/login.html">Login here</a></p>
                 </form>
             </div>
         </div>
@@ -86,8 +88,7 @@
             }
         });
 
-        document.getElementById('registerForm').addEventListener('submit', function(e){
-            e.preventDefault();
+    document.getElementById('registerForm').addEventListener('submit', function(e){
 
             var username = document.getElementById('username').value.trim();
             var email = document.getElementById('email').value.trim();
@@ -117,42 +118,170 @@
                 return false;
             }
 
-            if (!profilePicInput.files || profilePicInput.files.length === 0) {
-                alert('Please select a profile picture.');
-                profilePicInput.focus();
-                return false;
-            }
+            // Profile picture is optional; server will accept no file.
 
-            // Check if user already exists
-            var users = JSON.parse(localStorage.getItem('users') || '[]');
-            var existingUser = users.find(user => user.username === username || user.email === email);
-
-            if (existingUser) {
-                alert('Username or email already exists. Please choose different credentials.');
-                return false;
-            }
-
-            // Read the profile picture as a data URL
-            var reader = new FileReader();
-            reader.onload = function(evt) {
-                var profilePicData = evt.target.result;
-                var newUser = {
-                    id: Date.now(),
-                    username: username,
-                    email: email,
-                    phone: phone,
-                    password: pw, // In a real app, this would be hashed
-                    profilePic: profilePicData,
-                    createdAt: new Date().toISOString(),
-                    status: 'active'
-                };
-                users.push(newUser);
-                localStorage.setItem('users', JSON.stringify(users));
-                alert('Account created successfully! Please login with your credentials.');
-                window.location.href = 'login.html';
-            };
-            reader.readAsDataURL(profilePicInput.files[0]);
+            // If validation passes, allow the form to submit to register.php for server-side processing
+            // Don't preventDefault so the browser will submit the form with a multipart/form-data POST.
+            // No localStorage usage here.
+            return true;
         });
+    </script>
+    
+    <!-- OTP Modal (SMS) -->
+    <style>
+        .otp-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display:none; align-items:center; justify-content:center; z-index:2147483647; pointer-events: auto !important; }
+    .otp-modal { background: #fff; color: #222; padding: 20px; border-radius: 12px; width: 100%; max-width: 480px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index:2147483648; pointer-events:auto !important; }
+        .otp-modal h2 { margin: 0 0 8px 0; }
+        .otp-modal p { color: #444; margin: 0 0 12px 0; }
+    .otp-modal input[type='text'] { width: 100%; padding: 10px; border-radius:6px; border:1px solid #ccc; margin-bottom:8px; pointer-events:auto; }
+    .otp-modal input[type='text']:focus { outline: none; border-color: #FFD700; box-shadow: 0 0 0 4px rgba(255,215,0,0.12); }
+    .otp-actions { display:flex; gap:12px; justify-content:flex-end; }
+    .otp-actions button { padding: 10px 16px; border-radius:8px; font-weight:600; cursor:pointer; }
+    </style>
+    <div id="otpModalOverlay" class="otp-modal-overlay">
+        <div class="otp-modal" role="dialog" aria-modal="true" aria-labelledby="otpModalTitle">
+            <h2 id="otpModalTitle">Verify your account</h2>
+            <p id="otpModalMsg">Enter the 6-digit code sent via SMS to your phone number.</p>
+            <p id="otpModalPhone" style="font-weight:600;margin:6px 0 0 0;color:#222"></p>
+            <form id="otpModalForm">
+                <input type="hidden" name="pending_id" id="otpModalUserId" value="">
+                <input type="hidden" name="email" id="otpModalEmailInput" value="">
+                <input type="text" name="otp" id="otpModalInput" placeholder="123456" pattern="\d{6}" required inputmode="numeric" maxlength="6">
+                <div style="color:#d00;margin-bottom:8px;display:none;" id="otpModalError"></div>
+                <div style="color:#080;margin-bottom:8px;display:none;" id="otpModalSuccess"></div>
+                <div class="otp-actions">
+                    <button type="button" id="otpResendBtn">Resend OTP</button>
+                    <button type="submit" id="otpSubmitBtn" class="cta-button primary">Verify</button>
+                </div>
+            </form>
+            <div style="margin-top:8px; text-align:right;">
+                <button type="button" id="otpCloseBtn" style="background:none;border:none;color:#777;">Close</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        (function(){
+            const params = new URLSearchParams(window.location.search);
+            const showModal = params.get('show_verify_modal');
+            const userId = params.get('pending_id') || params.get('user_id');
+            if (showModal && userId) {
+                openOtpModal(userId, params.get('message') || 'Enter the 6-digit code we sent you.', params.get('email') || '');
+            }
+
+            function openOtpModal(uid, msg, email){
+                document.getElementById('otpModalUserId').value = uid;
+                document.getElementById('otpModalEmailInput').value = email || '';
+                document.getElementById('otpModalMsg').textContent = msg;
+                if (email) {
+                    document.getElementById('otpModalPhone').textContent = 'OTP sent to: ' + email;
+                } else {
+                    document.getElementById('otpModalPhone').textContent = '';
+                }
+                document.getElementById('otpModalError').style.display = 'none';
+                document.getElementById('otpModalSuccess').style.display = 'none';
+                document.getElementById('otpModalOverlay').style.display = 'flex';
+                // Prevent other page elements from capturing pointer events while modal is open
+                try{ document.querySelector('.hero-content').style.pointerEvents = 'none'; } catch(e) {}
+                try{ document.querySelector('.main-header').style.pointerEvents = 'none'; } catch(e) {}
+                setTimeout(function(){
+                    var otpField = document.getElementById('otpModalInput');
+                    if(otpField){ try{ otpField.readOnly = false; otpField.disabled = false; otpField.focus(); otpField.selectionStart = otpField.value.length; } catch(e){} }
+                }, 50);
+            }
+
+            // Prevent overlay clicks from stealing focus; keep focus on the OTP input
+            document.getElementById('otpModalOverlay').addEventListener('click', function(e){
+                // If user clicks directly on overlay (not the modal), keep focus on input
+                if (e.target === this) {
+                    var field = document.getElementById('otpModalInput');
+                    if (field) { field.focus(); }
+                }
+            });
+
+            function closeOtpModal(){
+                document.getElementById('otpModalOverlay').style.display = 'none';
+                // Restore pointer events
+                try{ document.querySelector('.hero-content').style.pointerEvents = 'auto'; } catch(e) {}
+                try{ document.querySelector('.main-header').style.pointerEvents = 'auto'; } catch(e) {}
+            }
+
+            document.getElementById('otpCloseBtn').addEventListener('click', closeOtpModal);
+
+            document.getElementById('otpModalForm').addEventListener('submit', function(e){
+                e.preventDefault();
+                const userId = document.getElementById('otpModalUserId').value;
+                const otp = document.getElementById('otpModalInput').value.trim();
+                const formData = new FormData();
+                formData.append('pending_id', userId);
+                formData.append('email', document.getElementById('otpModalEmailInput').value || '');
+                formData.append('otp', otp);
+                fetch('api/verify-otp.php', { method: 'POST', body: formData })
+                .then(async r => {
+                    const text = await r.text();
+                    let parsed;
+                    try { parsed = JSON.parse(text); } catch(e) { parsed = text; }
+                    if (!r.ok) {
+                        throw new Error((parsed && parsed.error) ? parsed.error : ('HTTP ' + r.status + ' ' + (typeof parsed === 'string' ? parsed : JSON.stringify(parsed))));
+                    }
+                    return parsed;
+                })
+                .then(data => {
+                    if (data.success) {
+                        // Redirect to authenticated page
+                        window.location.href = data.redirect;
+                    } else {
+                        document.getElementById('otpModalError').textContent = data.error || 'Verification failed';
+                        document.getElementById('otpModalError').style.display = 'block';
+                    }
+                }).catch(err => {
+                    console.error('verify-otp failed:', err);
+                    document.getElementById('otpModalError').textContent = err.message || 'Network error';
+                    document.getElementById('otpModalError').style.display = 'block';
+                });
+            });
+
+            document.getElementById('otpResendBtn').addEventListener('click', function(){
+                const userId = document.getElementById('otpModalUserId').value;
+                const formData = new FormData();
+                formData.append('pending_id', userId);
+                formData.append('email', document.getElementById('otpModalEmailInput').value || '');
+                document.getElementById('otpResendBtn').disabled = true;
+                fetch('api/resend-otp.php', { method: 'POST', body: formData })
+                .then(async r => {
+                    const text = await r.text();
+                    let parsed;
+                    try { parsed = JSON.parse(text); } catch(e) { parsed = text; }
+                    if (!r.ok) {
+                        throw new Error((parsed && parsed.error) ? parsed.error : ('HTTP ' + r.status + ' ' + (typeof parsed === 'string' ? parsed : JSON.stringify(parsed))));
+                    }
+                    return parsed;
+                })
+                .then(data => {
+                    document.getElementById('otpResendBtn').disabled = false;
+                    if (data.success) {
+                        document.getElementById('otpModalSuccess').textContent = data.message || 'OTP resent';
+                        document.getElementById('otpModalSuccess').style.display = 'block';
+                    } else {
+                        document.getElementById('otpModalError').textContent = data.error || 'Failed to resend';
+                        document.getElementById('otpModalError').style.display = 'block';
+                    }
+                }).catch(err => {
+                    console.error('resend-otp failed:', err);
+                    document.getElementById('otpResendBtn').disabled = false;
+                    document.getElementById('otpModalError').textContent = err.message || 'Network error';
+                    document.getElementById('otpModalError').style.display = 'block';
+                });
+            });
+        })();
+    </script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('error')) {
+            alert(decodeURIComponent(urlParams.get('error')));
+        }
+        if (urlParams.has('message')) {
+            alert(decodeURIComponent(urlParams.get('message')));
+        }
     </script>
 </body>
 </html>

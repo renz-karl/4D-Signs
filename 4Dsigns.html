@@ -1,10 +1,16 @@
+<?php
+require_once __DIR__ . '/session_check.php';
+// We can access user info via session now
+$username = isset($_SESSION['username']) ? htmlspecialchars($_SESSION['username']) : 'User';
+$profile_pic = isset($_SESSION['profile_pic']) ? htmlspecialchars($_SESSION['profile_pic']) : 'https://via.placeholder.com/32x32/FFD700/28263A?text=U';
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>4D signs - Custom Signage & Souvenirs</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="/4D-Signs/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>     
@@ -14,19 +20,19 @@
                 <div class="profile-dropdown">
                     <button class="profile-btn" id="profile-btn"><img src="https://via.placeholder.com/32x32/FFD700/28263A?text=U" alt="Profile" class="profile-img"></button>
                     <div class="dropdown-menu" id="dropdown-menu">
-                        <a href="contact.html"><i class="fas fa-envelope"></i>Contact</a>
-                        <a href="account-settings.html"><i class="fas fa-cog"></i>Settings</a>
+                        <a href="/4D-Signs/contact.html"><i class="fas fa-envelope"></i>Contact</a>
+                        <a href="/4D-Signs/account-settings.html"><i class="fas fa-cog"></i>Settings</a>
                         <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i>Logout</a>
                     </div>
                 </div>
-                <a href="Homepage.html" class="logo">4D Signs</a>
+                <a href="/4D-Signs/Homepage.html" class="logo">4D Signs</a>
             </div>
             <nav class="nav-bar">
-                <a href="4Dsigns.html" class="nav-link active"><i class="fas fa-home"></i> Home</a>
-                <a href="customize.html" class="nav-link"><i class="fas fa-palette"></i> Customize</a>
-                <a href="review.html" class="nav-link"><i class="fas fa-star"></i> <span>Orders/Reviews</span></a>
-                <a href="cart.html" class="nav-link" title="Cart"><i class="fas fa-shopping-cart"></i></a>
-                <a href="contact.html" class="nav-link" title="Contact"><i class="fas fa-envelope"></i></a>
+                <a href="/4D-Signs/4Dsigns.php" class="nav-link active"><i class="fas fa-home"></i> Home</a>
+                <a href="/4D-Signs/customize.html" class="nav-link"><i class="fas fa-palette"></i> Customize</a>
+                <a href="/4D-Signs/review.html" class="nav-link"><i class="fas fa-star"></i> <span>Orders/Reviews</span></a>
+                <a href="/4D-Signs/cart.html" class="nav-link" title="Cart"><i class="fas fa-shopping-cart"></i></a>
+                <a href="/4D-Signs/contact.html" class="nav-link" title="Contact"><i class="fas fa-envelope"></i></a>
             </nav>
         </div>
     </header>
@@ -56,7 +62,7 @@
             We bring your ideas to life with premium materials and expert craftsmanship.</p>
             <div class="hero-buttons">
                 <a href="#products" class="cta-button primary">Explore Products</a>
-                <a href="customize.html" class="cta-button secondary">Start Designing</a>
+                <a href="/4D-Signs/customize.html" class="cta-button secondary">Start Designing</a>
             </div>
         </div>
         <div class="hero-scroll">
@@ -443,7 +449,7 @@
 
 
 
-<a href="cart.html" class="floating-cart" id="floating-cart" aria-label="View cart">
+<a href="/4D-Signs/cart.html" class="floating-cart" id="floating-cart" aria-label="View cart">
   <i class="fas fa-shopping-cart"></i> <span id="floating-cart-count">0</span>
 </a>
     <script>
@@ -911,8 +917,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }, true);
 });
 </script>
-<script>
+    <script>
 // Profile dropdown functionality
+// Expose server-side auth flag for client-side scripts
+window.serverAuth = true;
+window.serverUser = { username: <?php echo json_encode($username); ?> };
 document.getElementById('profile-btn').addEventListener('click', function(e) {
     e.stopPropagation();
     const menu = document.getElementById('dropdown-menu');
@@ -925,18 +934,23 @@ window.addEventListener('click', function(e) {
     }
 });
 
-function logout() {
-    localStorage.removeItem('loggedInUser');
-    alert('You have been logged out.');
-    window.location.href = 'login.html';
+    function logout() {
+    try { localStorage.removeItem('loggedInUser'); } catch(e) {}
+    // Redirect to server logout implementation which clears session and then redirects
+    window.location.href = '/4D-Signs/logout.php';
 }
 
-// Check if user is logged in
+// Check if user is logged in; if serverAuth is present, prefer server session over localStorage
 document.addEventListener('DOMContentLoaded', function() {
     const loggedInUser = JSON.parse(localStorage.getItem('loggedInUser') || 'null');
-    if (!loggedInUser) {
-        window.location.href = 'login.html';
+    const serverAuth = (typeof window.serverAuth !== 'undefined') && window.serverAuth === true;
+    if (!loggedInUser && !serverAuth) {
+    window.location.href = '/4D-Signs/login.html';
     } else {
+        // If server-authenticated but localStorage is missing, populate it for UI
+        if (!loggedInUser && serverAuth && window.serverUser && window.serverUser.username) {
+            try { localStorage.setItem('loggedInUser', JSON.stringify({ username: window.serverUser.username })); } catch (e) {}
+        }
         // Update profile button with user's initials
         const profileImg = document.querySelector('.profile-img');
         if (profileImg && loggedInUser.username) {
@@ -960,10 +974,10 @@ document.addEventListener('DOMContentLoaded', function() {
         <nav class="footer-col links" aria-label="Footer navigation">
             <h4>Explore</h4>
             <ul>
-                <li><a href="Homepage.html">Home</a></li>
-                <li><a href="customize.html">Customize</a></li>
-                <li><a href="review.html"><span>Orders/Reviews</span></a></li>
-                <li><a href="cart.html">Cart</a></li>
+                <li><a href="/4D-Signs/Homepage.html">Home</a></li>
+                <li><a href="/4D-Signs/customize.html">Customize</a></li>
+                <li><a href="/4D-Signs/review.html"><span>Orders/Reviews</span></a></li>
+                <li><a href="/4D-Signs/cart.html">Cart</a></li>
             </ul>
         </nav>
         <div class="footer-col contact">

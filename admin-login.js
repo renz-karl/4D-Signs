@@ -23,7 +23,7 @@ document.getElementById('admin-login-form').addEventListener('submit', function(
         }
         
         // Redirect to admin dashboard
-        window.location.href = 'admin-dashboard.html';
+        window.location.href = '/4D-Signs/admin-dashboard.html';
     } else {
         // Show error message
         errorMessage.textContent = 'Invalid username or password';

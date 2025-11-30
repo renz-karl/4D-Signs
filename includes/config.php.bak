@@ -1,0 +1,36 @@
+<?php
+// Project config file — copy of includes/config.php.example
+// IMPORTANT: This file contains sensitive credentials. Keep it local and DO NOT commit it to git.
+// The file is already in .gitignore by default.
+
+return [
+    // Database connection
+    'db_host' => 'localhost',
+    'db_user' => 'webuser',
+    'db_pass' => 'web_password_here',
+    'db_name' => '4d_signs_db',
+
+    // Email sending via SMTP (Gmail example)
+    // For Gmail, create an App Password (recommended) and use the 16-char value in smtp_pass.
+    // If you prefer to use another SMTP provider (SendGrid, Mailgun), update these values accordingly.
+    'from_email' => 'you@gmail.com',
+    'from_name' => '4D Signs',
+    'smtp_host' => 'smtp.gmail.com',
+    'smtp_port' => 587,
+    'smtp_user' => 'you@gmail.com',
+    'smtp_pass' => '<INSERT-GMAIL-APP-PASSWORD-HERE>',
+    'smtp_secure' => 'tls', // 'ssl' for port 465
+
+    // Debug: shows OTP in responses locally; enable ONLY on localhost/dev
+    'debug' => true,
+];
+
+?>
+<?php
+return [
+    'db_host' => 'localhost',
+    'db_user' => 'webuser',
+    'db_pass' => 'ChangeThisPassword!',
+    'db_name' => '4d_signs_db'
+];
+?>

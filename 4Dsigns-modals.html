@@ -1,0 +1,640 @@
+<div id="add-to-cart-modal" class="modal-backdrop">
+    <div class="modal-content">
+        <button class="modal-close-btn">&times;</button>
+        <div class="modal-body">
+            <!-- Image Slider -->
+            <div class="modal-image-slider">
+                <div class="slider-container">
+                    <div class="slide active">
+                        <img src="" alt="Product Image" class="modal-product-img">
+                    </div>
+                    <!-- Additional slides will be added dynamically -->
+                </div>
+                <button class="slider-nav prev" onclick="moveSlide(-1)">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button class="slider-nav next" onclick="moveSlide(1)">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+                <div class="slider-indicators"></div>
+            </div>
+            <div class="modal-product-details">
+                <h3 class="modal-product-title"></h3>
+                <div class="modal-product-price"></div>
+                <div class="modal-product-reviews"></div>
+                <div class="modal-product-stock"></div>
+                
+                <!-- Color Picker -->
+                <div class="color-picker-section">
+                    <label class="color-picker-label">Choose Color:</label>
+                    <div class="color-options">
+                        <div class="color-option" data-color="white" style="background-color: #ffffff; border: 2px solid #ddd;" title="White"></div>
+                        <div class="color-option" data-color="black" style="background-color: #000000;" title="Black"></div>
+                        <div class="color-option" data-color="yellow" style="background-color: #FFD700;" title="Yellow"></div>
+                        <div class="color-option" data-color="blue" style="background-color: #0066FF;" title="Blue"></div>
+                        <div class="color-option" data-color="pink" style="background-color: #FF69B4;" title="Pink"></div>
+                    </div>
+                </div>
+                
+                <!-- Size Selector -->
+                <div class="size-picker-section">
+                    <label class="size-picker-label">Choose Size:</label>
+                    <div class="size-options">
+                        <div class="size-option" data-size="S">S</div>
+                        <div class="size-option" data-size="M">M</div>
+                        <div class="size-option" data-size="L">L</div>
+                        <div class="size-option" data-size="XL">XL</div>
+                        <div class="size-option" data-size="XXL">XXL</div>
+                    </div>
+                </div>
+                
+                <!-- Design Picker for Mugs -->
+                <div class="design-picker-section" style="display: none;">
+                    <label class="design-picker-label">Choose Design:</label>
+                    <div class="design-options">
+                        <div class="design-option" data-design="Design 1">
+                            <img src="ProductPics/Giveaways.jpg" alt="Design 1" class="design-preview">
+                            <span>Design 1</span>
+                        </div>
+                        <div class="design-option" data-design="Design 2">
+                            <img src="ProductPics/Giveaways2.jpg" alt="Design 2" class="design-preview">
+                            <span>Design 2</span>
+                        </div>
+                        <div class="design-option" data-design="Design 3">
+                            <img src="ProductPics/Giveaway3.jpg" alt="Design 3" class="design-preview">
+                            <span>Design 3</span>
+                        </div>
+                        <div class="design-option" data-design="Design 4">
+                            <img src="ProductPics/Giveaway5.jpg" alt="Design 4" class="design-preview">
+                            <span>Design 4</span>
+                        </div>
+                        <div class="design-option" data-design="Design 5">
+                            <img src="ProductPics/Giveaway6.jpg" alt="Design 5" class="design-preview">
+                            <span>Design 5</span>
+                        </div>
+                        <div class="design-option custom-design-option" data-design="Custom">
+                            <i class="fas fa-pen-fancy"></i>
+                            <span>Custom Design</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="quantity-selector">
+                    <button class="quantity-btn minus-btn">-</button>
+                    <input type="text" class="quantity-input" value="1" readonly>
+                    <button class="quantity-btn plus-btn">+</button>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="add-to-cart-confirm-btn">Add to Cart</button>
+        </div>
+    </div>
+</div>
+
+
+
+
+<a href="/4D-Signs/cart.html" class="floating-cart" id="floating-cart" aria-label="View cart">
+  <i class="fas fa-shopping-cart"></i> <span id="floating-cart-count">0</span>
+</a>
+<script>
+(function(){
+  const ITEMS_KEY = 'cartItems';
+  const COUNT_KEY = 'cartCount';
+  const badgeEls = Array.from(document.querySelectorAll('#cart-count, #floating-cart-count'));
+
+        function getItems() {
+            try { return JSON.parse(localStorage.getItem(ITEMS_KEY) || '[]'); } catch(e){ return []; }
+        }
+        function renderBadge(n){ badgeEls.forEach(el => el && (el.textContent = n)); }
+        function setItems(items) {
+            localStorage.setItem(ITEMS_KEY, JSON.stringify(items));
+            const count = items.reduce((s,it)=> s + (parseInt(it.qty,10) || 0), 0);
+            localStorage.setItem(COUNT_KEY, String(count));
+            renderBadge(count);
+            window.dispatchEvent(new CustomEvent('cart:updated', { detail: { count, items } }));
+        }
+
+        // accept optional color, size, price and store them on the cart item
+        function addItem(name, qty = 1, color = null, size = null, price = null) {
+            if (!name) name = 'Item';
+            qty = Math.max(1, parseInt(qty,10) || 1);
+            const id = name.trim().toLowerCase();
+            const items = getItems();
+            const idx = items.findIndex(i => i.id === id && (i.color || null) === (color || null) && (i.size || null) === (size || null));
+            if (idx >= 0) {
+                items[idx].qty += qty;
+                // update price if provided
+                if (price != null) items[idx].price = Number(price);
+            } else {
+                const item = { id, name, qty };
+                if (color) item.color = color;
+                if (size) item.size = size;
+                if (price != null) item.price = Number(price);
+                items.push(item);
+            }
+            setItems(items);
+        }
+        function updateQty(id, qty) {
+            const items = getItems();
+            const idx = items.findIndex(i => i.id === id);
+            if (idx === -1) return;
+            qty = parseInt(qty,10) || 0;
+            if (qty <= 0) items.splice(idx,1); else items[idx].qty = qty;
+            setItems(items);
+        }
+        function removeItem(id) {
+            const items = getItems().filter(i => i.id !== id);
+            setItems(items);
+        }
+
+  window.getCartItems = getItems;
+  window.setCartItems = setItems;
+  window.addItemToCart = addItem;
+  window.updateCartItemQty = updateQty;
+  window.removeCartItem = removeItem;
+
+
+  window.addToCart = function(qty = 1){ addItem('Item', qty); };
+
+
+  renderBadge(parseInt(localStorage.getItem(COUNT_KEY) || '0', 10));
+})();
+</script>
+<script>
+(function(){
+  const floatBtn = document.getElementById('floating-cart');
+  if (!floatBtn) return;
+  const toggle = () => {
+    if (window.scrollY > 150) floatBtn.classList.add('show');
+    else floatBtn.classList.remove('show');
+  };
+  window.addEventListener('scroll', toggle, { passive: true });
+  window.addEventListener('load', toggle);
+})();
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // utility: parse a price string like "₱150.00 - ₱500.00" or "₱150.00" -> returns numeric unit price (first number)
+    function parsePriceString(priceStr){
+        if (!priceStr) return null;
+        // strip non-digit, non-dot, non-comma, then find first number
+        const match = priceStr.replace(/,/g,'').match(/(\d+(?:\.\d+)?)/);
+        if (match) return Number(match[1]);
+        return null;
+    }
+    const modal = document.getElementById('add-to-cart-modal');
+    const closeBtn = modal.querySelector('.modal-close-btn');
+    const confirmBtn = modal.querySelector('.add-to-cart-confirm-btn');
+    const minusBtn = modal.querySelector('.minus-btn');
+    const plusBtn = modal.querySelector('.plus-btn');
+    const quantityInput = modal.querySelector('.quantity-input');
+    const colorOptions = modal.querySelectorAll('.color-option');
+    const sizeOptions = modal.querySelectorAll('.size-option');
+    const designOptions = modal.querySelectorAll('.design-option');
+
+    let currentProduct = null;
+    let selectedColor = null;
+    let selectedSize = null;
+    let selectedDesign = null;
+
+    // Color picker functionality
+    colorOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            // Remove selected class from all options
+            colorOptions.forEach(opt => opt.classList.remove('selected'));
+            // Add selected class to clicked option
+            option.classList.add('selected');
+            selectedColor = option.getAttribute('data-color');
+            console.log('Selected color:', selectedColor);
+        });
+    });
+
+    // Size picker functionality
+    sizeOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            // Remove selected class from all options
+            sizeOptions.forEach(opt => opt.classList.remove('selected'));
+            // Add selected class to clicked option
+            option.classList.add('selected');
+            selectedSize = option.getAttribute('data-size');
+            console.log('Selected size:', selectedSize);
+        });
+    });
+
+    // Design picker functionality
+    designOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            // Remove selected class from all options
+            designOptions.forEach(opt => opt.classList.remove('selected'));
+            // Add selected class to clicked option
+            option.classList.add('selected');
+            selectedDesign = option.getAttribute('data-design');
+            console.log('Selected design:', selectedDesign);
+        });
+    });
+
+    document.querySelectorAll('.add-to-cart-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            const productItem = button.closest('.product-item');
+            // If product has an id, prefer reading data from localStorage.products so admin changes are reflected
+            const pid = productItem.getAttribute('data-product-id');
+            let priceText = productItem.querySelector('.product-price').textContent;
+            let stockText = productItem.querySelector('.stock-count').textContent;
+            let imageSrc = productItem.querySelector('.product-image').src;
+
+            if (pid) {
+                try {
+                    const products = JSON.parse(localStorage.getItem('products') || '[]');
+                    const prod = products.find(p => p.id === pid || p.name === productItem.querySelector('h3')?.textContent);
+                    if (prod) {
+                        if (prod.price) priceText = prod.price;
+                        if (typeof prod.stock !== 'undefined') stockText = String(prod.stock);
+                        if (prod.image) imageSrc = prod.image;
+                    }
+                } catch (e) {
+                    console.warn('Failed to load product from storage', e);
+                }
+            }
+
+            currentProduct = {
+                name: productItem.querySelector('h3').textContent,
+                image: imageSrc,
+                reviews: productItem.querySelector('.reviews').textContent,
+                stock: stockText,
+                price: priceText,
+                unitPrice: (function(){
+                    const raw = parsePriceString(priceText);
+                    try {
+                        const promo = JSON.parse(localStorage.getItem('promo') || '{"active":false,"percent":30}');
+                        if (promo && promo.active && raw != null) {
+                            const discounted = Math.round(raw * (1 - (promo.percent || 0) / 100) * 100) / 100;
+                            return discounted;
+                        }
+                    } catch(e) {
+                        // ignore
+                    }
+                    return raw;
+                })()
+            };
+            openModal(currentProduct);
+        });
+    });
+
+    function openModal(product) {
+        console.log('Opening modal for product:', product.name); // Added console log
+        
+        // Get picker sections
+        const colorPickerSection = modal.querySelector('.color-picker-section');
+        const sizePickerSection = modal.querySelector('.size-picker-section');
+        const designPickerSection = modal.querySelector('.design-picker-section');
+        const productsWithoutPickers = ['Giveaways', 'Bulk Packages', 'Pabitin'];
+        
+        // Initialize slider or single image based on product type
+        const imageSlider = modal.querySelector('.modal-image-slider');
+        const sliderContainer = imageSlider.querySelector('.slider-container');
+        const indicatorsContainer = imageSlider.querySelector('.slider-indicators');
+        
+        // Check if product has sizes (show slider for products with sizes)
+        const hasSize = !productsWithoutPickers.includes(product.name) && 
+                        product.name !== 'Custom Mugs' && 
+                        product.name !== 'Party Hats';
+        
+        if (hasSize) {
+            // Determine which size guide image to use based on product
+            let sizeGuideImage = '';
+            
+            if (product.name === 'Banners') {
+                sizeGuideImage = 'SizeGuide/Banners.png';
+            } else if (product.name === 'Calling Cards') {
+                sizeGuideImage = 'SizeGuide/Cards.png';
+            } else if (product.name === 'Invitations') {
+                sizeGuideImage = 'SizeGuide/Invitations.png';
+            } else if (product.name === 'Keychains') {
+                sizeGuideImage = 'SizeGuide/Keychain.png';
+            } else if (product.name === 'Custom Mugs') {
+                sizeGuideImage = 'SizeGuide/Mugs.png';
+            } else if (product.name === 'Custom Signage') {
+                sizeGuideImage = 'SizeGuide/Signage.png';
+            } else if (product.name === 'Stickers & Decals') {
+                sizeGuideImage = 'SizeGuide/Stickers.png';
+            } else if (product.name === 'T-Shirt Printing') {
+                sizeGuideImage = 'SizeGuide/T-shirts.png';
+            } else {
+                // Default fallback
+                sizeGuideImage = 'SizeGuide/Signage.png';
+            }
+            
+            // Setup slider with product image and size guide
+            sliderContainer.innerHTML = `
+                <div class="slide active">
+                    <img src="${product.image}" alt="Product Image" class="modal-product-img">
+                </div>
+                <div class="slide">
+                    <img src="${sizeGuideImage}" alt="Size Guide" class="modal-product-img">
+                </div>
+            `;
+            
+            // Setup indicators
+            indicatorsContainer.innerHTML = `
+                <span class="slider-dot active" onclick="goToSlide(0)"></span>
+                <span class="slider-dot" onclick="goToSlide(1)"></span>
+            `;
+            
+            // Show slider navigation
+            imageSlider.querySelectorAll('.slider-nav').forEach(nav => nav.style.display = 'flex');
+        } else {
+            // Single image only
+            sliderContainer.innerHTML = `
+                <div class="slide active">
+                    <img src="${product.image}" alt="Product Image" class="modal-product-img">
+                </div>
+            `;
+            indicatorsContainer.innerHTML = '';
+            imageSlider.querySelectorAll('.slider-nav').forEach(nav => nav.style.display = 'none');
+        }
+        
+        modal.querySelector('.modal-product-title').textContent = product.name;
+        modal.querySelector('.modal-product-price').textContent = product.price;
+        modal.querySelector('.modal-product-reviews').textContent = product.reviews;
+        modal.querySelector('.modal-product-stock').textContent = `Items left: ${product.stock}`;
+        quantityInput.value = 1;
+        
+        // Reset all selections
+        colorOptions.forEach(opt => opt.classList.remove('selected'));
+        sizeOptions.forEach(opt => opt.classList.remove('selected'));
+        designOptions.forEach(opt => opt.classList.remove('selected'));
+        selectedColor = null;
+        selectedSize = null;
+        selectedDesign = null;
+        
+        // For Custom Mugs and Party Hats: Show design picker instead of color and size pickers
+        if (product.name === 'Custom Mugs' || product.name === 'Party Hats') {
+            colorPickerSection.style.display = 'none';
+            sizePickerSection.style.display = 'none';
+            designPickerSection.style.display = 'block';
+            selectedColor = null;
+            selectedSize = null;
+        } 
+        // For products without pickers
+        else if (productsWithoutPickers.includes(product.name)) {
+            colorPickerSection.style.display = 'none';
+            sizePickerSection.style.display = 'none';
+            designPickerSection.style.display = 'none';
+            // Set default values so validation won't block
+            selectedColor = 'default';
+            selectedSize = 'default';
+        } 
+        // For other products: Show color and size pickers
+        else {
+            colorPickerSection.style.display = 'block';
+            sizePickerSection.style.display = 'block';
+            designPickerSection.style.display = 'none';
+            selectedColor = null;
+            selectedSize = null;
+        }
+        
+        modal.classList.add('show');
+        
+        // Start auto-slide if there are multiple images
+        currentSlideIndex = 0;
+        startAutoSlide();
+    }
+
+    function closeModal() {
+        modal.classList.remove('show');
+        stopAutoSlide(); // Stop auto-slide when modal closes
+    }
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+
+    minusBtn.addEventListener('click', () => {
+        let quantity = parseInt(quantityInput.value);
+        if (quantity > 1) {
+            quantityInput.value = quantity - 1;
+        }
+    });
+
+    plusBtn.addEventListener('click', () => {
+        let quantity = parseInt(quantityInput.value);
+        quantityInput.value = quantity + 1;
+    });
+
+    confirmBtn.addEventListener('click', () => {
+        const quantity = parseInt(quantityInput.value);
+        
+        // For Custom Mugs and Party Hats: Check design and size
+        if (currentProduct.name === 'Custom Mugs' || currentProduct.name === 'Party Hats') {
+            if (!selectedDesign) {
+                alert('Please select a design before adding to cart!');
+                return;
+            }
+            if (!selectedSize) {
+                alert('Please select a size before adding to cart!');
+                return;
+            }
+            if (typeof addItemToCart === 'function') {
+                // Add item with design instead of color
+                addItemToCart(currentProduct.name, quantity, selectedDesign, selectedSize, currentProduct.unitPrice);
+            }
+            console.log('Adding to cart:', currentProduct.name, 'Quantity:', quantity, 'Design:', selectedDesign, 'Size:', selectedSize);
+        }
+        // For products without pickers (Giveaways, Bulk Packages, Pabitin)
+        else if (currentProduct.name === 'Giveaways' || currentProduct.name === 'Bulk Packages' || currentProduct.name === 'Pabitin') {
+            if (typeof addItemToCart === 'function') {
+                addItemToCart(currentProduct.name, quantity, null, null, currentProduct.unitPrice);
+            }
+            console.log('Adding to cart:', currentProduct.name, 'Quantity:', quantity);
+        }
+        // For other products: Check color and size
+        else {
+            if (!selectedColor) {
+                alert('Please select a color before adding to cart!');
+                return;
+            }
+            if (!selectedSize) {
+                alert('Please select a size before adding to cart!');
+                return;
+            }
+            if (typeof addItemToCart === 'function') {
+                addItemToCart(currentProduct.name, quantity, selectedColor, selectedSize, currentProduct.unitPrice);
+            }
+            console.log('Adding to cart:', currentProduct.name, 'Quantity:', quantity, 'Color:', selectedColor, 'Size:', selectedSize);
+        }
+        
+        closeModal();
+    });
+});
+</script>
+<script>
+// Image Slider Functions with Auto-play
+let currentSlideIndex = 0;
+let autoSlideInterval = null;
+
+function moveSlide(direction) {
+    const slides = document.querySelectorAll('.modal-image-slider .slide');
+    const dots = document.querySelectorAll('.slider-dot');
+    
+    if (slides.length === 0) return;
+    
+    slides[currentSlideIndex].classList.remove('active');
+    if (dots[currentSlideIndex]) dots[currentSlideIndex].classList.remove('active');
+    
+    currentSlideIndex += direction;
+    
+    if (currentSlideIndex >= slides.length) {
+        currentSlideIndex = 0;
+    } else if (currentSlideIndex < 0) {
+        currentSlideIndex = slides.length - 1;
+    }
+    
+    slides[currentSlideIndex].classList.add('active');
+    if (dots[currentSlideIndex]) dots[currentSlideIndex].classList.add('active');
+    
+    // Reset auto-slide timer when manually navigating
+    resetAutoSlide();
+}
+
+function goToSlide(index) {
+    const slides = document.querySelectorAll('.modal-image-slider .slide');
+    const dots = document.querySelectorAll('.slider-dot');
+    
+    if (slides.length === 0) return;
+    
+    slides[currentSlideIndex].classList.remove('active');
+    if (dots[currentSlideIndex]) dots[currentSlideIndex].classList.remove('active');
+    
+    currentSlideIndex = index;
+    
+    slides[currentSlideIndex].classList.add('active');
+    if (dots[currentSlideIndex]) dots[currentSlideIndex].classList.add('active');
+    
+    // Reset auto-slide timer when manually navigating
+    resetAutoSlide();
+}
+
+function startAutoSlide() {
+    const slides = document.querySelectorAll('.modal-image-slider .slide');
+    if (slides.length <= 1) return; // Don't auto-slide if only 1 image
+    
+    // Clear any existing interval
+    if (autoSlideInterval) {
+        clearInterval(autoSlideInterval);
+    }
+    
+    // Start auto-sliding every 3 seconds
+    autoSlideInterval = setInterval(() => {
+        moveSlide(1);
+    }, 3000);
+}
+
+function stopAutoSlide() {
+    if (autoSlideInterval) {
+        clearInterval(autoSlideInterval);
+        autoSlideInterval = null;
+    }
+}
+
+function resetAutoSlide() {
+    stopAutoSlide();
+    startAutoSlide();
+}
+
+// Pause auto-slide when hovering over slider
+document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('add-to-cart-modal');
+    
+    modal.addEventListener('mouseenter', (e) => {
+        if (e.target.closest('.modal-image-slider')) {
+            stopAutoSlide();
+        }
+    }, true);
+    
+    modal.addEventListener('mouseleave', (e) => {
+        if (e.target.closest('.modal-image-slider')) {
+            startAutoSlide();
+        }
+    }, true);
+});
+</script>
+<script>
+// Profile dropdown functionality
+document.getElementById('profile-btn').addEventListener('click', function(e) {
+    e.stopPropagation();
+    const menu = document.getElementById('dropdown-menu');
+    menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+});
+
+window.addEventListener('click', function(e) {
+    if (!e.target.closest('.profile-dropdown')) {
+        document.getElementById('dropdown-menu').style.display = 'none';
+    }
+});
+
+function logout() {
+    try { localStorage.removeItem('loggedInUser'); } catch (e) {}
+    // Redirect to server logout for session cleanup
+    window.location.href = '/4D-Signs/logout.php';
+}
+
+// Check if user is logged in
+document.addEventListener('DOMContentLoaded', function() {
+    const loggedInUser = JSON.parse(localStorage.getItem('loggedInUser') || 'null');
+    const serverAuth = (typeof window.serverAuth !== 'undefined') && window.serverAuth === true;
+    if (!loggedInUser && !serverAuth) {
+    window.location.href = '/4D-Signs/login.html';
+    } else {
+        if (!loggedInUser && serverAuth && window.serverUser && window.serverUser.username) {
+            try { localStorage.setItem('loggedInUser', JSON.stringify({ username: window.serverUser.username })); } catch (e) {}
+        }
+        // Update profile button with user's initials
+        const profileImg = document.querySelector('.profile-img');
+        if (profileImg && loggedInUser.username) {
+            const initials = loggedInUser.username.charAt(0).toUpperCase();
+            profileImg.src = `https://via.placeholder.com/32x32/FFD700/28263A?text=${initials}`;
+            profileImg.alt = `${loggedInUser.username}'s profile`;
+        }
+    }
+});
+</script>
+<footer class="site-footer">
+    <div class="footer-wrap">
+        <div class="footer-col brand">
+            <h3>4D signs</h3>
+            <p>Your vision, our signs. Premium custom signage and souvenirs.</p>
+            <div class="footer-social">
+                <a href="https://www.facebook.com/FourDsigns" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+            </div>
+        </div>
+        <nav class="footer-col links" aria-label="Footer navigation">
+            <h4>Explore</h4>
+            <ul>
+                <li><a href="/4D-Signs/Homepage.html">Home</a></li>
+                <li><a href="/4D-Signs/customize.html">Customize</a></li>
+                <li><a href="/4D-Signs/review.html"><span>Orders/Reviews</span></a></li>
+                <li><a href="/4D-Signs/cart.html">Cart</a></li>
+            </ul>
+        </nav>
+        <div class="footer-col contact">
+            <h4>Contact</h4>
+            <ul>
+                <li><i class="fa fa-map-marker-alt"></i> 352 Zone 4 Tangos, Baliuag, Philippines, 3006</li>
+                <li><i class="fa fa-envelope"></i>cheriz20domingo@gmail.com</li>
+                <li><i class="fa fa-phone"></i> +63 917 582 5483</li>
+            </ul>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>© <span id="footer-year"></span> 4D signs · All rights reserved</p>
+    </div>
+</footer>
+<script>document.getElementById('footer-year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

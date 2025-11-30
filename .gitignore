@@ -1,0 +1,7 @@
+# Project-level ignore rules
+uploads/
+includes/config.php
+
+# Node, PHP etc ignores (if any)
+vendor/
+.env

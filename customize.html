@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Customize Your Sign - 4D Signs</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="/4D-Signs/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="customize.css">
+    <link rel="stylesheet" href="/4D-Signs/customize.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
     <style>
@@ -283,13 +283,13 @@
 <body>
     <header class="main-header">
         <div class="header-content">
-            <a href="Homepage.html" class="logo">4D Signs</a>
+            <a href="/4D-Signs/Homepage.html" class="logo">4D Signs</a>
             <nav class="nav-bar">
-                <a href="4Dsigns.html" class="nav-link"><i class="fas fa-home"></i> Home</a>
-                <a href="customize.html" class="nav-link active"><i class="fas fa-palette"></i> Customize</a>
-                <a href="review.html" class="nav-link"><i class="fas fa-star"></i> <span>Orders/Reviews</span></a>
-                <a href="cart.html" class="nav-link" title="Cart"><i class="fas fa-shopping-cart"></i></a>
-                <a href="contact.html" class="nav-link" title="Contact"><i class="fas fa-envelope"></i></a>
+                <a href="/4D-Signs/4Dsigns.php" class="nav-link"><i class="fas fa-home"></i> Home</a>
+                <a href="/4D-Signs/customize.html" class="nav-link active"><i class="fas fa-palette"></i> Customize</a>
+                <a href="/4D-Signs/review.html" class="nav-link"><i class="fas fa-star"></i> <span>Orders/Reviews</span></a>
+                <a href="/4D-Signs/cart.html" class="nav-link" title="Cart"><i class="fas fa-shopping-cart"></i></a>
+                <a href="/4D-Signs/contact.html" class="nav-link" title="Contact"><i class="fas fa-envelope"></i></a>
             </nav>
         </div>
     </header>
@@ -354,10 +354,6 @@
                                 <button type="button" class="icon-btn" data-icon="fa-music" title="Music"><i class="fas fa-music"></i></button>
                                 <button type="button" class="icon-btn" data-icon="fa-plane" title="Travel"><i class="fas fa-plane"></i></button>
                                 <button type="button" class="icon-btn" data-icon="fa-shopping-cart" title="E-commerce"><i class="fas fa-shopping-cart"></i></button>
-                            </div>
-                            <div style="margin-top: 10px;">
-                                <label for="logo-upload" style="font-size: 14px;">Upload your own logo/image:</label>
-                                <input type="file" id="logo-upload" accept="image/*">
                             </div>
                         </div>
                     </div>
@@ -603,7 +599,7 @@
                                      src="LogoProducts/shirt-outline.jpg"
                                      alt="T-Shirt Preview" 
                                      class="shirt-preview product-template-image" 
-                                     style="display:none; width:100%; height:auto; max-width:720px; margin:0 auto; pointer-events:none; user-select:none;"
+                                     style="display:block; width:200%; height:auto; max-width:none; margin:0 auto; pointer-events:none; user-select:none; object-fit:contain;"
                                      draggable="false"/>
                                 <img id="mug-image"
                                      src="LogoProducts/mug-outline.jpg"
@@ -615,6 +611,24 @@
                                      src="LogoProducts/ecobag-outline.jpg"
                                      alt="Eco Bag Preview" 
                                      class="ecobag-preview product-template-image" 
+                                     style="display:none; width:100%; height:auto; max-width:720px; margin:0 auto; pointer-events:none; user-select:none;"
+                                     draggable="false"/>
+                                <img id="key-chain-image"
+                                     src="LogoProducts/key-chain-outline.jpg"
+                                     alt="Key Chain Preview" 
+                                     class="key-chain-preview product-template-image" 
+                                     style="display:none; width:100%; height:auto; max-width:720px; margin:0 auto; pointer-events:none; user-select:none;"
+                                     draggable="false"/>
+                                <img id="ref-magnet-image"
+                                     src="LogoProducts/ref-magnet-outline.jpg"
+                                     alt="Ref Magnet Preview" 
+                                     class="ref-magnet-preview product-template-image" 
+                                     style="display:none; width:100%; height:auto; max-width:720px; margin:0 auto; pointer-events:none; user-select:none;"
+                                     draggable="false"/>
+                                <img id="sticker-image"
+                                     src="LogoProducts/sticker-outline.jpg"
+                                     alt="Sticker Preview" 
+                                     class="sticker-preview product-template-image" 
                                      style="display:none; width:100%; height:auto; max-width:720px; margin:0 auto; pointer-events:none; user-select:none;"
                                      draggable="false"/>
                                 <img id="shirt-template" src="ProductPics/shirt-template.png" class="template-img" style="display: none;">
@@ -837,7 +851,7 @@
             closeSizeQtyModal();
             
             // Redirect to cart page
-            window.location.href = 'cart.html';
+            window.location.href = '/4D-Signs/cart.html';
         }
         
         function toggleSection(button) {
@@ -877,6 +891,43 @@
         // All event listeners are now handled in customize-script.js to avoid duplication
         // This includes: slider updates, color pickers, template switching, etc.
     </script>
-    <script src="customize-script.js"></script>
+    <script src="/4D-Signs/customize-script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('✓ Customize page initialized');
+
+            const productType = document.getElementById('product-type');
+            
+            if (productType) {
+                productType.addEventListener('change', updateProductDisplay);
+                updateProductDisplay(); // This will show the default selected product
+            }
+
+            function updateProductDisplay() {
+                const selectedType = productType.value;
+                console.log('✓ Product type changed to:', selectedType);
+
+                // Hide ALL product images
+                const allImages = document.querySelectorAll('.product-template-image');
+                allImages.forEach(img => img.style.display = 'none');
+
+                // Show ONLY the selected product
+                const imageMap = {
+                    'shirt': 'shirt-image',
+                    'mug': 'mug-image',
+                    'ecobag': 'ecobag-image',
+                    'key-chain': 'key-chain-image',
+                    'ref-magnet': 'ref-magnet-image',
+                    'sticker': 'sticker-image'
+                };
+
+                const imageId = imageMap[selectedType];
+                if (imageId) {
+                    const img = document.getElementById(imageId);
+                    if (img) img.style.display = 'block';
+                }
+            }
+        });
+    </script>
 </body>
 </html>

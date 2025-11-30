@@ -207,13 +207,13 @@ body {
 
 .shirt-drop-area:hover {
     border-color: #ffd700;
-    background: rgba(255, 215, 0, 0.05);
+    background: white; /* Keep it white, don't add rgba */
 }
 
 .shirt-drop-area.drag-over {
     border-color: #FFD700;
     border-style: solid;
-    background: rgba(255, 215, 0, 0.15);
+    background: white; /* Keep white here too */
     box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
 }
 
@@ -584,17 +584,39 @@ body {
 #shirt-image,
 #mug-image,
 #ecobag-image,
-.sign-preview,
+#key-chain-image,
+#ref-magnet-image,
+#sticker-image,
 .shirt-preview,
 .mug-preview,
-.ecobag-preview {
+.ecobag-preview,
+.key-chain-preview,
+.ref-magnet-preview,
+.sticker-preview {
+    position: relative !important;
+    width: 100% !important;
+    height: auto !important;
+    max-width: 600px !important;
+    margin: 0 auto !important;
     pointer-events: none !important;
     user-select: none !important;
-    -webkit-user-select: none !important;
-    -moz-user-select: none !important;
-    -ms-user-select: none !important;
-    cursor: default !important;
-    z-index: 0 !important;
+    object-fit: contain !important;
+}
+
+/* Hide all by default - JavaScript will show the selected one */
+#shirt-image,
+#mug-image,
+#ecobag-image,
+#key-chain-image,
+#ref-magnet-image,
+#sticker-image,
+.shirt-preview,
+.mug-preview,
+.ecobag-preview,
+.key-chain-preview,
+.ref-magnet-preview,
+.sticker-preview {
+    display: none !important;
 }
 
 /* Resizable Image */
@@ -616,6 +638,39 @@ body {
 
 .resizable-image:active {
     cursor: nwse-resize;
+}
+
+/* Center shirt image in design area */
+/* #shirt-image,
+.shirt-preview {
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 200% !important;
+    height: auto !important;
+    max-width: none !important;
+    display: none !important;s
+    margin: 0 !important;
+} */
+
+
+ 
+
+.design-area {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.shirt-drop-area {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Responsive Design */
@@ -1782,6 +1837,19 @@ body {
 
 .confirm-btn:active {
     transform: translateY(0);
+}
+
+#canvas-design,
+#canvas-design:hover,
+#canvas-design:focus {
+    background-color: white !important;
+    opacity: 1 !important;
+    transition: none;
+}
+
+.shirt-template,
+.shirt-template:hover {
+    opacity: 1 !important;
 }
 
 

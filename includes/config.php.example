@@ -1,0 +1,65 @@
+<?php
+// Copy this file to includes/config.php and update the values; don't commit real passwords
+return [
+    'db_host' => 'localhost',
+    'db_user' => 'webuser',
+    'db_pass' => 'web_password_here',
+    'db_name' => '4d_signs_db'
+];
+?>
+// Optional SMTP settings (not used for OTP delivery; OTP is SMS-only in this project).
+/*
+return [
+    'db_host' => 'localhost',
+    'db_user' => 'webuser',
+    'db_pass' => 'web_password_here',
+    'db_name' => '4d_signs_db',
+    'smtp_host' => 'smtp.example.com',
+    'smtp_port' => 587,
+    'smtp_user' => 'smtp-username',
+    'smtp_pass' => 'smtp-password',
+    'from_email' => 'noreply@example.com',
+];
+*/
+
+// Optional Twilio SMS settings for OTP via SMS (OTP delivery is SMS-only)
+/*
+return [
+    'twilio_account_sid' => 'ACxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+    'twilio_auth_token' => 'your_auth_token',
+    'twilio_from_number' => '+1234567890', // E.164 format
+];
+*/
+
+// Optional SMTP / Email settings
+/*
+return [
+    'db_host' => 'localhost',
+    'db_user' => 'webuser',
+    'db_pass' => 'web_password_here',
+    'db_name' => '4d_signs_db',
+    // Primary sender email
+    'from_email' => 'noreply@yourdomain.com',
+    'from_name' => '4D Signs',
+    // SMTP settings (for PHPMailer)
+    'smtp_host' => 'smtp.example.com',
+    'smtp_port' => 587,
+    'smtp_user' => 'smtp-user',
+    'smtp_pass' => 'smtp-password',
+    'smtp_secure' => 'tls', // or 'ssl'
+    // debug => true for local development only (shows debug OTP)
+    'debug' => false,
+];
+*/
+
+// Optional dev flags: Uncomment and set debug => true if you want local-only debug behavior (e.g., returning OTP in API responses).
+// Only enable in development on localhost; do NOT enable in production.
+/*
+return [
+    'db_host' => 'localhost',
+    'db_user' => 'webuser',
+    'db_pass' => 'web_password_here',
+    'db_name' => '4d_signs_db',
+    'debug' => true,
+];
+*/
