@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <i class="fas fa-box-open"></i>
                     <h3>No Orders Yet</h3>
                     <p>You haven't placed any orders yet.</p>
-                    <a href="/4D-Signs/4Dsigns.php" class="shop-now-btn">Start Shopping</a>
+                    <a href="4Dsigns.html" class="shop-now-btn">Start Shopping</a>
                 </div>
             `;
             return;

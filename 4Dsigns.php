@@ -10,7 +10,7 @@ $profile_pic = isset($_SESSION['profile_pic']) ? htmlspecialchars($_SESSION['pro
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>4D signs - Custom Signage & Souvenirs</title>
-    <link rel="stylesheet" href="/4D-Signs/style.css">
+    <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -20,9 +20,9 @@ $profile_pic = isset($_SESSION['profile_pic']) ? htmlspecialchars($_SESSION['pro
                 <div class="profile-dropdown">
                     <button class="profile-btn" id="profile-btn"><img src="<?= $profile_pic ?>" alt="Profile" class="profile-img"></button>
                     <div class="dropdown-menu" id="dropdown-menu">
-                        <a href="/4D-Signs/contact.html"><i class="fas fa-envelope"></i>Contact</a>
-                        <a href="/4D-Signs/account-settings.html"><i class="fas fa-cog"></i>Settings</a>
-                        <a href="/4D-Signs/logout.php"><i class="fas fa-sign-out-alt"></i>Logout</a>
+                        <a href="contact.html"><i class="fas fa-envelope"></i>Contact</a>
+                        <a href="account-settings.html"><i class="fas fa-cog"></i>Settings</a>
+                        <a href="logout.php"><i class="fas fa-sign-out-alt"></i>Logout</a>
                     </div>
                 </div>
                 <a href="/4D-Signs/Homepage.html" class="logo">4D Signs</a>
@@ -62,7 +62,7 @@ $profile_pic = isset($_SESSION['profile_pic']) ? htmlspecialchars($_SESSION['pro
             <p class="hero-description">Transform your business or event with custom, high-impact signage and souvenirs. We bring your ideas to life with premium materials and expert craftsmanship.</p>
             <div class="hero-buttons">
                 <a href="#products" class="cta-button primary">Explore Products</a>
-                <a href="/4D-Signs/customize.html" class="cta-button secondary">Start Designing</a>
+                <a href="customize.html" class="cta-button secondary">Start Designing</a>
             </div>
         </div>
         <div class="hero-scroll">
@@ -84,7 +84,7 @@ $profile_pic = isset($_SESSION['profile_pic']) ? htmlspecialchars($_SESSION['pro
     <script>
         // Remove localStorage based logout and session checks, as we are now authenticated via server session
         function logout() {
-            window.location.href = '/4D-Signs/logout.php';
+            window.location.href = 'logout.php';
         }
     </script>
 </body>

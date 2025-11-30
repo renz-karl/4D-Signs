@@ -72,7 +72,7 @@ function editCustomItem(itemId) {
         }));
         
         // Redirect to customize page
-    window.location.href = '/4D-Signs/customize.html?mode=edit&id=' + encodeURIComponent(itemId);
+    window.location.href = 'customize.html?mode=edit&id=' + encodeURIComponent(itemId);
     }
 }
 
@@ -608,7 +608,7 @@ function placeOrder() {
             const cartItems = JSON.parse(localStorage.getItem('cartItems') || '[]');
             if (cartItems.length === 0) {
                 alert('Your cart is empty!');
-                window.location.href = '/4D-Signs/4Dsigns.php';
+                window.location.href = '4Dsigns.html';
                 return;
             }
             checkoutItems.push(...cartItems);

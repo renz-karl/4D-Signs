@@ -15,7 +15,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Validate inputs
     if (empty($input) || empty($password)) {
-    header("Location: /4D-Signs/login.html?error=" . urlencode("Username/email and password are required."));
+    header("Location: login.html?error=" . urlencode("Username/email and password are required."));
         exit();
     }
 
@@ -43,7 +43,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (password_verify($password, $hashed_password)) {
             if (!$is_verified) {
                 // Not verified yet — redirect to verification page and include email to show in modal
-                    $redirect = '/4D-Signs/login.html?user_id=' . $id . '&email=' . urlencode($email) . '&error=' . urlencode('Your account is not verified. Please check your email for the OTP or request a new one.');
+                    $redirect = 'login.html?user_id=' . $id . '&email=' . urlencode($email) . '&error=' . urlencode('Your account is not verified. Please check your email for the OTP or request a new one.');
                     $redirect .= '&show_verify_modal=1';
                     header("Location: " . $redirect);
                 exit();
@@ -92,7 +92,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $stmt->close();
 
     if (isset($error)) {
-            header("Location: /4D-Signs/login.html?error=" . urlencode($error));
+            header("Location: login.html?error=" . urlencode($error));
         exit();
     }
 }

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Account Settings - 4D Signs</title>
-    <link rel="stylesheet" href="/4D-Signs/style.css">
+    <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -14,12 +14,12 @@
                 <div class="profile-dropdown">
                     <button class="profile-btn" id="profile-btn"><img src="https://via.placeholder.com/32x32/FFD700/28263A?text=U" alt="Profile" class="profile-img"></button>
             <div class="dropdown-menu" id="dropdown-menu">
-                <a href="/4D-Signs/contact.html"><i class="fas fa-envelope"></i>Contact</a>
-                <a href="/4D-Signs/account-settings.html"><i class="fas fa-cog"></i>Settings</a>
+                <a href="contact.html"><i class="fas fa-envelope"></i>Contact</a>
+                <a href="account-settings.html"><i class="fas fa-cog"></i>Settings</a>
                 <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i>Logout</a>
                     </div>
                 </div>
-                <a href="/4D-Signs/Homepage.html" class="logo">4D Signs</a>
+                <a href="Homepage.html" class="logo">4D Signs</a>
             </div>
             <nav class="nav-bar">
                 <a href="/4D-Signs/4Dsigns.php" class="nav-link"><i class="fas fa-home"></i> Home</a>
@@ -131,10 +131,10 @@
             <nav class="footer-col links" aria-label="Footer navigation">
                 <h4>Explore</h4>
                 <ul>
-                    <li><a href="/4D-Signs/Homepage.html">Home</a></li>
-                    <li><a href="/4D-Signs/customize.html">Customize</a></li>
-                    <li><a href="/4D-Signs/review.html"><span>Orders/Reviews</span></a></li>
-                    <li><a href="/4D-Signs/cart.html">Cart</a></li>
+                    <li><a href="Homepage.html">Home</a></li>
+                        <li><a href="customize.html">Customize</a></li>
+                        <li><a href="review.html"><span>Orders/Reviews</span></a></li>
+                        <li><a href="cart.html">Cart</a></li>
                 </ul>
             </nav>
             <div class="footer-col contact">
@@ -166,9 +166,9 @@ window.addEventListener('click', function(e) {
 });
 
 function logout() {
-    localStorage.removeItem('loggedInUser');
-    alert('You have been logged out.');
-    window.location.href = '/4D-Signs/login.html';
+    try { localStorage.removeItem('loggedInUser'); } catch(e) {}
+    // Ensure the server-side session is cleared as well
+    window.location.href = 'logout.php';
 }
 
 // Account settings functionality
@@ -178,7 +178,7 @@ document.getElementById('account-form').addEventListener('submit', function(e) {
     const loggedInUser = JSON.parse(localStorage.getItem('loggedInUser') || 'null');
     if (!loggedInUser) {
         alert('Session expired. Please login again.');
-    window.location.href = '/4D-Signs/login.html';
+    window.location.href = 'login.html';
         return;
     }
 
@@ -204,7 +204,7 @@ document.getElementById('account-form').addEventListener('submit', function(e) {
 
     if (userIndex === -1) {
         alert('User not found. Please login again.');
-    window.location.href = '/4D-Signs/login.html';
+    window.location.href = 'login.html';
         return;
     }
 
@@ -277,7 +277,7 @@ function confirmDeleteAccount() {
             localStorage.removeItem('loggedInUser');
 
             alert('Account deleted successfully.');
-            window.location.href = '/4D-Signs/login.html';
+            window.location.href = 'login.html';
         }
     }
 }
@@ -288,7 +288,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (!loggedInUser) {
         alert('Please login first to access account settings.');
-    window.location.href = '/4D-Signs/login.html';
+    window.location.href = 'login.html';
         return;
     }
 

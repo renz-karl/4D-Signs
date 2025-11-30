@@ -95,7 +95,7 @@
 
 
 
-<a href="/4D-Signs/cart.html" class="floating-cart" id="floating-cart" aria-label="View cart">
+<a href="cart.html" class="floating-cart" id="floating-cart" aria-label="View cart">
   <i class="fas fa-shopping-cart"></i> <span id="floating-cart-count">0</span>
 </a>
 <script>
@@ -580,7 +580,7 @@ window.addEventListener('click', function(e) {
 function logout() {
     try { localStorage.removeItem('loggedInUser'); } catch (e) {}
     // Redirect to server logout for session cleanup
-    window.location.href = '/4D-Signs/logout.php';
+    window.location.href = 'logout.php';
 }
 
 // Check if user is logged in
@@ -588,7 +588,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const loggedInUser = JSON.parse(localStorage.getItem('loggedInUser') || 'null');
     const serverAuth = (typeof window.serverAuth !== 'undefined') && window.serverAuth === true;
     if (!loggedInUser && !serverAuth) {
-    window.location.href = '/4D-Signs/login.html';
+    window.location.href = 'login.html';
     } else {
         if (!loggedInUser && serverAuth && window.serverUser && window.serverUser.username) {
             try { localStorage.setItem('loggedInUser', JSON.stringify({ username: window.serverUser.username })); } catch (e) {}
@@ -616,10 +616,10 @@ document.addEventListener('DOMContentLoaded', function() {
         <nav class="footer-col links" aria-label="Footer navigation">
             <h4>Explore</h4>
             <ul>
-                <li><a href="/4D-Signs/Homepage.html">Home</a></li>
-                <li><a href="/4D-Signs/customize.html">Customize</a></li>
-                <li><a href="/4D-Signs/review.html"><span>Orders/Reviews</span></a></li>
-                <li><a href="/4D-Signs/cart.html">Cart</a></li>
+                <li><a href="Homepage.html">Home</a></li>
+                <li><a href="customize.html">Customize</a></li>
+                <li><a href="review.html"><span>Orders/Reviews</span></a></li>
+                <li><a href="cart.html">Cart</a></li>
             </ul>
         </nav>
         <div class="footer-col contact">

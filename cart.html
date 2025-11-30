@@ -6,7 +6,7 @@
     <title>Shopping Cart - 4D signs</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/4D-Signs/style.css">
+  <link rel="stylesheet" href="style.css">
     <style>
         .edit-custom-btn {
             background: linear-gradient(135deg, #FFD700, #FFC700);
@@ -501,7 +501,7 @@
             <i class="fas fa-shopping-bag fa-3x"></i>
             <h2>Your Shopping Cart is Empty</h2>
             <p>Discover our amazing custom products and add some to your cart!</p>
-            <a href="/4D-Signs/4Dsigns.php" class="cart-action primary" style="display: inline-block; margin-top: 2rem;">
+            <a href="4Dsigns.html" class="cart-action primary" style="display: inline-block; margin-top: 2rem;">
                 <i class="fas fa-store"></i>
                 Browse Products
             </a>
@@ -533,7 +533,7 @@
         </div>
 
         <div class="cart-actions">
-            <a href="/4D-Signs/4Dsigns.php" class="cart-action">
+            <a href="4Dsigns.html" class="cart-action">
                 <i class="fas fa-arrow-left"></i>
                 Continue Shopping
             </a>
@@ -628,8 +628,8 @@
       
       console.log('Stored editing data for item ID:', itemId);
       
-      // Redirect to customize page for editing
-  window.location.href = '/4D-Signs/customize.html?mode=edit&id=' + encodeURIComponent(itemId);
+    // Redirect to customize page for editing
+  window.location.href = 'customize.html?mode=edit&id=' + encodeURIComponent(itemId);
     } else {
       console.error('Item not found:', itemId);
     }
@@ -919,7 +919,7 @@
       // Store selected items for checkout
       localStorage.setItem('checkoutItems', JSON.stringify(selectedItems));
       
-  window.location.href = '/4D-Signs/checkout.html';
+  window.location.href = 'checkout.html';
     });
 
     window.addEventListener('cart:updated', render);

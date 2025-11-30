@@ -254,7 +254,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 items.push(cartItem);
                 setCartItems(items);
                 alert('Customized item added to cart!');
-                window.location.href = '/4D-Signs/cart.html';
+                window.location.href = 'cart.html';
             } else {
                 let items = JSON.parse(localStorage.getItem('cartItems') || '[]');
                 items.push(cartItem);
