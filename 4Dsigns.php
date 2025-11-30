@@ -3,6 +3,7 @@ require_once __DIR__ . '/session_check.php';
 // We can access user info via session now
 $username = isset($_SESSION['username']) ? htmlspecialchars($_SESSION['username']) : 'User';
 $profile_pic = isset($_SESSION['profile_pic']) ? htmlspecialchars($_SESSION['profile_pic']) : 'https://via.placeholder.com/32x32/FFD700/28263A?text=U';
+$userid = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -86,6 +87,20 @@ $profile_pic = isset($_SESSION['profile_pic']) ? htmlspecialchars($_SESSION['pro
         function logout() {
             window.location.href = 'logout.php';
         }
+    </script>
+    <script>
+        // Expose server-side auth state to client-side scripts so UI logic prefers server session
+        window.serverAuth = true;
+        window.serverUser = {
+            id: <?php echo json_encode((string)$userid); ?>,
+            username: <?php echo json_encode($username); ?>,
+            email: <?php echo json_encode(isset($_SESSION['email']) ? $_SESSION['email'] : ''); ?>
+        };
+        try {
+            if (window.serverAuth && window.serverUser) {
+                localStorage.setItem('loggedInUser', JSON.stringify(window.serverUser));
+            }
+        } catch (e) { /* ignore */ }
     </script>
 </body>
 </html>

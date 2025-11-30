@@ -55,6 +55,10 @@
                                     <span id="current-email">john.doe@example.com</span>
                                 </div>
                                 <div class="info-item">
+                                    <label>Phone:</label>
+                                    <span id="current-phone">N/A</span>
+                                </div>
+                                <div class="info-item">
                                     <label>Member Since:</label>
                                     <span id="member-since">January 2024</span>
                                 </div>
@@ -175,7 +179,12 @@ function logout() {
 document.getElementById('account-form').addEventListener('submit', function(e) {
     e.preventDefault();
 
-    const loggedInUser = JSON.parse(localStorage.getItem('loggedInUser') || 'null');
+    let loggedInUser = JSON.parse(localStorage.getItem('loggedInUser') || 'null');
+    // If not found in localStorage, but serverAuth is present and serverUser is available, use it as fallback
+    if (!loggedInUser && typeof window !== 'undefined' && typeof window.serverAuth !== 'undefined' && window.serverAuth === true && typeof window.serverUser !== 'undefined') {
+        loggedInUser = window.serverUser;
+        try { localStorage.setItem('loggedInUser', JSON.stringify(window.serverUser)); } catch(e) {}
+    }
     if (!loggedInUser) {
         alert('Session expired. Please login again.');
     window.location.href = 'login.html';
@@ -186,6 +195,7 @@ document.getElementById('account-form').addEventListener('submit', function(e) {
     const currentPassword = document.getElementById('current-password').value;
     const newPassword = document.getElementById('new-password').value;
     const confirmPassword = document.getElementById('confirm-password').value;
+    const newPhone = document.getElementById('new-phone') ? document.getElementById('new-phone').value.trim() : '';
 
     // Basic validation
     if (!currentPassword) {
@@ -198,22 +208,75 @@ document.getElementById('account-form').addEventListener('submit', function(e) {
         return;
     }
 
-    // Get all users and find current user
+    // Get all users and find current user using helper (by id, email, or username)
     const users = JSON.parse(localStorage.getItem('users') || '[]');
-    const userIndex = users.findIndex(u => u.id === loggedInUser.id);
+    function findUserIndex(loggedInfo) {
+        if (!loggedInfo) return -1;
+        // Prefer id
+        if (typeof loggedInfo.id !== 'undefined') {
+            const idx = users.findIndex(u => String(u.id) === String(loggedInfo.id));
+            if (idx !== -1) return idx;
+        }
+        // try by email
+        if (loggedInfo.email) {
+            const idx = users.findIndex(u => u.email === loggedInfo.email);
+            if (idx !== -1) return idx;
+        }
+        // try by username
+        if (loggedInfo.username) {
+            const idx = users.findIndex(u => u.username === loggedInfo.username);
+            if (idx !== -1) return idx;
+        }
+        return -1;
+    }
 
+    let userIndex = findUserIndex(loggedInUser);
     if (userIndex === -1) {
-        alert('User not found. Please login again.');
-    window.location.href = 'login.html';
-        return;
+        // If the user isn't in localStorage users, try to create/seed a local record using serverUser info
+        if (typeof window !== 'undefined' && typeof window.serverAuth !== 'undefined' && window.serverAuth === true && typeof window.serverUser !== 'undefined') {
+            // Build a minimal user object and add to users
+            const seed = {
+                id: window.serverUser.id || (Date.now()),
+                username: window.serverUser.username || window.serverUser.email || ('user' + Date.now()),
+                email: window.serverUser.email || '',
+                password: '',
+                phone: '',
+                profile_pic_path: window.serverUser.profile_pic || ''
+            };
+            users.push(seed);
+            localStorage.setItem('users', JSON.stringify(users));
+            // Recompute userIndex
+            const newIndex = findUserIndex(window.serverUser);
+            if (newIndex !== -1) {
+                userIndex = newIndex;
+            } else {
+                alert('Failed to create a local profile for your account. Please contact support.');
+                return;
+            }
+        } else {
+            // If not server-authenticated fallback, ask to login again
+            alert('User record not found locally. Please log out and log in again.');
+            window.location.href = 'login.html';
+            return;
+        }
     }
 
     const user = users[userIndex];
 
-    // Verify current password
-    if (user.password !== currentPassword) {
-        alert('Current password is incorrect.');
-        return;
+    // Verify current password (if we have a local password). If user is server-authenticated
+    // and local password isn't present, allow the user to proceed (server will manage verification).
+    if (user.password) {
+        if (user.password !== currentPassword) {
+            alert('Current password is incorrect.');
+            return;
+        }
+    } else {
+        // No local password (likely server-backed account). If server session exists, allow update.
+        if (!(typeof window !== 'undefined' && typeof window.serverAuth !== 'undefined' && window.serverAuth === true)) {
+            alert('Cannot verify your account locally; please re-login.');
+            window.location.href = 'login.html';
+            return;
+        }
     }
 
     // Check if new username is already taken (if provided)
@@ -226,6 +289,37 @@ document.getElementById('account-form').addEventListener('submit', function(e) {
         user.username = newUsername;
     }
 
+    // Utility: normalize and validate phone
+    function normalizePhoneNumber(phone) {
+        if (!phone) return '';
+        let p = phone.trim();
+        // Remove spaces and common separators
+        p = p.replace(/[^+0-9]/g, '');
+        // Remove leading + if present for easier checks
+        const plus = p.startsWith('+');
+        if (plus) p = p.substring(1);
+        // Now p is digits. Normalize:
+        if (/^09\d{9}$/.test(p)) {
+            // 09XXXXXXXXX -> +639XXXXXXXXX
+            return '+63' + p.substring(1);
+        }
+        if (/^63\d{9}$/.test(p)) {
+            return '+' + p;
+        }
+        if (/^9\d{9}$/.test(p)) {
+            return '+63' + p;
+        }
+        // If already in +639XXXXXXXXX form
+        if (/^639\d{9}$/.test(p)) return '+' + p;
+        return null;
+    }
+
+    function isValidPhone(phone) {
+        return normalizePhoneNumber(phone) !== null;
+    }
+
+    // Sanitize phone variable using normalizer for consistent storage
+    const normalizedPhone = newPhone ? normalizePhoneNumber(newPhone) : '';
     // Update password if provided
     if (newPassword) {
         if (newPassword.length < 6) {
@@ -235,21 +329,40 @@ document.getElementById('account-form').addEventListener('submit', function(e) {
         user.password = newPassword;
     }
 
+    // Update phone if provided
+    if (newPhone) {
+        if (!normalizedPhone) {
+            alert('Please enter a valid Philippine phone number like 09XXXXXXXXX or +63XXXXXXXXX');
+            return;
+        }
+        user.phone = normalizedPhone;
+    }
+
     // Save updated user data
     users[userIndex] = user;
     localStorage.setItem('users', JSON.stringify(users));
 
     // Update logged in user data
-    const updatedLoggedInUser = {
+    const updatedLoggedInUser = Object.assign({}, loggedInUser || {}, {
         id: user.id,
         username: user.username,
         email: user.email,
-        loggedInAt: loggedInUser.loggedInAt
-    };
+        phone: user.phone || '',
+    });
+    // Preserve the original loggedInAt if present
+    if (loggedInUser && loggedInUser.loggedInAt) updatedLoggedInUser.loggedInAt = loggedInUser.loggedInAt;
     localStorage.setItem('loggedInUser', JSON.stringify(updatedLoggedInUser));
 
     // Update display
     document.getElementById('current-username').textContent = user.username;
+    // Update profile image and alt if present
+    const profileImg = document.querySelector('.profile-img');
+    if (profileImg) {
+        const initials = user.username.charAt(0).toUpperCase();
+        profileImg.src = `https://via.placeholder.com/32x32/FFD700/28263A?text=${initials}`;
+        profileImg.alt = `${user.username}'s profile`;
+    }
+    if (document.getElementById('current-phone')) document.getElementById('current-phone').textContent = user.phone || 'N/A';
 
     alert('Account settings updated successfully!');
     resetForm();
@@ -262,7 +375,10 @@ function resetForm() {
 function confirmDeleteAccount() {
     if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
         if (confirm('This will permanently delete your account and all associated data. Are you absolutely sure?')) {
-            const loggedInUser = JSON.parse(localStorage.getItem('loggedInUser') || 'null');
+            let loggedInUser = JSON.parse(localStorage.getItem('loggedInUser') || 'null');
+            if (!loggedInUser && typeof window !== 'undefined' && typeof window.serverAuth !== 'undefined' && window.serverAuth === true && typeof window.serverUser !== 'undefined') {
+                loggedInUser = window.serverUser;
+            }
             if (!loggedInUser) {
                 alert('Session expired.');
                 return;
@@ -270,7 +386,15 @@ function confirmDeleteAccount() {
 
             // Remove user from users array
             const users = JSON.parse(localStorage.getItem('users') || '[]');
-            const updatedUsers = users.filter(u => u.id !== loggedInUser.id);
+            function deleteFind(uinfo) {
+                // delete by id, then email, then username
+                if (uinfo.id) return u => String(u.id) === String(uinfo.id);
+                if (uinfo.email) return u => u.email === uinfo.email;
+                if (uinfo.username) return u => u.username === uinfo.username;
+                return u => false;
+            }
+            const predicate = deleteFind(loggedInUser);
+            const updatedUsers = users.filter(u => !predicate(u));
             localStorage.setItem('users', JSON.stringify(updatedUsers));
 
             // Clear logged in user data
@@ -282,9 +406,31 @@ function confirmDeleteAccount() {
     }
 }
 
-// Load saved username on page load
-document.addEventListener('DOMContentLoaded', function() {
-    const loggedInUser = JSON.parse(localStorage.getItem('loggedInUser') || 'null');
+    // Load saved username on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        // Fetch server session info (if any) and expose to client for pages that are static HTML
+        (function(){
+            // avoid hitting the network if serverAuth already set by server-rendered pages
+            if (typeof window !== 'undefined' && typeof window.serverAuth !== 'undefined' && window.serverAuth === true) return;
+            try {
+                fetch('debug/session.php', { credentials: 'include' })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data && data.session_data && data.session_data.user_id) {
+                            window.serverAuth = true;
+                            window.serverUser = {
+                                id: data.session_data.user_id,
+                                username: data.session_data.username || data.session_data.email || '',
+                                email: data.session_data.email || ''
+                            };
+                        }
+                    }).catch(e => { /* ignore */ });
+            } catch (e) { /* ignore */ }
+        })();
+    let loggedInUser = JSON.parse(localStorage.getItem('loggedInUser') || 'null');
+    if (!loggedInUser && typeof window !== 'undefined' && typeof window.serverAuth !== 'undefined' && window.serverAuth === true && typeof window.serverUser !== 'undefined') {
+        loggedInUser = window.serverUser;
+    }
 
     if (!loggedInUser) {
         alert('Please login first to access account settings.');
@@ -303,14 +449,34 @@ document.addEventListener('DOMContentLoaded', function() {
     // Display real user information
     document.getElementById('current-username').textContent = loggedInUser.username;
     document.getElementById('current-email').textContent = loggedInUser.email;
+    const setPhone = (num) => { if (document.getElementById('current-phone')) document.getElementById('current-phone').textContent = num || 'N/A'; };
 
-    // Format the member since date
-    const createdDate = new Date(loggedInUser.loggedInAt);
-    const memberSince = createdDate.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long'
-    });
-    document.getElementById('member-since').textContent = memberSince;
+    // Attempt to load phone from loggedInUser or users array
+    const phoneFromLogged = loggedInUser.phone || '';
+    if (phoneFromLogged) {
+        setPhone(phoneFromLogged);
+        const el = document.getElementById('new-phone'); if (el && !el.value) el.value = phoneFromLogged;
+    } else {
+        // Try to find the user in the users list
+        try {
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            const u = users.find(x => x.id === loggedInUser.id);
+            if (u && u.phone) { setPhone(u.phone); const el = document.getElementById('new-phone'); if (el && !el.value) el.value = u.phone; }
+            else setPhone('N/A');
+        } catch(e) { setPhone('N/A'); }
+    }
+
+    // Format the member since date (if available)
+    if (loggedInUser.loggedInAt) {
+        const createdDate = new Date(loggedInUser.loggedInAt);
+        const memberSince = createdDate.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long'
+        });
+        document.getElementById('member-since').textContent = memberSince;
+    } else {
+        document.getElementById('member-since').textContent = 'Unknown';
+    }
 
     document.getElementById('footer-year').textContent = new Date().getFullYear();
 });
