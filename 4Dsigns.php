@@ -11,7 +11,8 @@ if (isset($_SESSION['profile_pic_path']) && $_SESSION['profile_pic_path']) {
     $profile_pic = htmlspecialchars($_SESSION['profile_pic']);
 }
 if ($profile_pic && strpos($profile_pic, '/') !== 0 && !preg_match('/^https?:\/\//', $profile_pic)) {
-    $profile_pic = '/' . ltrim($profile_pic, '\/');
+    // If it's a relative path such as "uploads/foo.jpg", prefix with the application base
+    $profile_pic = '/4D-Signs/' . ltrim($profile_pic, '\\/');
 }
 if (empty($profile_pic)) {
     $profile_pic = 'https://via.placeholder.com/32x32/FFD700/28263A?text=U';
@@ -119,6 +120,23 @@ $userid = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
                 localStorage.setItem('loggedInUser', JSON.stringify(window.serverUser));
             }
         } catch (e) { /* ignore */ }
+    </script>
+    <script>
+        // Update header avatar when localStorage.loggedInUser is changed by another tab (e.g. after profile pic update)
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'loggedInUser') {
+                try {
+                    const su = JSON.parse(e.newValue || 'null');
+                    if (su) {
+                        const pic = (su.profile_pic || su.profile_pic_path || '').trim();
+                        let picPath = pic;
+                        if (picPath && picPath.indexOf('http') !== 0 && !picPath.startsWith('/')) picPath = '/4D-Signs/' + picPath;
+                        const profileImg = document.querySelector('.profile-img');
+                        if (profileImg && picPath) { profileImg.src = picPath; profileImg.alt = `${su.username || 'User'}'s profile`; }
+                    }
+                } catch (err) {}
+            }
+        });
     </script>
 </body>
 </html>

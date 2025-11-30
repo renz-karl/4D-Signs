@@ -1250,7 +1250,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-});
+}});
+
+// ❌ DELETE EVERYTHING BELOW THIS LINE ❌
 
 // ====== IMAGE UPLOAD FUNCTIONALITY ======
 const imageUploadInput = document.getElementById('image-upload');

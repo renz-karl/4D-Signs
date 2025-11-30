@@ -471,6 +471,19 @@ function confirmDeleteAccount() {
 
     document.getElementById('footer-year').textContent = new Date().getFullYear();
 });
+// Update profile images in other tabs if loggedInUser changes in localStorage
+window.addEventListener('storage', function(e) {
+    if (e.key === 'loggedInUser') {
+        try {
+            const su = JSON.parse(e.newValue || 'null');
+            if (su) {
+                if (su.profile_pic && su.profile_pic.indexOf('http') !== 0 && !su.profile_pic.startsWith('/')) su.profile_pic = '/4D-Signs/' + su.profile_pic;
+                if (su.profile_pic_path && su.profile_pic_path.indexOf('http') !== 0 && !su.profile_pic_path.startsWith('/')) su.profile_pic_path = '/4D-Signs/' + su.profile_pic_path;
+                applyProfileToUI(su);
+            }
+        } catch (err) { /* ignore */ }
+    }
+});
     </script>
 </body>
 </html>

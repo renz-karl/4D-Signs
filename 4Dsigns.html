@@ -951,13 +951,36 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!loggedInUser && serverAuth && window.serverUser && window.serverUser.username) {
             try { localStorage.setItem('loggedInUser', JSON.stringify({ username: window.serverUser.username })); } catch (e) {}
         }
-        // Update profile button with user's initials
+        // Update profile button with user's profile picture if available, otherwise initials
         const profileImg = document.querySelector('.profile-img');
-        if (profileImg && loggedInUser.username) {
-            const initials = loggedInUser.username.charAt(0).toUpperCase();
-            profileImg.src = `https://via.placeholder.com/32x32/FFD700/28263A?text=${initials}`;
-            profileImg.alt = `${loggedInUser.username}'s profile`;
+        if (profileImg) {
+            const pic = (loggedInUser.profile_pic || loggedInUser.profile_pic_path || '').trim();
+            let picPath = pic;
+            if (picPath && picPath.indexOf('http') !== 0 && !picPath.startsWith('/')) picPath = '/4D-Signs/' + picPath;
+            if (picPath) {
+                profileImg.src = picPath;
+                profileImg.alt = `${loggedInUser.username || 'User'}'s profile`;
+            } else if (loggedInUser.username) {
+                const initials = loggedInUser.username.charAt(0).toUpperCase();
+                profileImg.src = `https://via.placeholder.com/32x32/FFD700/28263A?text=${initials}`;
+                profileImg.alt = `${loggedInUser.username}'s profile`;
+            }
         }
+    }
+});
+// Listen for storage changes (profile updates from other tabs)
+window.addEventListener('storage', function(e) {
+    if (e.key === 'loggedInUser') {
+        try {
+            const su = JSON.parse(e.newValue || 'null');
+            if (su) {
+                const pic = (su.profile_pic || su.profile_pic_path || '').trim();
+                let picPath = pic;
+                if (picPath && picPath.indexOf('http') !== 0 && !picPath.startsWith('/')) picPath = '/4D-Signs/' + picPath;
+                const profileImg = document.querySelector('.profile-img');
+                if (profileImg && picPath) { profileImg.src = picPath; profileImg.alt = `${su.username || 'User'}'s profile`; }
+            }
+        } catch (err) {}
     }
 });
 </script>
