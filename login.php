@@ -7,6 +7,8 @@ error_log("[LOGIN] session_id=" . session_id() . "; session_before=" . json_enco
 
 // Use centralized DB connection
 require_once __DIR__ . '/includes/db.php';
+// Debug log DB used by login
+error_log("[LOGIN] DB: host={$servername} db={$dbname} user={$db_username}\n", 3, __DIR__ . '/notifications.log');
 
 // Check if form is submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -29,13 +31,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $searchInput = normalizePhone($input);
         }
         // Query user (allow username, email, or phone)
-        $stmt = $conn->prepare("SELECT id, username, email, phone, password, profile_pic_path, is_verified FROM users WHERE username = ? OR email = ? OR phone = ?");
+    $stmt = $conn->prepare("SELECT id, username, email, phone, password, profile_pic_path, is_verified, created_at FROM users WHERE username = ? OR email = ? OR phone = ?");
         $stmt->bind_param("sss", $searchInput, $searchInput, $searchInput);
     $stmt->execute();
     $stmt->store_result();
 
     if ($stmt->num_rows == 1) {
-    $stmt->bind_result($id, $username, $email, $phone, $hashed_password, $profile_pic_path, $is_verified);
+    $stmt->bind_result($id, $username, $email, $phone, $hashed_password, $profile_pic_path, $is_verified, $created_at);
         $stmt->fetch();
 
         error_log("[LOGIN] User found: id=$id username={" . $username . "} email={" . $email . "} is_verified={$is_verified}", 3, __DIR__ . '/notifications.log');
@@ -54,6 +56,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['username'] = $username;
             $_SESSION['email'] = $email;
             $_SESSION['profile_pic'] = $profile_pic_path;
+            $_SESSION['phone'] = $phone; // store phone in session for client-side exposure
+            $_SESSION['created_at'] = $created_at;
+            // also expose a loggedInAt name expected by client code
+            $_SESSION['loggedInAt'] = $created_at;
             // Ensure the session cookie is explicitly set with helpful attributes (for browsers that need samesite/httponly)
             if (PHP_VERSION_ID >= 70300) {
                 // PHP 7.3+ supports options array

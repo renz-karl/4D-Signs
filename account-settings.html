@@ -98,6 +98,12 @@
                                     <input type="password" id="confirm-password" name="confirm_password" placeholder="Confirm new password">
                                 </div>
 
+                                <div class="form-group">
+                                    <label for="new-phone">Phone Number:</label>
+                                    <input type="text" id="new-phone" name="phone" placeholder="09XXXXXXXXX or +63XXXXXXXXX">
+                                    <small>Enter Philippine number; will be normalized to +63XXXXXXXXX</small>
+                                </div>
+
                                 <div class="form-actions">
                                     <button type="submit" class="btn-primary">Update Account</button>
                                     <button type="button" class="btn-secondary" onclick="resetForm()">Cancel</button>
@@ -183,7 +189,12 @@ document.getElementById('account-form').addEventListener('submit', function(e) {
     // If not found in localStorage, but serverAuth is present and serverUser is available, use it as fallback
     if (!loggedInUser && typeof window !== 'undefined' && typeof window.serverAuth !== 'undefined' && window.serverAuth === true && typeof window.serverUser !== 'undefined') {
         loggedInUser = window.serverUser;
-        try { localStorage.setItem('loggedInUser', JSON.stringify(window.serverUser)); } catch(e) {}
+                try { 
+                    // Normalize serverUser keys to include loggedInAt for client code
+                    const su = Object.assign({}, window.serverUser);
+                    if (!su.loggedInAt && su.created_at) su.loggedInAt = su.created_at;
+                    localStorage.setItem('loggedInUser', JSON.stringify(su));
+                } catch(e) {}
     }
     if (!loggedInUser) {
         alert('Session expired. Please login again.');
@@ -240,8 +251,9 @@ document.getElementById('account-form').addEventListener('submit', function(e) {
                 username: window.serverUser.username || window.serverUser.email || ('user' + Date.now()),
                 email: window.serverUser.email || '',
                 password: '',
-                phone: '',
-                profile_pic_path: window.serverUser.profile_pic || ''
+                phone: window.serverUser.phone || '',
+                profile_pic_path: window.serverUser.profile_pic || '',
+                created_at: window.serverUser.loggedInAt || window.serverUser.created_at || new Date().toISOString()
             };
             users.push(seed);
             localStorage.setItem('users', JSON.stringify(users));
@@ -338,11 +350,6 @@ document.getElementById('account-form').addEventListener('submit', function(e) {
         user.phone = normalizedPhone;
     }
 
-    // Save updated user data
-    users[userIndex] = user;
-    localStorage.setItem('users', JSON.stringify(users));
-
-    // Update logged in user data
     const updatedLoggedInUser = Object.assign({}, loggedInUser || {}, {
         id: user.id,
         username: user.username,
@@ -351,6 +358,58 @@ document.getElementById('account-form').addEventListener('submit', function(e) {
     });
     // Preserve the original loggedInAt if present
     if (loggedInUser && loggedInUser.loggedInAt) updatedLoggedInUser.loggedInAt = loggedInUser.loggedInAt;
+    // If server-authenticated, call API to persist changes and update session
+    if (typeof window !== 'undefined' && typeof window.serverAuth !== 'undefined' && window.serverAuth === true) {
+        // Build payload
+        const payload = {
+            username: user.username,
+            current_password: currentPassword,
+            new_password: newPassword || '',
+            phone: user.phone || ''
+        };
+        fetch('api/update-profile.php', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        }).then(r => r.json()).then(data => {
+            if (!data || !data.success) {
+                const msg = data && data.errors && data.errors.length ? data.errors.join(' | ') : 'Failed to update on server';
+                alert('Server update failed: ' + msg);
+                return;
+            }
+            // Update session and local storage with server values
+            try { 
+                const su = Object.assign({}, data.session_user);
+                if (!su.loggedInAt && su.created_at) su.loggedInAt = su.created_at;
+                localStorage.setItem('loggedInUser', JSON.stringify(su)); 
+            } catch(e) {}
+            // Update users[] stored locally if present
+            users[userIndex] = Object.assign(users[userIndex] || {}, { username: data.session_user.username, phone: data.session_user.phone });
+            localStorage.setItem('users', JSON.stringify(users));
+            // Update display
+            document.getElementById('current-username').textContent = data.session_user.username;
+            if (document.getElementById('current-phone')) document.getElementById('current-phone').textContent = data.session_user.phone || 'N/A';
+            const profileImg = document.querySelector('.profile-img');
+            if (profileImg) {
+                const initials = data.session_user.username.charAt(0).toUpperCase();
+                profileImg.src = `https://via.placeholder.com/32x32/FFD700/28263A?text=${initials}`;
+                profileImg.alt = `${data.session_user.username}'s profile`;
+            }
+            alert('Account settings updated successfully!');
+            resetForm();
+        }).catch(err => {
+            console.error('Update profile request failed', err);
+            alert('Server update failed: ' + err.message);
+        });
+        return; // stop local-only flow — we will update local state after server success
+    }
+
+    // Save updated user data locally when server not present
+    users[userIndex] = user;
+    localStorage.setItem('users', JSON.stringify(users));
     localStorage.setItem('loggedInUser', JSON.stringify(updatedLoggedInUser));
 
     // Update display
@@ -369,7 +428,10 @@ document.getElementById('account-form').addEventListener('submit', function(e) {
 });
 
 function resetForm() {
+    const newPhoneEl = document.getElementById('new-phone');
+    const preservePhone = newPhoneEl ? newPhoneEl.value : '';
     document.getElementById('account-form').reset();
+    if (newPhoneEl && preservePhone) newPhoneEl.value = preservePhone;
 }
 
 function confirmDeleteAccount() {
@@ -407,26 +469,26 @@ function confirmDeleteAccount() {
 }
 
     // Load saved username on page load
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', async function() {
         // Fetch server session info (if any) and expose to client for pages that are static HTML
-        (function(){
-            // avoid hitting the network if serverAuth already set by server-rendered pages
-            if (typeof window !== 'undefined' && typeof window.serverAuth !== 'undefined' && window.serverAuth === true) return;
+        if (!(typeof window !== 'undefined' && typeof window.serverAuth !== 'undefined' && window.serverAuth === true)) {
             try {
-                fetch('debug/session.php', { credentials: 'include' })
-                    .then(r => r.json())
-                    .then(data => {
-                        if (data && data.session_data && data.session_data.user_id) {
-                            window.serverAuth = true;
-                            window.serverUser = {
-                                id: data.session_data.user_id,
-                                username: data.session_data.username || data.session_data.email || '',
-                                email: data.session_data.email || ''
-                            };
-                        }
-                    }).catch(e => { /* ignore */ });
+                const r = await fetch('debug/session.php', { credentials: 'include' });
+                const data = await r.json();
+                if (data && data.session_data && data.session_data.user_id) {
+                    window.serverAuth = true;
+                    window.serverUser = {
+                        id: data.session_data.user_id,
+                        username: data.session_data.username || data.session_data.email || '',
+                        email: data.session_data.email || '',
+                        phone: data.session_data.phone || '',
+                        profile_pic: data.session_data.profile_pic || '',
+                        loggedInAt: data.session_data.loggedInAt || data.session_data.created_at || ''
+                    };
+                    try { localStorage.setItem('loggedInUser', JSON.stringify(window.serverUser)); } catch(e) {}
+                }
             } catch (e) { /* ignore */ }
-        })();
+        }
     let loggedInUser = JSON.parse(localStorage.getItem('loggedInUser') || 'null');
     if (!loggedInUser && typeof window !== 'undefined' && typeof window.serverAuth !== 'undefined' && window.serverAuth === true && typeof window.serverUser !== 'undefined') {
         loggedInUser = window.serverUser;
@@ -451,6 +513,8 @@ function confirmDeleteAccount() {
     document.getElementById('current-email').textContent = loggedInUser.email;
     const setPhone = (num) => { if (document.getElementById('current-phone')) document.getElementById('current-phone').textContent = num || 'N/A'; };
 
+    // Ensure loggedInAt exists from created_at if needed (for older entries)
+    if (loggedInUser && !loggedInUser.loggedInAt && loggedInUser.created_at) loggedInUser.loggedInAt = loggedInUser.created_at;
     // Attempt to load phone from loggedInUser or users array
     const phoneFromLogged = loggedInUser.phone || '';
     if (phoneFromLogged) {
@@ -468,7 +532,9 @@ function confirmDeleteAccount() {
 
     // Format the member since date (if available)
     if (loggedInUser.loggedInAt) {
-        const createdDate = new Date(loggedInUser.loggedInAt);
+        // Normalize datetime string into ISO format accepted by Date
+        const iso = String(loggedInUser.loggedInAt).replace(' ', 'T');
+        const createdDate = new Date(iso);
         const memberSince = createdDate.toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'long'

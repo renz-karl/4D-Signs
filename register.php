@@ -4,6 +4,8 @@
 // Use centralized DB connection
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/notifications.php';
+// Log connected DB for debugging
+error_log("[REGISTER] Connecting DB: host={$servername} db={$dbname} user={$db_username}" . "\n", 3, __DIR__ . '/register.log');
 
 // Check if form is submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -165,6 +167,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if ($stmt->execute()) {
                 // Success - generate OTP (already bound in insert) and get pending id
                 $pendingId = $conn->insert_id;
+                error_log("[REGISTER] Inserted pending_registrations.id={$pendingId} into DB {$dbname}\n", 3, __DIR__ . '/register.log');
                 // OTP should be sent via Email (instead of SMS)
                 $message = "Your OTP code is: " . $otp . "\nThis code expires in 15 minutes.";
                 if (!empty($email)) {

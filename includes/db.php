@@ -23,9 +23,14 @@ $db_password = $config['db_pass'];
 $dbname = $config['db_name'];
 
 // Create connection
-$conn = new mysqli($servername, $db_username, $db_password, $dbname);
-if ($conn->connect_error) {
-    die("Database connection failed: " . $conn->connect_error);
+// Set mysqli to throw exceptions on errors where available for better error handling
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+try {
+    $conn = new mysqli($servername, $db_username, $db_password, $dbname);
+} catch (Throwable $t) {
+    error_log('Database connection failed: ' . $t->getMessage() . "\n", 3, __DIR__ . '/../notifications.log');
+    // For dev, display an error page, but do not leak credentials in production
+    die('Database connection failed. Please check the application log for details.');
 }
 
 // Set charset

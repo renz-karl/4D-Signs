@@ -2,6 +2,7 @@
 // api/verify-otp.php - AJAX endpoint for OTP verification (returns JSON)
 header('Content-Type: application/json');
 require_once __DIR__ . '/../includes/db.php';
+error_log("[VERIFY-OTP] Connecting DB: host={$servername} db={$dbname} user={$db_username}" . "\n", 3, __DIR__ . '/../notifications.log');
 session_start();
 
 // Robust error handling: ensure any Throwable returns JSON
@@ -81,6 +82,7 @@ if ($isPending) {
     $ok = $insertStmt->execute();
     if ($ok) {
         $newUserId = $conn->insert_id;
+        error_log("[VERIFY-OTP] Created users.id={$newUserId} from pending={$pendingId} in DB {$dbname}\n", 3, __DIR__ . '/../notifications.log');
         // Delete pending registration
         $del = $conn->prepare('DELETE FROM pending_registrations WHERE id = ?');
         $del->bind_param('i', $pendingId);
@@ -107,6 +109,31 @@ if (!$ok) {
 $_SESSION['user_id'] = $id;
 $_SESSION['username'] = $username;
 $_SESSION['email'] = $email;
+// set phone if available
+if (isset($phoneOrNull) && $phoneOrNull) $_SESSION['phone'] = $phoneOrNull;
+// Populate creation date from DB, if possible
+$createdAtStmt = $conn->prepare('SELECT created_at FROM users WHERE id = ? LIMIT 1');
+$createdAtStmt->bind_param('i', $id);
+$createdAtStmt->execute();
+$cRes = $createdAtStmt->get_result();
+if ($cRes && $row = $cRes->fetch_assoc()) {
+    $_SESSION['created_at'] = $row['created_at'];
+    $_SESSION['loggedInAt'] = $row['created_at'];
+}
+$createdAtStmt->close();
+// Ensure the session cookie is explicitly set with helpful attributes (for browsers that need samesite/httponly)
+if (PHP_VERSION_ID >= 70300) {
+    setcookie(session_name(), session_id(), [
+        'expires' => 0,
+        'path' => '/',
+        'domain' => '',
+        'secure' => false,
+        'httponly' => true,
+        'samesite' => 'Lax'
+    ]);
+} else {
+    setcookie(session_name(), session_id(), 0, '/', '', false, true);
+}
 
 echo json_encode(['success' => true, 'redirect' => '4Dsigns.php']);
 exit();

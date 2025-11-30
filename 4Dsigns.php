@@ -92,9 +92,12 @@ $userid = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
         // Expose server-side auth state to client-side scripts so UI logic prefers server session
         window.serverAuth = true;
         window.serverUser = {
-            id: <?php echo json_encode((string)$userid); ?>,
-            username: <?php echo json_encode($username); ?>,
-            email: <?php echo json_encode(isset($_SESSION['email']) ? $_SESSION['email'] : ''); ?>
+                id: <?php echo json_encode((string)$userid); ?>,
+                username: <?php echo json_encode($username); ?>,
+                email: <?php echo json_encode(isset($_SESSION['email']) ? $_SESSION['email'] : ''); ?>,
+                phone: <?php echo json_encode(isset($_SESSION['phone']) ? $_SESSION['phone'] : ''); ?>,
+                created_at: <?php echo json_encode(isset($_SESSION['created_at']) ? $_SESSION['created_at'] : ''); ?>,
+                loggedInAt: <?php echo json_encode(isset($_SESSION['loggedInAt']) ? $_SESSION['loggedInAt'] : ''); ?>
         };
         try {
             if (window.serverAuth && window.serverUser) {
