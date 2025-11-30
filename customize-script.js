@@ -491,7 +491,7 @@ document.addEventListener('DOMContentLoaded', function() {
             e.stopPropagation();
             selectElement(img);
         });
-    }
+    }}
 
     function makeTextInteractive(txt) {
         interact(txt).draggable({
