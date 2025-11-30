@@ -1291,3 +1291,9 @@ PHPMailer exception: Invalid address:  (to): karlledesma2007.gmail.com
 [LOGIN] session_id=i77kt8upra134elv1gacldhuhl; session_before=[][LOGIN] DB: host=localhost db=4d_signs_db user=root
 [LOGIN] Attempt: input=admin (from POST)
 [LOGIN] User found: id=16 username={admin} email={karlledesma2007@gmail.com} is_verified=1[LOGIN] Success: wrote session user_id=16, session_id=2l1jikrmi3vijbjv65g17c15tl
+[LOGIN] session_id=9v3alsiqe5cn1tjoonrtuuvhem; session_before=[][LOGIN] DB: host=localhost db=4d_signs_db user=root
+[LOGIN] Attempt: input=reynskerlll (from POST)
+[LOGIN] User found: id=16 username={reynskerlll} email={karlledesma2007@gmail.com} is_verified=1[LOGIN] Success: wrote session user_id=16, session_id=6e1tn5130f8sbauhjndehf37qg
+[LOGIN] session_id=3gek0vo5avld1sf9njflds3315; session_before=[][LOGIN] DB: host=localhost db=4d_signs_db user=root
+[LOGIN] Attempt: input=reynskerlll (from POST)
+[LOGIN] User found: id=16 username={reynskerlll} email={karlledesma2007@gmail.com} is_verified=1[LOGIN] Success: wrote session user_id=16, session_id=27892phrc95qn98i76emcbd4s9

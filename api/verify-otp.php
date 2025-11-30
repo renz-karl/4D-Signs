@@ -111,6 +111,12 @@ $_SESSION['username'] = $username;
 $_SESSION['email'] = $email;
 // set phone if available
 if (isset($phoneOrNull) && $phoneOrNull) $_SESSION['phone'] = $phoneOrNull;
+// set profile pic path if available
+if (isset($profilePicOrNull) && $profilePicOrNull) {
+    $pp = $profilePicOrNull;
+    if ($pp && strpos($pp, 'http') !== 0 && strpos($pp, '/') !== 0) $pp = '/4D-Signs/' . ltrim($pp, '/\\');
+    $_SESSION['profile_pic'] = $pp;
+}
 // Populate creation date from DB, if possible
 $createdAtStmt = $conn->prepare('SELECT created_at FROM users WHERE id = ? LIMIT 1');
 $createdAtStmt->bind_param('i', $id);

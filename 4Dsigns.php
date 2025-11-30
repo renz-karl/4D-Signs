@@ -2,7 +2,20 @@
 require_once __DIR__ . '/session_check.php';
 // We can access user info via session now
 $username = isset($_SESSION['username']) ? htmlspecialchars($_SESSION['username']) : 'User';
-$profile_pic = isset($_SESSION['profile_pic']) ? htmlspecialchars($_SESSION['profile_pic']) : 'https://via.placeholder.com/32x32/FFD700/28263A?text=U';
+// Normalize profile pic path from session to absolute path if it's relative or empty
+// Prefer profile_pic_path if available (new schema), else fallback to profile_pic
+$profile_pic = '';
+if (isset($_SESSION['profile_pic_path']) && $_SESSION['profile_pic_path']) {
+    $profile_pic = htmlspecialchars($_SESSION['profile_pic_path']);
+} elseif (isset($_SESSION['profile_pic']) && $_SESSION['profile_pic']) {
+    $profile_pic = htmlspecialchars($_SESSION['profile_pic']);
+}
+if ($profile_pic && strpos($profile_pic, '/') !== 0 && !preg_match('/^https?:\/\//', $profile_pic)) {
+    $profile_pic = '/' . ltrim($profile_pic, '\/');
+}
+if (empty($profile_pic)) {
+    $profile_pic = 'https://via.placeholder.com/32x32/FFD700/28263A?text=U';
+}
 $userid = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
 ?>
 <!DOCTYPE html>
@@ -91,13 +104,15 @@ $userid = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
     <script>
         // Expose server-side auth state to client-side scripts so UI logic prefers server session
         window.serverAuth = true;
-        window.serverUser = {
+    window.serverUser = {
                 id: <?php echo json_encode((string)$userid); ?>,
                 username: <?php echo json_encode($username); ?>,
                 email: <?php echo json_encode(isset($_SESSION['email']) ? $_SESSION['email'] : ''); ?>,
                 phone: <?php echo json_encode(isset($_SESSION['phone']) ? $_SESSION['phone'] : ''); ?>,
                 created_at: <?php echo json_encode(isset($_SESSION['created_at']) ? $_SESSION['created_at'] : ''); ?>,
                 loggedInAt: <?php echo json_encode(isset($_SESSION['loggedInAt']) ? $_SESSION['loggedInAt'] : ''); ?>
+        ,profile_pic: <?php echo json_encode($profile_pic); ?>
+        ,profile_pic_path: <?php echo json_encode($profile_pic); ?>
         };
         try {
             if (window.serverAuth && window.serverUser) {

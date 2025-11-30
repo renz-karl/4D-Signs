@@ -580,19 +580,12 @@ body {
 }
 
 /* Product base images - should not be interactive */
-#sign-image,
 #shirt-image,
 #mug-image,
 #ecobag-image,
 #key-chain-image,
-#ref-magnet-image,
-#sticker-image,
-.shirt-preview,
-.mug-preview,
-.ecobag-preview,
-.key-chain-preview,
-.ref-magnet-preview,
-.sticker-preview {
+#ref-magnet-image
+#sticker-image {
     position: relative !important;
     width: 100% !important;
     height: auto !important;
@@ -603,21 +596,6 @@ body {
     object-fit: contain !important;
 }
 
-/* Hide all by default - JavaScript will show the selected one */
-#shirt-image,
-#mug-image,
-#ecobag-image,
-#key-chain-image,
-#ref-magnet-image,
-#sticker-image,
-.shirt-preview,
-.mug-preview,
-.ecobag-preview,
-.key-chain-preview,
-.ref-magnet-preview,
-.sticker-preview {
-    display: none !important;
-}
 
 /* Resizable Image */
 .resizable-image {
@@ -639,22 +617,6 @@ body {
 .resizable-image:active {
     cursor: nwse-resize;
 }
-
-/* Center shirt image in design area */
-/* #shirt-image,
-.shirt-preview {
-    position: absolute !important;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    width: 200% !important;
-    height: auto !important;
-    max-width: none !important;
-    display: none !important;s
-    margin: 0 !important;
-} */
-
-
  
 
 .design-area {

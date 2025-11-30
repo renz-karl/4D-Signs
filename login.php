@@ -55,6 +55,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['user_id'] = $id;
             $_SESSION['username'] = $username;
             $_SESSION['email'] = $email;
+            // Normalize profile pic path for consistent client consumption
+            if ($profile_pic_path && strpos($profile_pic_path, '/') !== 0 && !preg_match('/^https?:\/\//', $profile_pic_path)) {
+                $profile_pic_path = '/4D-Signs/' . ltrim($profile_pic_path, '/\\');
+            }
             $_SESSION['profile_pic'] = $profile_pic_path;
             $_SESSION['phone'] = $phone; // store phone in session for client-side exposure
             $_SESSION['created_at'] = $created_at;

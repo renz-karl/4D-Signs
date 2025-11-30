@@ -701,26 +701,53 @@
             <!-- Right Panel - Upload -->
             <aside class="upload-panel">
                 <div class="upload-header">
-                    <h3><i class="fas fa-cloud-upload-alt"></i> Upload</h3>
+                    <h3><i class="fas fa-cloud-upload-alt"></i> Upload Your Design</h3>
                 </div>
                 <div class="upload-panel-content">
-                    <div class="upload-area" id="drop-zone">
+                    <!-- Image Upload Area -->
+                    <div class="add-image" id="upload-area">
                         <div class="upload-container">
-                            <i class="fas fa-cloud-upload-alt upload-icon" id="upload-icon"></i>
-                            <img id="preview-image" class="preview-image" style="display: none;">
-                            <p id="drop-text">Drop image here</p>
+                            <div class="upload-icon"><i class="fas fa-image"></i></div>
+                            <p id="drop-text">Drag & drop your image here</p>
                             <p class="or-text">or</p>
-                            <input type="file" id="file-input" accept="image/*" hidden>
-                            <button type="button" class="browse-btn-custom" onclick="document.getElementById('file-input').click()">
-                                <i class="fas fa-folder-open"></i> Browse Files
+                            <button type="button" class="browse-btn" onclick="document.getElementById('image-upload').click()">
+                                <i class="fas fa-folder-open"></i> Browse
                             </button>
+                            <input type="file" id="image-upload" accept="image/*" style="display: none;">
+                            <img id="preview-image" class="preview-image" style="display: none;">
                         </div>
                     </div>
 
-                    <div class="custom-name-section">
-                        <label for="custom-text"><i class="fas fa-tag"></i> Product Name</label>
-                        <input type="text" id="custom-text" placeholder="Enter product name" class="custom-input" autocomplete="off">
+                    <!-- Custom Name Input -->
+                    <div class="custom-name">
+                        <label for="custom-text"><i class="fas fa-heading"></i> Product Name</label>
+                        <input type="text" id="custom-text" placeholder="e.g., My Awesome Shirt">
                     </div>
+
+                    <!-- Icons/Shapes Library -->
+                    <div class="form-section">
+                        <h3><i class="fas fa-icons"></i> Add Icons</h3>
+                        <div class="icon-library">
+                            <button type="button" class="icon-btn" data-icon="fa-heart" title="Heart"><i class="fas fa-heart"></i></button>
+                            <button type="button" class="icon-btn" data-icon="fa-star" title="Star"><i class="fas fa-star"></i></button>
+                            <button type="button" class="icon-btn" data-icon="fa-circle" title="Circle"><i class="fas fa-circle"></i></button>
+                            <button type="button" class="icon-btn" data-icon="fa-square" title="Square"><i class="fas fa-square"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- Logo Upload -->
+                    <div class="form-section">
+                        <h3><i class="fas fa-image"></i> Upload Logo</h3>
+                        <input type="file" id="logo-upload" accept="image/*" style="display: none;">
+                        <button type="button" class="browse-btn" onclick="document.getElementById('logo-upload').click()">
+                            <i class="fas fa-upload"></i> Upload Logo
+                        </button>
+                    </div>
+
+                    <!-- Done Design Button -->
+                    <button type="button" id="done-design-btn" class="submit-btn" style="width: 100%; margin-top: 2rem;">
+                        <i class="fas fa-check"></i> Done - Choose Size & Quantity
+                    </button>
                 </div>
             </aside>
             </form>

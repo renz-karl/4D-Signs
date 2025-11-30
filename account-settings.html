@@ -39,7 +39,24 @@
                     <p>Manage your account information and preferences</p>
                 </div>
 
-                <div class="settings-content">
+                    <div class="settings-content">
+                        <style>
+                            .account-avatar { display:flex; flex-direction:column; align-items:center; gap:8px; margin-bottom:20px; }
+                            .account-avatar .avatar-wrap { width:220px; height:220px; border-radius:50%; overflow:hidden; display:inline-block; border:3px solid #f0f0f0; position:relative; cursor:pointer; }
+                            .account-avatar img.avatar-img { width:100%; height:100%; object-fit:cover; display:block; }
+                            .avatar-edit { position:absolute; right:10px; bottom:10px; background:rgba(0,0,0,0.6); color:#fff; width:34px; height:34px; display:flex; align-items:center; justify-content:center; border-radius:50%; font-size:14px; cursor:pointer; }
+                            .avatar-info { text-align:center; }
+                            /* avatar username removed from UI */
+                            /* avatar email removed per design */
+                            .profile-pic-input { display:none; }
+                        </style>
+                        <div class="account-avatar">
+                            <div class="avatar-wrap" id="avatar-wrap" title="Change profile picture">
+                                <img src="https://via.placeholder.com/96x96/FFD700/28263A?text=U" alt="Profile" class="avatar-img profile-img">
+                                <div class="avatar-edit" id="avatar-edit">Change</div>
+                            </div>
+                            <div class="avatar-info"></div>
+                        </div>
                     <div class="settings-card">
                         <div class="card-header">
                             <h2><i class="fas fa-user"></i> Account Information</h2>
@@ -103,6 +120,8 @@
                                     <input type="text" id="new-phone" name="phone" placeholder="09XXXXXXXXX or +63XXXXXXXXX">
                                     <small>Enter Philippine number; will be normalized to +63XXXXXXXXX</small>
                                 </div>
+
+                                <!-- Profile picture editing moved above the account info (avatar). -->
 
                                 <div class="form-actions">
                                     <button type="submit" class="btn-primary">Update Account</button>
@@ -182,249 +201,57 @@ function logout() {
 }
 
 // Account settings functionality
-document.getElementById('account-form').addEventListener('submit', function(e) {
+document.getElementById('account-form').addEventListener('submit', async function(e) {
     e.preventDefault();
-
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
     let loggedInUser = JSON.parse(localStorage.getItem('loggedInUser') || 'null');
-    // If not found in localStorage, but serverAuth is present and serverUser is available, use it as fallback
-    if (!loggedInUser && typeof window !== 'undefined' && typeof window.serverAuth !== 'undefined' && window.serverAuth === true && typeof window.serverUser !== 'undefined') {
+    if (!loggedInUser && window.serverAuth && window.serverUser) {
         loggedInUser = window.serverUser;
-                try { 
-                    // Normalize serverUser keys to include loggedInAt for client code
-                    const su = Object.assign({}, window.serverUser);
-                    if (!su.loggedInAt && su.created_at) su.loggedInAt = su.created_at;
-                    localStorage.setItem('loggedInUser', JSON.stringify(su));
-                } catch(e) {}
     }
     if (!loggedInUser) {
-        alert('Session expired. Please login again.');
-    window.location.href = 'login.html';
+        alert('Please login first.');
+        window.location.href = 'login.html';
         return;
     }
-
     const newUsername = document.getElementById('new-username').value.trim();
     const currentPassword = document.getElementById('current-password').value;
     const newPassword = document.getElementById('new-password').value;
     const confirmPassword = document.getElementById('confirm-password').value;
-    const newPhone = document.getElementById('new-phone') ? document.getElementById('new-phone').value.trim() : '';
-
+    const newPhone = (document.getElementById('new-phone') ? document.getElementById('new-phone').value.trim() : '');
     // Basic validation
-    if (!currentPassword) {
-        alert('Please enter your current password.');
-        return;
-    }
-
-    if (newPassword && newPassword !== confirmPassword) {
-        alert('New passwords do not match.');
-        return;
-    }
-
-    // Get all users and find current user using helper (by id, email, or username)
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    function findUserIndex(loggedInfo) {
-        if (!loggedInfo) return -1;
-        // Prefer id
-        if (typeof loggedInfo.id !== 'undefined') {
-            const idx = users.findIndex(u => String(u.id) === String(loggedInfo.id));
-            if (idx !== -1) return idx;
-        }
-        // try by email
-        if (loggedInfo.email) {
-            const idx = users.findIndex(u => u.email === loggedInfo.email);
-            if (idx !== -1) return idx;
-        }
-        // try by username
-        if (loggedInfo.username) {
-            const idx = users.findIndex(u => u.username === loggedInfo.username);
-            if (idx !== -1) return idx;
-        }
-        return -1;
-    }
-
+    if (newPassword && newPassword !== confirmPassword) { alert('New passwords do not match.'); return; }
+    // Find user index; if not found seed from serverUser
+    function findUserIndex(loggedInfo) { if (!loggedInfo) return -1; const idx = users.findIndex(u => String(u.id) === String(loggedInfo.id)); if (idx !== -1) return idx; return users.findIndex(u => u.email === loggedInfo.email) !== -1 ? users.findIndex(u => u.email === loggedInfo.email) : users.findIndex(u => u.username === loggedInfo.username); }
     let userIndex = findUserIndex(loggedInUser);
-    if (userIndex === -1) {
-        // If the user isn't in localStorage users, try to create/seed a local record using serverUser info
-        if (typeof window !== 'undefined' && typeof window.serverAuth !== 'undefined' && window.serverAuth === true && typeof window.serverUser !== 'undefined') {
-            // Build a minimal user object and add to users
-            const seed = {
-                id: window.serverUser.id || (Date.now()),
-                username: window.serverUser.username || window.serverUser.email || ('user' + Date.now()),
-                email: window.serverUser.email || '',
-                password: '',
-                phone: window.serverUser.phone || '',
-                profile_pic_path: window.serverUser.profile_pic || '',
-                created_at: window.serverUser.loggedInAt || window.serverUser.created_at || new Date().toISOString()
-            };
-            users.push(seed);
-            localStorage.setItem('users', JSON.stringify(users));
-            // Recompute userIndex
-            const newIndex = findUserIndex(window.serverUser);
-            if (newIndex !== -1) {
-                userIndex = newIndex;
-            } else {
-                alert('Failed to create a local profile for your account. Please contact support.');
-                return;
-            }
-        } else {
-            // If not server-authenticated fallback, ask to login again
-            alert('User record not found locally. Please log out and log in again.');
-            window.location.href = 'login.html';
-            return;
-        }
+    if (userIndex === -1 && window.serverAuth && window.serverUser) {
+        const seed = { id: window.serverUser.id || Date.now(), username: window.serverUser.username || window.serverUser.email || 'user' + Date.now(), email: window.serverUser.email || '', password: '', phone: window.serverUser.phone || '', created_at: window.serverUser.loggedInAt || window.serverUser.created_at || new Date().toISOString() };
+        users.push(seed); localStorage.setItem('users', JSON.stringify(users)); userIndex = findUserIndex(seed);
     }
-
+    if (userIndex === -1) { alert('User record not found.'); window.location.href = 'login.html'; return; }
+    // Build user payload & apply local changes
     const user = users[userIndex];
-
-    // Verify current password (if we have a local password). If user is server-authenticated
-    // and local password isn't present, allow the user to proceed (server will manage verification).
-    if (user.password) {
-        if (user.password !== currentPassword) {
-            alert('Current password is incorrect.');
+    if (newUsername && newUsername !== user.username) { const usernameExists = users.some(u => u.username === newUsername && u.id !== user.id); if (usernameExists) { alert('Username already exists.'); return; } user.username = newUsername; }
+    if (newPassword) { if (newPassword.length < 6) { alert('New password must be at least 6 characters long.'); return; } user.password = newPassword; }
+    if (newPhone) { const normalized = (function(p){let s=p.replace(/[^+0-9]/g,''); if(/^09\d{9}$/.test(s)) return '+63'+s.substring(1); if(/^9\d{9}$/.test(s)) return '+63'+s; if(/^[+]?63\d{9}$/.test(s)) return s.startsWith('+')?s:'+'+s; return null;})(newPhone); if (!normalized) { alert('Invalid phone'); return; } user.phone = normalized; }
+    const updatedLoggedInUser = Object.assign({}, loggedInUser, { id: user.id, username: user.username, email: user.email, phone: user.phone || '', loggedInAt: loggedInUser.loggedInAt || loggedInUser.created_at });
+    if (window.serverAuth && window.serverUser) {
+        // Persist to server via JSON (no profile pic here)
+        try {
+            const res = await fetch('api/update-profile.php', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: user.username, current_password: currentPassword, new_password: newPassword || '', phone: user.phone || '' }) });
+            const data = await res.json();
+            if (!data || !data.success) { const msg = (data && data.errors && data.errors.length) ? data.errors.join(' | ') : 'Server update failed'; alert(msg); return; }
+            const su = Object.assign({}, data.session_user); if (!su.loggedInAt && su.created_at) su.loggedInAt = su.created_at; try { localStorage.setItem('loggedInUser', JSON.stringify(su)); } catch(e) {}
+            users[userIndex] = Object.assign(users[userIndex] || {}, { username: data.session_user.username, phone: data.session_user.phone }); localStorage.setItem('users', JSON.stringify(users));
+            const picPath = data.session_user.profile_pic_path || data.session_user.profile_pic || '';
+            const profileImgs = document.querySelectorAll('.profile-img'); if (picPath && profileImgs) { profileImgs.forEach(i => { i.src = picPath; i.alt = `${data.session_user.username}'s profile`; }); }
+            document.getElementById('current-username').textContent = data.session_user.username; if (document.getElementById('current-phone')) document.getElementById('current-phone').textContent = data.session_user.phone || 'N/A';
+            alert('Account settings updated successfully!'); resetForm();
             return;
-        }
-    } else {
-        // No local password (likely server-backed account). If server session exists, allow update.
-        if (!(typeof window !== 'undefined' && typeof window.serverAuth !== 'undefined' && window.serverAuth === true)) {
-            alert('Cannot verify your account locally; please re-login.');
-            window.location.href = 'login.html';
-            return;
-        }
+        } catch (err) { console.error(err); alert('Server update failed'); return; }
     }
-
-    // Check if new username is already taken (if provided)
-    if (newUsername && newUsername !== user.username) {
-        const usernameExists = users.some(u => u.username === newUsername && u.id !== user.id);
-        if (usernameExists) {
-            alert('Username already exists. Please choose a different username.');
-            return;
-        }
-        user.username = newUsername;
-    }
-
-    // Utility: normalize and validate phone
-    function normalizePhoneNumber(phone) {
-        if (!phone) return '';
-        let p = phone.trim();
-        // Remove spaces and common separators
-        p = p.replace(/[^+0-9]/g, '');
-        // Remove leading + if present for easier checks
-        const plus = p.startsWith('+');
-        if (plus) p = p.substring(1);
-        // Now p is digits. Normalize:
-        if (/^09\d{9}$/.test(p)) {
-            // 09XXXXXXXXX -> +639XXXXXXXXX
-            return '+63' + p.substring(1);
-        }
-        if (/^63\d{9}$/.test(p)) {
-            return '+' + p;
-        }
-        if (/^9\d{9}$/.test(p)) {
-            return '+63' + p;
-        }
-        // If already in +639XXXXXXXXX form
-        if (/^639\d{9}$/.test(p)) return '+' + p;
-        return null;
-    }
-
-    function isValidPhone(phone) {
-        return normalizePhoneNumber(phone) !== null;
-    }
-
-    // Sanitize phone variable using normalizer for consistent storage
-    const normalizedPhone = newPhone ? normalizePhoneNumber(newPhone) : '';
-    // Update password if provided
-    if (newPassword) {
-        if (newPassword.length < 6) {
-            alert('New password must be at least 6 characters long.');
-            return;
-        }
-        user.password = newPassword;
-    }
-
-    // Update phone if provided
-    if (newPhone) {
-        if (!normalizedPhone) {
-            alert('Please enter a valid Philippine phone number like 09XXXXXXXXX or +63XXXXXXXXX');
-            return;
-        }
-        user.phone = normalizedPhone;
-    }
-
-    const updatedLoggedInUser = Object.assign({}, loggedInUser || {}, {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        phone: user.phone || '',
-    });
-    // Preserve the original loggedInAt if present
-    if (loggedInUser && loggedInUser.loggedInAt) updatedLoggedInUser.loggedInAt = loggedInUser.loggedInAt;
-    // If server-authenticated, call API to persist changes and update session
-    if (typeof window !== 'undefined' && typeof window.serverAuth !== 'undefined' && window.serverAuth === true) {
-        // Build payload
-        const payload = {
-            username: user.username,
-            current_password: currentPassword,
-            new_password: newPassword || '',
-            phone: user.phone || ''
-        };
-        fetch('api/update-profile.php', {
-            method: 'POST',
-            credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload)
-        }).then(r => r.json()).then(data => {
-            if (!data || !data.success) {
-                const msg = data && data.errors && data.errors.length ? data.errors.join(' | ') : 'Failed to update on server';
-                alert('Server update failed: ' + msg);
-                return;
-            }
-            // Update session and local storage with server values
-            try { 
-                const su = Object.assign({}, data.session_user);
-                if (!su.loggedInAt && su.created_at) su.loggedInAt = su.created_at;
-                localStorage.setItem('loggedInUser', JSON.stringify(su)); 
-            } catch(e) {}
-            // Update users[] stored locally if present
-            users[userIndex] = Object.assign(users[userIndex] || {}, { username: data.session_user.username, phone: data.session_user.phone });
-            localStorage.setItem('users', JSON.stringify(users));
-            // Update display
-            document.getElementById('current-username').textContent = data.session_user.username;
-            if (document.getElementById('current-phone')) document.getElementById('current-phone').textContent = data.session_user.phone || 'N/A';
-            const profileImg = document.querySelector('.profile-img');
-            if (profileImg) {
-                const initials = data.session_user.username.charAt(0).toUpperCase();
-                profileImg.src = `https://via.placeholder.com/32x32/FFD700/28263A?text=${initials}`;
-                profileImg.alt = `${data.session_user.username}'s profile`;
-            }
-            alert('Account settings updated successfully!');
-            resetForm();
-        }).catch(err => {
-            console.error('Update profile request failed', err);
-            alert('Server update failed: ' + err.message);
-        });
-        return; // stop local-only flow — we will update local state after server success
-    }
-
-    // Save updated user data locally when server not present
-    users[userIndex] = user;
-    localStorage.setItem('users', JSON.stringify(users));
-    localStorage.setItem('loggedInUser', JSON.stringify(updatedLoggedInUser));
-
-    // Update display
-    document.getElementById('current-username').textContent = user.username;
-    // Update profile image and alt if present
-    const profileImg = document.querySelector('.profile-img');
-    if (profileImg) {
-        const initials = user.username.charAt(0).toUpperCase();
-        profileImg.src = `https://via.placeholder.com/32x32/FFD700/28263A?text=${initials}`;
-        profileImg.alt = `${user.username}'s profile`;
-    }
-    if (document.getElementById('current-phone')) document.getElementById('current-phone').textContent = user.phone || 'N/A';
-
-    alert('Account settings updated successfully!');
-    resetForm();
+    // Local only update
+    users[userIndex] = user; localStorage.setItem('users', JSON.stringify(users)); localStorage.setItem('loggedInUser', JSON.stringify(updatedLoggedInUser));
+    document.getElementById('current-username').textContent = user.username; const profileImgs = document.querySelectorAll('.profile-img'); const picPath = user.profile_pic || user.profile_pic_path || ''; if (picPath && profileImgs) profileImgs.forEach(i => { i.src = picPath; i.alt = `${user.username}'s profile`; }); if (document.getElementById('current-phone')) document.getElementById('current-phone').textContent = user.phone || 'N/A'; alert('Account settings updated successfully!'); resetForm();
 });
 
 function resetForm() {
@@ -477,19 +304,99 @@ function confirmDeleteAccount() {
                 const data = await r.json();
                 if (data && data.session_data && data.session_data.user_id) {
                     window.serverAuth = true;
+                    // Normalize paths in returned server data so logos and avatars persist across refresh
+                    let serverPic = data.session_data.profile_pic || data.session_data.profile_pic_path || '';
+                    if (serverPic && serverPic.indexOf('http') !== 0 && !serverPic.startsWith('/')) serverPic = '/4D-Signs/' + serverPic;
                     window.serverUser = {
                         id: data.session_data.user_id,
                         username: data.session_data.username || data.session_data.email || '',
                         email: data.session_data.email || '',
                         phone: data.session_data.phone || '',
-                        profile_pic: data.session_data.profile_pic || '',
+                        profile_pic: serverPic,
+                        profile_pic_path: serverPic,
                         loggedInAt: data.session_data.loggedInAt || data.session_data.created_at || ''
                     };
                     try { localStorage.setItem('loggedInUser', JSON.stringify(window.serverUser)); } catch(e) {}
                 }
             } catch (e) { /* ignore */ }
         }
+        // Preview profile picture file selection and wire avatar upload (separate from the update form)
+        // We'll create a hidden file input and bind avatar interactions to it
+        let profilePicInput = document.getElementById('profile-pic');
+        if (!profilePicInput) {
+            profilePicInput = document.createElement('input');
+            profilePicInput.type = 'file';
+            profilePicInput.accept = 'image/*';
+            profilePicInput.id = 'profile-pic';
+            profilePicInput.className = 'profile-pic-input';
+            document.body.appendChild(profilePicInput);
+        }
+        if (profilePicInput) {
+            profilePicInput.addEventListener('change', function(e) {
+                const f = e.target.files[0];
+                if (!f) return;
+                const img = document.querySelector('.profile-img');
+                if (!img) return;
+                const url = URL.createObjectURL(f);
+                img.src = url;
+                img.alt = 'Selected profile picture';
+                // Immediately upload the selected picture (separate flow)
+                uploadProfilePic(f);
+                // clear input so future identical file selections still trigger change
+                try { profilePicInput.value = ''; } catch (e) {}
+            });
+        }
+
+        // Apply profile data to UI (avatar and header images)
+        function applyProfileToUI(su) {
+            if (!su) return;
+            let picPath = su.profile_pic_path || su.profile_pic || '';
+            if (picPath && picPath.indexOf('http') !== 0 && !picPath.startsWith('/')) {
+                picPath = '/4D-Signs/' + picPath;
+            }
+            const imgs = document.querySelectorAll('.profile-img');
+            if (picPath && imgs) imgs.forEach(i => { i.src = picPath; i.alt = `${su.username || ''}'s profile`; });
+            // If avatar exists set that too
+            const avatarImg = document.querySelector('.avatar-img');
+            if (picPath && avatarImg) { avatarImg.src = picPath; avatarImg.alt = `${su.username || ''}'s profile`; }
+        }
+
+        // Upload profile picture as a separate endpoint call
+        async function uploadProfilePic(file) {
+            try {
+                const fd = new FormData();
+                fd.append('profilePic', file);
+                // We don't send current password for profile pic updates; server trusts session auth
+                const r = await fetch('api/update-profile.php', { method: 'POST', credentials: 'include', body: fd });
+                const data = await r.json();
+                if (!data || !data.success) {
+                    const msg = (data && data.errors && data.errors.length) ? data.errors.join(' | ') : 'Failed to upload profile picture';
+                    alert(msg);
+                    return;
+                }
+                // Update session/local storage and UI with returned path
+                const su = Object.assign({}, data.session_user);
+                if (su.profile_pic_path && su.profile_pic_path.indexOf('http') !== 0 && !su.profile_pic_path.startsWith('/')) su.profile_pic_path = '/4D-Signs/' + su.profile_pic_path;
+                if (su.profile_pic && su.profile_pic.indexOf('http') !== 0 && !su.profile_pic.startsWith('/')) su.profile_pic = '/4D-Signs/' + su.profile_pic;
+                if (!su.loggedInAt && su.created_at) su.loggedInAt = su.created_at;
+                try { localStorage.setItem('loggedInUser', JSON.stringify(su)); } catch(e) {}
+                // Update header/profile images
+                // Apply to both header and avatar
+                applyProfileToUI(su);
+                alert('Profile picture updated!');
+            } catch (err) {
+                console.error('uploadProfilePic error', err);
+                alert('Failed to upload profile picture.');
+            }
+        }
     let loggedInUser = JSON.parse(localStorage.getItem('loggedInUser') || 'null');
+    // Normalize paths in local storage user data for consistency and apply to UI
+    if (loggedInUser) {
+        if (loggedInUser.profile_pic_path && loggedInUser.profile_pic_path.indexOf('http') !== 0 && !loggedInUser.profile_pic_path.startsWith('/')) loggedInUser.profile_pic_path = '/4D-Signs/' + loggedInUser.profile_pic_path;
+        if (loggedInUser.profile_pic && loggedInUser.profile_pic.indexOf('http') !== 0 && !loggedInUser.profile_pic.startsWith('/')) loggedInUser.profile_pic = '/4D-Signs/' + loggedInUser.profile_pic;
+        localStorage.setItem('loggedInUser', JSON.stringify(loggedInUser));
+        applyProfileToUI(loggedInUser);
+    }
     if (!loggedInUser && typeof window !== 'undefined' && typeof window.serverAuth !== 'undefined' && window.serverAuth === true && typeof window.serverUser !== 'undefined') {
         loggedInUser = window.serverUser;
     }
@@ -500,12 +407,30 @@ function confirmDeleteAccount() {
         return;
     }
 
-    // Update profile button with user's initials
+    // Update profile button image using server-supplied path if available, otherwise initials
     const profileImg = document.querySelector('.profile-img');
-    if (profileImg && loggedInUser.username) {
-        const initials = loggedInUser.username.charAt(0).toUpperCase();
-        profileImg.src = `https://via.placeholder.com/32x32/FFD700/28263A?text=${initials}`;
-        profileImg.alt = `${loggedInUser.username}'s profile`;
+    if (profileImg) {
+        const pic = loggedInUser.profile_pic || loggedInUser.profile_pic_path || loggedInUser.profilePic || '';
+        if (pic) {
+            profileImg.src = pic;
+            profileImg.alt = `${loggedInUser.username}'s profile`;
+        } else if (loggedInUser.username) {
+            const initials = loggedInUser.username.charAt(0).toUpperCase();
+            profileImg.src = `https://via.placeholder.com/32x32/FFD700/28263A?text=${initials}`;
+            profileImg.alt = `${loggedInUser.username}'s profile`;
+        }
+    }
+
+    // Avatar username has been removed from the UI
+
+    // Wire avatar click to open upload dialog
+    const avatarWrap = document.getElementById('avatar-wrap');
+    const avatarEdit = document.getElementById('avatar-edit');
+    if (avatarWrap) {
+        avatarWrap.addEventListener('click', function() { profilePicInput.click(); });
+    }
+    if (avatarEdit) {
+        avatarEdit.addEventListener('click', function(e) { e.stopPropagation(); profilePicInput.click(); });
     }
 
     // Display real user information
