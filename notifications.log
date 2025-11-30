@@ -1297,3 +1297,10 @@ PHPMailer exception: Invalid address:  (to): karlledesma2007.gmail.com
 [LOGIN] session_id=3gek0vo5avld1sf9njflds3315; session_before=[][LOGIN] DB: host=localhost db=4d_signs_db user=root
 [LOGIN] Attempt: input=reynskerlll (from POST)
 [LOGIN] User found: id=16 username={reynskerlll} email={karlledesma2007@gmail.com} is_verified=1[LOGIN] Success: wrote session user_id=16, session_id=27892phrc95qn98i76emcbd4s9
+[LOGIN] session_id=38mmjohavut9u9ljgpcrf8no9b; session_before=[][LOGIN] DB: host=localhost db=4d_signs_db user=root
+[LOGIN] Attempt: input=reynskerlll (from POST)
+[LOGIN] User found: id=16 username={reynskerlll} email={karlledesma2007@gmail.com} is_verified=1[LOGIN] Success: wrote session user_id=16, session_id=ut9dhmf8g97o0l6kt75a34e3on
+[LOGIN] session_id=m9pn7nsmqs1jp8gn8pejr6fsir; session_before=[][LOGIN] DB: host=localhost db=4d_signs_db user=root
+[LOGIN] Attempt: input=reynskerlll (from POST)
+[LOGIN] User found: id=16 username={reynskerlll} email={karlledesma2007@gmail.com} is_verified=1[LOGIN] Success: wrote session user_id=16, session_id=tkr0ua3j2v94b5ahfgfbavsoq7
+[UPDATE-PROFILE] user=16 profile_pic_path=/4D-Signs/uploads/p_692c7a19dd3716.44536600.jpg

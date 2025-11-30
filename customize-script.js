@@ -510,7 +510,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         txt.addEventListener('click', (e) => {
             e.stopPropagation();
-            selectElement(txt);
+            selectElement(txt);     
         });
     }
 

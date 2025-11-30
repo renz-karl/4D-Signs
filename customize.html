@@ -755,6 +755,29 @@
     </main>
 
     <script>
+    // Try to fetch server session info and expose it to client pages, so static HTML pages get server auth state
+    (async function() {
+        try {
+            const r = await fetch('debug/session.php', { credentials: 'include' });
+            const data = await r.json();
+            if (data && data.session_data && data.session_data.user_id) {
+                window.serverAuth = true;
+                let serverPic = data.session_data.profile_pic || data.session_data.profile_pic_path || '';
+                if (serverPic && serverPic.indexOf('http') !== 0 && !serverPic.startsWith('/')) serverPic = '/4D-Signs/' + serverPic;
+                window.serverUser = {
+                    id: data.session_data.user_id,
+                    username: data.session_data.username || data.session_data.email || '',
+                    email: data.session_data.email || '',
+                    phone: data.session_data.phone || '',
+                    profile_pic: serverPic,
+                    profile_pic_path: serverPic,
+                    created_at: data.session_data.created_at || '',
+                    loggedInAt: data.session_data.loggedInAt || data.session_data.created_at || ''
+                };
+                try { localStorage.setItem('loggedInUser', JSON.stringify(window.serverUser)); } catch(e) {}
+            }
+        } catch(e) { /* ignore */ }
+    })();
         // Size & Quantity Modal Functions
         let colorVariantCounter = 0;
         
