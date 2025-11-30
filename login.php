@@ -59,7 +59,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if ($profile_pic_path && strpos($profile_pic_path, '/') !== 0 && !preg_match('/^https?:\/\//', $profile_pic_path)) {
                 $profile_pic_path = '/4D-Signs/' . ltrim($profile_pic_path, '/\\');
             }
+            // Keep both keys set for consistency across application pages
             $_SESSION['profile_pic'] = $profile_pic_path;
+            $_SESSION['profile_pic_path'] = $profile_pic_path;
             $_SESSION['phone'] = $phone; // store phone in session for client-side exposure
             $_SESSION['is_admin'] = !empty($is_admin) ? 1 : 0;
             $_SESSION['created_at'] = $created_at;

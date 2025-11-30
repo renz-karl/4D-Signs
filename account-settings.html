@@ -336,10 +336,12 @@ function confirmDeleteAccount() {
             profilePicInput.addEventListener('change', function(e) {
                 const f = e.target.files[0];
                 if (!f) return;
-                const img = document.querySelector('.profile-img');
-                if (!img) return;
                 const url = URL.createObjectURL(f);
-                img.src = url;
+                // Update all header/profile images immediately with the selected file preview
+                const imgs = document.querySelectorAll('.profile-img');
+                if (imgs) imgs.forEach(i => { i.src = url; i.alt = 'Selected profile picture'; });
+                const avatarImg = document.querySelector('.avatar-img');
+                if (avatarImg) { avatarImg.src = url; avatarImg.alt = 'Selected profile picture'; }
                 img.alt = 'Selected profile picture';
                 // Immediately upload the selected picture (separate flow)
                 uploadProfilePic(f);
@@ -382,8 +384,17 @@ function confirmDeleteAccount() {
                 if (!su.loggedInAt && su.created_at) su.loggedInAt = su.created_at;
                 try { localStorage.setItem('loggedInUser', JSON.stringify(su)); } catch(e) {}
                 // Update header/profile images
-                // Apply to both header and avatar
+                // Apply to both header and avatar (with cache-busting to ensure reload)
                 applyProfileToUI(su);
+                // Force reload of the image to avoid old cached version
+                try {
+                    const pics = document.querySelectorAll('.profile-img');
+                    const avatarImg = document.querySelector('.avatar-img');
+                    const ppath = su.profile_pic_path || su.profile_pic || '';
+                    const url = ppath ? ppath + '?t=' + Date.now() : '';
+                    if (url && pics) pics.forEach(i => i.src = url);
+                    if (url && avatarImg) avatarImg.src = url;
+                } catch(e) { /* ignore */ }
                 alert('Profile picture updated!');
             } catch (err) {
                 console.error('uploadProfilePic error', err);

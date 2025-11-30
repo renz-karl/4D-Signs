@@ -455,50 +455,64 @@
             img.classList.contains('ecobag-preview')) {
             return;
         }
+        
+        interact(img)
+            .draggable({
+                inertia: true,
+                modifiers: [
+                    interact.modifiers.restrictRect({
+                        restriction: shirtDropArea,
+                        endOnly: true
+                    })
+                ],
+                listeners: {
+                    move: dragMoveListener,
+                    end: () => saveState()
+                }
+            })
+            .resizable({
+                edges: { left: true, right: true, bottom: true, top: true },
+                preserveAspectRatio: true,
+                inertia: true,
+                modifiers: [
+                    interact.modifiers.restrictEdges({
+                        outer: shirtDropArea
+                    }),
+                    interact.modifiers.restrictSize({
+                        min: { width: 50, height: 50 }
+                    })
+                },
+                listeners: {
+                    move: resizeListener,
+                    end: () => saveState()
+                }
+            });
 
-        img.addEventListener('click', function(e) {
+        img.addEventListener('click', (e) => {
             e.stopPropagation();
             selectElement(img);
         });
-    }
+    }}
 
     function makeTextInteractive(txt) {
-        // Put back drag & resize for text using interact.js
-        try {
-            interact(txt)
-                .draggable({
-                    inertia: true,
-                    modifiers: [
-                        interact.modifiers.restrictRect({
-                            restriction: shirtDropArea,
-                            endOnly: true
-                        })
-                    ],
-                    listeners: {
-                        move: dragMoveListener,
-                        end: function() { saveState(); }
-                    }
+        interact(txt).draggable({
+            listeners: { 
+                move: dragMoveListener,
+                end: () => saveState()
+            },
+            inertia: true,
+            modifiers: [
+                interact.modifiers.restrictRect({
+                    restriction: shirtDropArea,
+                    endOnly: true
                 })
-                .resizable({
-                    edges: { left: true, right: true, bottom: true, top: true },
-                    preserveAspectRatio: false,
-                    inertia: true,
-                    modifiers: [
-                        interact.modifiers.restrictEdges({ outer: shirtDropArea }),
-                        interact.modifiers.restrictSize({ min: { width: 30, height: 20 } })
-                    ],
-                    listeners: {
-                        move: resizeTextListener,
-                        end: function() { saveState(); }
-                    }
-                });
-        } catch (err) {
-            // If Interact.js isn't available or throws, fall back to simple click handler
-            txt.addEventListener('click', function(e) {
-                e.stopPropagation();
-                selectElement(txt);
-            });
-        }
+            ]
+        });
+
+        txt.addEventListener('click', (e) => {
+            e.stopPropagation();
+            selectElement(txt);
+        });
     }
 
     function dragMoveListener(event) {
