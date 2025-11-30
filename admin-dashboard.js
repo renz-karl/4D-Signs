@@ -1,7 +1,31 @@
 // Check authentication
 window.addEventListener('DOMContentLoaded', () => {
-    if (sessionStorage.getItem('adminLoggedIn') !== 'true') {
-        window.location.href = 'admin-login.html';
+    // Allow admin access if either sessionStorage is set OR server-provided user is admin
+    let isAdmin = false;
+    try {
+        isAdmin = (sessionStorage.getItem('adminLoggedIn') === 'true') || ((typeof window !== 'undefined' && window.serverAuth && window.serverUser && (window.serverUser.is_admin === true || window.serverUser.is_admin === 1)));
+        // Also check localStorage seeded loggedInUser for is_admin flag
+        if (!isAdmin) {
+            const lsu = JSON.parse(localStorage.getItem('loggedInUser') || 'null');
+            if (lsu && (lsu.is_admin === true || lsu.is_admin === 1)) isAdmin = true;
+        }
+    } catch(e) { isAdmin = false; }
+    if (!isAdmin) {
+        // Attempt to query server session via debug endpoint to check if user is admin
+        fetch('debug/session.php', { credentials: 'include' }).then(r => r.json()).then(data => {
+            if (data && data.session_data && (data.session_data.is_admin === '1' || data.session_data.is_admin === 1 || data.session_data.is_admin === true)) {
+                sessionStorage.setItem('adminLoggedIn', 'true');
+                // set adminName from session if present
+                try { if (data.session_data.username) document.getElementById('admin-name').textContent = data.session_data.username; } catch (e) {}
+                // proceed with loading dashboard
+                loadDashboardData(); loadProducts(); loadPromoSettings(); loadOrders(); loadCustomers(); loadReviews(); loadMessages(); updateUnreadBadge();
+            } else {
+                window.location.href = 'admin-login.html';
+            }
+        }).catch(err => {
+            console.error('Failed to check admin session', err);
+            window.location.href = 'admin-login.html';
+        });
         return;
     }
 

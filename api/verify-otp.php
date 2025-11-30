@@ -37,7 +37,7 @@ if ($isPending) {
     $stmt = $conn->prepare("SELECT id, username, email, password_hash, phone, profile_pic_path, otp_code_hash, otp_expires_at FROM pending_registrations WHERE id = ?");
     $stmt->bind_param('i', $pendingId);
 } else {
-    $stmt = $conn->prepare("SELECT id, username, email, otp_code_hash, otp_expires_at FROM users WHERE id = ?");
+    $stmt = $conn->prepare("SELECT id, username, email, otp_code_hash, otp_expires_at, is_admin FROM users WHERE id = ?");
     $stmt->bind_param('i', $userId);
 }
 $stmt->execute();
@@ -52,7 +52,7 @@ $passwordHashOrNull = null; $phoneOrNull = null; $profilePicOrNull = null;
 if ($isPending) {
     $stmt->bind_result($id, $username, $email, $passwordHashOrNull, $phoneOrNull, $profilePicOrNull, $otpHash, $otpExpiresAt);
 } else {
-    $stmt->bind_result($id, $username, $email, $otpHash, $otpExpiresAt);
+    $stmt->bind_result($id, $username, $email, $otpHash, $otpExpiresAt, $isAdminFlag);
 }
 $stmt->fetch();
 $stmt->close();
@@ -116,6 +116,10 @@ if (isset($profilePicOrNull) && $profilePicOrNull) {
     $pp = $profilePicOrNull;
     if ($pp && strpos($pp, 'http') !== 0 && strpos($pp, '/') !== 0) $pp = '/4D-Signs/' . ltrim($pp, '/\\');
     $_SESSION['profile_pic'] = $pp;
+}
+// set admin flag if returned from DB select
+if (isset($isAdminFlag)) {
+    $_SESSION['is_admin'] = !empty($isAdminFlag) ? 1 : 0;
 }
 // Populate creation date from DB, if possible
 $createdAtStmt = $conn->prepare('SELECT created_at FROM users WHERE id = ? LIMIT 1');

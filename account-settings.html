@@ -19,7 +19,7 @@
                 <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i>Logout</a>
                     </div>
                 </div>
-                <a href="Homepage.html" class="logo">4D Signs</a>
+                <a href="/4D-Signs/4Dsigns.php" class="logo">4D Signs</a>
             </div>
             <nav class="nav-bar">
                 <a href="/4D-Signs/4Dsigns.php" class="nav-link"><i class="fas fa-home"></i> Home</a>
@@ -160,7 +160,7 @@
             <nav class="footer-col links" aria-label="Footer navigation">
                 <h4>Explore</h4>
                 <ul>
-                    <li><a href="Homepage.html">Home</a></li>
+                    <li><a href="/4D-Signs/4Dsigns.php">Home</a></li>
                         <li><a href="customize.html">Customize</a></li>
                         <li><a href="review.html"><span>Orders/Reviews</span></a></li>
                         <li><a href="cart.html">Cart</a></li>
@@ -314,7 +314,8 @@ function confirmDeleteAccount() {
                         phone: data.session_data.phone || '',
                         profile_pic: serverPic,
                         profile_pic_path: serverPic,
-                        loggedInAt: data.session_data.loggedInAt || data.session_data.created_at || ''
+                        loggedInAt: data.session_data.loggedInAt || data.session_data.created_at || '',
+                        is_admin: data.session_data.is_admin && (data.session_data.is_admin === '1' || data.session_data.is_admin === 1 || data.session_data.is_admin === true) ? true : false
                     };
                     try { localStorage.setItem('loggedInUser', JSON.stringify(window.serverUser)); } catch(e) {}
                 }

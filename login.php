@@ -31,13 +31,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $searchInput = normalizePhone($input);
         }
         // Query user (allow username, email, or phone)
-    $stmt = $conn->prepare("SELECT id, username, email, phone, password, profile_pic_path, is_verified, created_at FROM users WHERE username = ? OR email = ? OR phone = ?");
+    $stmt = $conn->prepare("SELECT id, username, email, phone, password, profile_pic_path, is_verified, created_at, is_admin FROM users WHERE username = ? OR email = ? OR phone = ?");
         $stmt->bind_param("sss", $searchInput, $searchInput, $searchInput);
     $stmt->execute();
     $stmt->store_result();
 
     if ($stmt->num_rows == 1) {
-    $stmt->bind_result($id, $username, $email, $phone, $hashed_password, $profile_pic_path, $is_verified, $created_at);
+    $stmt->bind_result($id, $username, $email, $phone, $hashed_password, $profile_pic_path, $is_verified, $created_at, $is_admin);
         $stmt->fetch();
 
         error_log("[LOGIN] User found: id=$id username={" . $username . "} email={" . $email . "} is_verified={$is_verified}", 3, __DIR__ . '/notifications.log');
@@ -61,6 +61,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
             $_SESSION['profile_pic'] = $profile_pic_path;
             $_SESSION['phone'] = $phone; // store phone in session for client-side exposure
+            $_SESSION['is_admin'] = !empty($is_admin) ? 1 : 0;
             $_SESSION['created_at'] = $created_at;
             // also expose a loggedInAt name expected by client code
             $_SESSION['loggedInAt'] = $created_at;
@@ -89,7 +90,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $updateStmt->close();
             }
 
-            header("Location: 4Dsigns.php");
+            // If user is admin, redirect to admin dashboard; otherwise go to main page
+            if (!empty($is_admin) && intval($is_admin) === 1) {
+                header("Location: admin-dashboard.html");
+            } else {
+                header("Location: 4Dsigns.php");
+            }
             exit();
         } else {
             $error = "Invalid password.";

@@ -40,7 +40,7 @@ $userid = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
                         <a href="logout.php"><i class="fas fa-sign-out-alt"></i>Logout</a>
                     </div>
                 </div>
-                <a href="/4D-Signs/Homepage.html" class="logo">4D Signs</a>
+                <a href="/4D-Signs/4Dsigns.php" class="logo">4D Signs</a>
             </div>
             <nav class="nav-bar">
                 <a href="/4D-Signs/4Dsigns.php" class="nav-link active"><i class="fas fa-home"></i> Home</a>
@@ -114,12 +114,38 @@ $userid = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
                 loggedInAt: <?php echo json_encode(isset($_SESSION['loggedInAt']) ? $_SESSION['loggedInAt'] : ''); ?>
         ,profile_pic: <?php echo json_encode($profile_pic); ?>
         ,profile_pic_path: <?php echo json_encode($profile_pic); ?>
+    ,is_admin: <?php echo json_encode(isset($_SESSION['is_admin']) ? (bool)$_SESSION['is_admin'] : false); ?>
         };
         try {
             if (window.serverAuth && window.serverUser) {
                 localStorage.setItem('loggedInUser', JSON.stringify(window.serverUser));
+                // If server reports admin privileges, set admin session storage for admin dashboard entry
+                try { if (window.serverUser.is_admin === true || window.serverUser.is_admin === 1) sessionStorage.setItem('adminLoggedIn', 'true'); } catch (e) {}
             }
         } catch (e) { /* ignore */ }
+    </script>
+    <script>
+        // Ensure header avatar uses client/local storage profile image if present
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                let loggedInUser = JSON.parse(localStorage.getItem('loggedInUser') || 'null');
+                if (!loggedInUser && typeof window !== 'undefined' && typeof window.serverAuth !== 'undefined' && window.serverAuth === true && typeof window.serverUser !== 'undefined') loggedInUser = window.serverUser;
+                const profileImg = document.querySelector('.profile-img');
+                if (profileImg && loggedInUser) {
+                    const pic = (loggedInUser.profile_pic || loggedInUser.profile_pic_path || '').trim();
+                    let picPath = pic;
+                    if (picPath && picPath.indexOf('http') !== 0 && !picPath.startsWith('/')) picPath = '/4D-Signs/' + picPath;
+                    if (picPath) {
+                        profileImg.src = picPath;
+                        profileImg.alt = `${loggedInUser.username || 'User'}'s profile`;
+                    } else if (loggedInUser.username) {
+                        const initials = loggedInUser.username.charAt(0).toUpperCase();
+                        profileImg.src = `https://via.placeholder.com/32x32/FFD700/28263A?text=${initials}`;
+                        profileImg.alt = `${loggedInUser.username}'s profile`;
+                    }
+                }
+            } catch (err) { /* ignore */ }
+        });
     </script>
     <script>
         // Update header avatar when localStorage.loggedInUser is changed by another tab (e.g. after profile pic update)

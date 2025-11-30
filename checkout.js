@@ -608,7 +608,7 @@ function placeOrder() {
             const cartItems = JSON.parse(localStorage.getItem('cartItems') || '[]');
             if (cartItems.length === 0) {
                 alert('Your cart is empty!');
-                window.location.href = '4Dsigns.html';
+                window.location.href = '/4D-Signs/4Dsigns.php';
                 return;
             }
             checkoutItems.push(...cartItems);
@@ -700,7 +700,7 @@ function placeOrder() {
         }
         
         // Redirect to homepage
-        window.location.href = '4Dsigns.html';
+    window.location.href = '/4D-Signs/4Dsigns.php';
     } catch (error) {
         console.error('Error placing order:', error);
         alert('An error occurred while placing your order. Please try again.');
