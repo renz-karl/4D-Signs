@@ -5,6 +5,8 @@
     const previewImage = document.getElementById('preview-image');
     const imageUploadInput = document.getElementById('image-upload');
     const uploadArea = document.getElementById('upload-area');
+    let initialTemplateToSelect = null;
+    let initialTemplateScale = null;
     
     // If we're editing an existing custom cart item, keep context here so we can update it on save
     let editingContext = null;
@@ -72,6 +74,12 @@
                     });
                 }
 
+                    if (itemToEdit.designData.template) {
+                        initialTemplateToSelect = itemToEdit.designData.template;
+                    }
+                    if (itemToEdit.designData.templateScale) {
+                        initialTemplateScale = itemToEdit.designData.templateScale;
+                    }
                 updateContentClass();
             }
 
@@ -165,35 +173,10 @@
 
     function updateDropArea() {
         console.log('Dropdown value:', dropdown.value);
-        // Hide all base product images and only show the selected product
-        const allImages = document.querySelectorAll('.product-template-image');
-        allImages.forEach(img => img.style.display = 'none');
-        const imageMap = {
-            'shirt': 'shirt-image',
-            'mug': 'mug-image',
-            'ecobag': 'ecobag-image',
-            'key-chain': 'key-chain-image',
-            'ref-magnet': 'ref-magnet-image',
-            'sticker': 'sticker-image',
-            'sign': 'sign-image'
-        };
-        const imageId = imageMap[dropdown.value];
-        if (imageId) {
-            const img = document.getElementById(imageId);
-            if (img) img.style.display = 'block';
-        }
-        // Toggle the template overlay images to match selected product type
-        const allTemplates = document.querySelectorAll('.template-img');
-        allTemplates.forEach(t => t.style.display = 'none');
-        const templateMap = {
-            'shirt': 'shirt-template',
-            'mug': 'mug-template',
-            'sign': 'sign-template'
-        };
-        const templateId = templateMap[dropdown.value];
-        if (templateId) {
-            const tmpl = document.getElementById(templateId);
-            if (tmpl) tmpl.style.display = 'block';
+        // we've removed base product images: templates will act as the product preview
+        // Populate the template picker for this product type and reset selection
+        if (typeof templateManager !== 'undefined' && templateManager.populate) {
+            templateManager.populate(dropdown.value);
         }
         
         const existingDynamicImages = shirtDropArea.querySelectorAll('.shirt-img, .mug-img, .ecobag-img, .sign-img');
@@ -202,11 +185,228 @@
 
     if (dropdown) {
         dropdown.addEventListener('change', updateDropArea);
-        updateDropArea();
+        // do not call yet; wait until templateManager is initialized
+    }
+
+    // Templates available per product type
+    const availableTemplates = {
+    shirt: [{ id: 'shirt-template', name: 'Shirt Template', src: 'LogoProducts/T-Shirt (1).png' }],
+    mug: [{ id: 'mug-template', name: 'Mug Template', src: 'LogoProducts/Mug.png' }],
+    sign: [],
+        ecobag: [],
+        'key-chain': [],
+        'ref-magnet': [],
+        sticker: []
+    };
+
+    // Template manager: encapsulates the template picker UI and actions
+    const templateManager = (function() {
+    let pickerEl = null;
+    let current = '';
+    let mapByProduct = {};
+
+        function init() {
+            pickerEl = document.getElementById('template-picker');
+            // build mapByProduct from existing overlay elements if they have data-product attribute
+            mapByProduct = {};
+            document.querySelectorAll('.template-img').forEach(img => {
+                const pid = img.id;
+                const ptype = img.dataset ? img.dataset.product : img.getAttribute('data-product');
+                if (!ptype) return;
+                const name = img.alt || pid;
+                const src = img.src || img.getAttribute('src');
+                if (!mapByProduct[ptype]) mapByProduct[ptype] = [];
+                mapByProduct[ptype].push({ id: pid, name: name, src: src });
+            });
+        }
+
+    // Per-product default scale, in percent, used when overlay has no explicit scale
+    const templateDefaultScales = { shirt: 100, mug: 86, ecobag: 92 };
+
+    function populate(productType) {
+            if (!pickerEl) return;
+            // clear
+            pickerEl.innerHTML = '';
+            // none
+            const none = document.createElement('div');
+            none.className = 'template-thumb template-none';
+            none.dataset.templateId = '';
+            none.setAttribute('role', 'button');
+            none.tabIndex = 0;
+            none.textContent = 'None';
+            none.addEventListener('click', () => select(''));
+            none.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') select('');});
+            pickerEl.appendChild(none);
+
+            const templates = (mapByProduct[productType] && mapByProduct[productType].length) ? mapByProduct[productType] : (availableTemplates[productType] || []);
+            templates.forEach(t => {
+                const thumb = document.createElement('div');
+                thumb.className = 'template-thumb';
+                thumb.dataset.templateId = t.id;
+                thumb.setAttribute('role', 'button');
+                thumb.tabIndex = 0;
+                const img = document.createElement('img');
+                // prefer explicit template src; fall back to overlay element src or LogoProducts path
+                img.src = t.src || (document.getElementById(t.id) && document.getElementById(t.id).src) || (`LogoProducts/${t.id}.png`);
+                img.alt = t.name;
+                thumb.appendChild(img);
+                const label = document.createElement('div');
+                label.className = 'template-thumb-label';
+                label.textContent = t.name || '';
+                thumb.appendChild(label);
+                thumb.title = t.name;
+                thumb.addEventListener('click', () => select(t.id));
+                thumb.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') select(t.id);});
+                pickerEl.appendChild(thumb);
+            });
+            // default to the first template if available (so the selected product shows visually)
+            if (templates.length > 0) {
+                select(templates[0].id);
+            } else {
+                select('');
+            }
+        }
+
+        function select(id) {
+            current = id || '';
+            if (pickerEl) {
+                pickerEl.querySelectorAll('.template-thumb').forEach(el => el.classList.remove('selected'));
+                const el = pickerEl.querySelector(`[data-template-id="${current}"]`);
+                if (el) el.classList.add('selected');
+            }
+        // show/hide actual overlays
+            document.querySelectorAll('.template-img').forEach(t => t.style.display = 'none');
+            // if no template selected, reset scale slider to default
+            if (!current && templateScaleSlider && templateScaleValue) {
+                currentTemplateScale = 100;
+                templateScaleSlider.value = 100;
+                templateScaleValue.textContent = '100%';
+            }
+        // Clear per-product helper classes on overlays
+        document.querySelectorAll('.template-img').forEach(t => t.classList.remove('template-img--shirt','template-img--mug','template-img--ecobag'));
+            if (current) {
+                    let overlay = document.getElementById(current);
+                    if (!overlay) {
+                        // Try to find template definition from discovered or predefined templates
+                        const def = (mapByProduct[current.split('-')[0]] || []).find(t => t.id === current) ||
+                                    Object.values(availableTemplates).flat().find(t => t.id === current);
+                        if (def && def.src) {
+                            overlay = document.createElement('img');
+                            overlay.id = current;
+                            overlay.className = 'template-img';
+                            overlay.src = def.src;
+                            overlay.dataset.product = def.product || current.split('-')[0];
+                            overlay.style.display = 'block';
+                            shirtDropArea.insertBefore(overlay, designArea);
+                        }
+                    }
+                    if (overlay) {
+                        overlay.style.display = 'block';
+                        // determine product type and apply helper class
+                        const productType = (overlay.dataset && overlay.dataset.product) ? overlay.dataset.product : (current.split('-')[0] || '');
+                        if (productType) {
+                            overlay.classList.add('template-img--' + productType);
+                        }
+                        // if a template scale control exists, set its value based on overlay transform or current state
+                                // calculate scale: if overlay had an explicit scale, parse it; otherwise, use currentTemplateScale or a product default
+                                let scalePercent = parseOverlayScale(overlay);
+                                const hasScaleInStyle = overlay && overlay.style && overlay.style.transform && overlay.style.transform.indexOf('scale(') !== -1;
+                                if (!hasScaleInStyle && templateDefaultScales[productType]) {
+                                    scalePercent = templateDefaultScales[productType];
+                                }
+                                scalePercent = scalePercent || currentTemplateScale || 100;
+                        currentTemplateScale = scalePercent;
+                        if (templateScaleSlider && templateScaleValue) {
+                            templateScaleSlider.value = scalePercent;
+                            templateScaleValue.textContent = scalePercent + '%';
+                        }
+                        // apply the scale to the overlay (ensures scaling applied when overlay is created)
+                        applyTemplateScale(scalePercent, overlay);
+                        try { saveState(); } catch(e) {}
+                        if (templateScaleSlider) templateScaleSlider.disabled = false;
+                    }
+            }
+            else {
+                if (templateScaleSlider) templateScaleSlider.disabled = true;
+            }
+        }
+
+        function getSelected() { return current || ''; }
+
+        return { init, populate, select, getSelected };
+    })();
+
+    // Ensure templateManager initializes when DOM ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            templateManager.init();
+            if (initialTemplateToSelect && templateManager.select) templateManager.select(initialTemplateToSelect);
+            // apply initial template scale if provided
+            if (initialTemplateScale) {
+                currentTemplateScale = initialTemplateScale;
+            }
+            registerTemplateScaleControls();
+            if (typeof updateDropArea === 'function') updateDropArea();
+        });
+    } else {
+        templateManager.init();
+        if (initialTemplateToSelect && templateManager.select) templateManager.select(initialTemplateToSelect);
+        if (initialTemplateScale) {
+            currentTemplateScale = initialTemplateScale;
+        }
+        registerTemplateScaleControls();
+        if (typeof updateDropArea === 'function') updateDropArea();
     }
 
     const customNameInput = document.getElementById('custom-text');
     let customNameText = null;
+
+    // Template scale state (percent)
+    let currentTemplateScale = 100; // default 100%
+    let templateScaleSlider = null;
+    let templateScaleValue = null;
+
+    function getSelectedOverlay() {
+        const id = (typeof templateManager !== 'undefined' && templateManager.getSelected) ? templateManager.getSelected() : '';
+        return id ? document.getElementById(id) : null;
+    }
+
+    function applyTemplateScale(scalePercent, overlayEl) {
+        const scale = (typeof scalePercent === 'number') ? scalePercent / 100 : currentTemplateScale / 100;
+        const overlay = overlayEl || getSelectedOverlay();
+        if (!overlay) return;
+        // Keep centering translate and add scale
+        overlay.style.transform = `translate(-50%, -50%) scale(${scale})`;
+    }
+
+    function parseOverlayScale(overlay) {
+        const t = overlay && overlay.style && overlay.style.transform ? overlay.style.transform : '';
+        const m = t.match(/scale\(([^)]+)\)/);
+        return m ? parseFloat(m[1]) * 100 : 100;
+    }
+
+    function registerTemplateScaleControls() {
+        templateScaleSlider = document.getElementById('template-scale');
+        templateScaleValue = document.getElementById('template-scale-value');
+        if (!templateScaleSlider || !templateScaleValue) return;
+        // default
+    templateScaleSlider.value = currentTemplateScale;
+    templateScaleValue.textContent = currentTemplateScale + '%';
+    // disable slider if no template selected
+    if (!getSelectedOverlay()) templateScaleSlider.disabled = true;
+
+        templateScaleSlider.addEventListener('input', function() {
+            const scale = parseInt(this.value) || 100;
+            currentTemplateScale = scale;
+            templateScaleValue.textContent = scale + '%';
+            applyTemplateScale(scale);
+        });
+
+        templateScaleSlider.addEventListener('change', function() {
+            // Persist change in undo stack
+            saveState();
+        });
+    }
 
     if (customNameInput) {
         customNameInput.value = '';
@@ -228,6 +428,8 @@
         customNameText.style.zIndex = '2';
 
         shirtDropArea.insertBefore(customNameText, designArea);
+        // No template changes here — restored/selection handled elsewhere
+
         updateContentClass();
 
         makeTextInteractive(customNameText);
@@ -339,6 +541,21 @@
         }
         
         updateContentClass();
+
+        // restore selected template overlay and scale if present
+        try {
+            if (state.template && typeof templateManager !== 'undefined' && templateManager.select) {
+                templateManager.select(state.template);
+            }
+            if (state.templateScale) {
+                currentTemplateScale = state.templateScale;
+                applyTemplateScale(currentTemplateScale, getSelectedOverlay());
+                if (templateScaleSlider && templateScaleValue) {
+                    templateScaleSlider.value = currentTemplateScale;
+                    templateScaleValue.textContent = currentTemplateScale + '%';
+                }
+            }
+        } catch (err) { /* ignore */ }
     }
 
     function selectElement(element) {
@@ -457,12 +674,8 @@
 
     function makeImageInteractive(img) {
         // Simplified without interact.js to avoid parse errors in environment
-        if (img.id === 'sign-image' || img.id === 'shirt-image' || 
-            img.id === 'mug-image' || img.id === 'ecobag-image' ||
-            img.classList.contains('sign-preview') || 
-            img.classList.contains('shirt-preview') ||
-            img.classList.contains('mug-preview') || 
-            img.classList.contains('ecobag-preview')) {
+        // Avoid making product/template preview images interactive
+        if (img.classList.contains('template-img') || img.classList.contains('product-template-image')) {
             return;
         }
 
@@ -1066,7 +1279,9 @@
     function captureDesignData() {
         const designData = {
             images: [],
-            texts: []
+            texts: [],
+            template: (typeof templateManager !== 'undefined' && templateManager.getSelected) ? templateManager.getSelected() : '',
+            templateScale: currentTemplateScale || 100
         };
         
         const images = shirtDropArea.querySelectorAll('.resizable-image');

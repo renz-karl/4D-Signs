@@ -595,23 +595,24 @@ body {
     z-index: 1;
 }
 
+/* Specific per-product sizing helpers */
+.template-img--shirt { height: 98%; max-height: 98%; opacity: 0.42 !important; }
+.template-img--mug { height: 76%; max-height: 76%; opacity: 0.4 !important; }
+.template-img--ecobag { height: 86%; max-height: 86%; opacity: 0.36 !important; }
+
 /* Product base images - should not be interactive */
-#shirt-image,
-#mug-image,
-#ecobag-image,
-#key-chain-image,
-#ref-magnet-image,
-#sticker-image {
-    position: relative !important;
-    width: auto !important;
-    height: auto !important;
-    max-width: 600px !important;
-    margin: 0 auto !important;
-    pointer-events: none !important;
-    user-select: none !important;
-    object-fit: contain !important;
+/* product images removed - templates are used as product previews now */
+.product-template-image {
+    position: relative;
+    width: auto;
+    height: auto;
+    max-width: 600px;
+    margin: 0 auto;
+    pointer-events: none;
+    user-select: none;
+    object-fit: contain;
     display: block;
- }
+}
 
 
 /* Resizable Image */
@@ -897,6 +898,52 @@ body {
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
+
+/* Template Picker Thumbnails */
+.template-picker {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+.template-thumb {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 56px;
+    min-height: 40px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.05);
+    background: rgba(255,255,255,0.02);
+    color: #fff;
+    cursor: pointer;
+    font-size: 12px;
+}
+.template-thumb img {
+    display: block;
+    max-width: 48px;
+    max-height: 32px;
+    object-fit: contain;
+}
+.template-thumb-label {
+    margin-top: 6px;
+    text-align: center;
+    font-size: 11px;
+    line-height: 1.1;
+    max-width: 80px;
+}
+.template-thumb.selected {
+    outline: 2px solid #FFD700;
+    background: rgba(255,215,0,0.12);
+}
+.template-thumb:hover {
+    transform: translateY(-2px);
+}
+
+/* Template scale input styling */
+#template-scale { width: 100%; }
+#template-scale-value { min-width: 48px; text-align: right; }
 
 /* Custom Input Styles */
 .custom-input {

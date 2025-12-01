@@ -336,6 +336,30 @@
                         </div>
                     </div>
 
+                    <!-- Template Picker (under Elements) -->
+                    <div class="tool-section">
+                        <button type="button" class="section-btn" onclick="toggleSection(this)">
+                            <i class="fas fa-th-large"></i>
+                            <span>Template</span>
+                            <i class="fas fa-chevron-down arrow"></i>
+                        </button>
+                        <div class="section-content">
+                            <div class="style-row">
+                                <label>Pick a Template</label>
+                                <div id="template-picker" class="template-picker" aria-label="Template Picker">
+                                    <div class="template-none template-thumb" role="button" tabindex="0" data-template-id="">None</div>
+                                </div>
+                            </div>
+                            <div class="style-row">
+                                <label>Template Size</label>
+                                <div class="range-wrapper">
+                                    <input type="range" id="template-scale" min="60" max="150" step="1" value="100" class="custom-slider">
+                                    <span id="template-scale-value" class="range-label">100%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Logos section removed per request -->
 
                     <!-- Template Color Section removed per request -->
@@ -538,51 +562,16 @@
                     <div class="design-canvas">
                         <div class="shirt-drop-area" id="shirtDropArea"> 
                             <div class="design-area">
-                                <img id="sign-image"
-                                     src="LogoProducts/sign-outline.jpg"
-                                     alt="Sign Preview" 
-                                     class="sign-preview product-template-image" 
-                                     style="display:none; width:100%; height:auto; max-width:720px; margin:0 auto; pointer-events:none; user-select:none;"
-                                     draggable="false"/>
-                          <img id="shirt-image"
-                              src="LogoProducts/shirt-outline.jpg"
-                              alt="T-Shirt Preview" 
-                              class="shirt-preview product-template-image" 
-                              style="display:block; width:auto; height:auto; max-width:600px; margin:0 auto; pointer-events:none; user-select:none; object-fit:contain;"
-                              draggable="false"/>
-                                <img id="mug-image"
-                                     src="LogoProducts/mug-outline.jpg"
-                                     alt="Mug Preview" 
-                                     class="mug-preview product-template-image" 
-                                     style="display:none; width:100%; height:auto; max-width:720px; margin:0 auto; pointer-events:none; user-select:none;"
-                                     draggable="false"/>
-                                <img id="ecobag-image"
-                                     src="LogoProducts/ecobag-outline.jpg"
-                                     alt="Eco Bag Preview" 
-                                     class="ecobag-preview product-template-image" 
-                                     style="display:none; width:100%; height:auto; max-width:720px; margin:0 auto; pointer-events:none; user-select:none;"
-                                     draggable="false"/>
-                                <img id="key-chain-image"
-                                     src="LogoProducts/key-chain-outline.jpg"
-                                     alt="Key Chain Preview" 
-                                     class="key-chain-preview product-template-image" 
-                                     style="display:none; width:100%; height:auto; max-width:720px; margin:0 auto; pointer-events:none; user-select:none;"
-                                     draggable="false"/>
-                                <img id="ref-magnet-image"
-                                     src="LogoProducts/ref-magnet-outline.jpg"
-                                     alt="Ref Magnet Preview" 
-                                     class="ref-magnet-preview product-template-image" 
-                                     style="display:none; width:100%; height:auto; max-width:720px; margin:0 auto; pointer-events:none; user-select:none;"
-                                     draggable="false"/>
-                                <img id="sticker-image"
-                                     src="LogoProducts/sticker-outline.jpg"
-                                     alt="Sticker Preview" 
-                                     class="sticker-preview product-template-image" 
-                                     style="display:none; width:100%; height:auto; max-width:720px; margin:0 auto; pointer-events:none; user-select:none;"
-                                     draggable="false"/>
-                                <img id="shirt-template" src="ProductPics/shirt-template.png" class="template-img" style="display: none;">
-                                <img id="mug-template" src="ProductPics/mug-template.png" class="template-img" style="display: none;">
-                                <img id="sign-template" src="ProductPics/sign-template.png" class="template-img" style="display: none;">
+                          <!-- sign preview moved into templates -->
+                          <!-- product preview moved into templates -->
+                          <!-- mug preview moved into templates -->
+                          <!-- ecobag preview moved into templates -->
+                          <!-- keychain preview moved into templates -->
+                          <!-- ref magnet preview moved into templates -->
+                          <!-- sticker preview moved into templates -->
+                                <img id="shirt-template" data-product="shirt" src="LogoProducts/T-Shirt (1).png" class="template-img" style="display: none;">
+                                <img id="mug-template" data-product="mug" src="LogoProducts/Mug.png" class="template-img" style="display: none;">
+                                <!-- sign template not present in LogoProducts -> remove to avoid broken overlay -->
                                 <p class="hint-text"><i class="fas fa-info-circle"></i> Drag and drop your design here</p>
                             </div>
                         </div>
@@ -879,46 +868,14 @@
             const productType = document.getElementById('product-type');
             
             if (productType) {
-                productType.addEventListener('change', updateProductDisplay);
-                updateProductDisplay(); // This will show the default selected product
+                productType.addEventListener('change', updateDropArea);
+                // Call updateDropArea to show initial product & template picker
+                if (typeof updateDropArea === 'function') updateDropArea();
             }
 
             function updateProductDisplay() {
-                const selectedType = productType.value;
-                console.log('✓ Product type changed to:', selectedType);
-
-                // Hide ALL product images
-                const allImages = document.querySelectorAll('.product-template-image');
-                allImages.forEach(img => img.style.display = 'none');
-
-                // Show ONLY the selected product
-                const imageMap = {
-                    'shirt': 'shirt-image',
-                    'mug': 'mug-image',
-                    'ecobag': 'ecobag-image',
-                    'key-chain': 'key-chain-image',
-                    'ref-magnet': 'ref-magnet-image',
-                    'sticker': 'sticker-image'
-                };
-
-                const imageId = imageMap[selectedType];
-                if (imageId) {
-                    const img = document.getElementById(imageId);
-                    if (img) img.style.display = 'block';
-                }
-                // Also toggle template overlay images - only show the template for the selected product type
-                const allTemplates = document.querySelectorAll('.template-img');
-                allTemplates.forEach(t => t.style.display = 'none');
-                const templateMap = {
-                    'shirt': 'shirt-template',
-                    'mug': 'mug-template',
-                    'sign': 'sign-template'
-                };
-                const templateId = templateMap[selectedType];
-                if (templateId) {
-                    const tmpl = document.getElementById(templateId);
-                    if (tmpl) tmpl.style.display = 'block';
-                }
+                // Keep for compatibility - call updateDropArea which will handle base image and templates
+                if (typeof updateDropArea === 'function') updateDropArea();
             }
         });
     </script>
