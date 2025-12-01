@@ -468,6 +468,9 @@ body {
     display: none;
 }
 
+/* Keep the 'Choose Again' visible when upload has image */
+.upload-container.has-image .browse-btn-custom { display: inline-flex !important; }
+
 /* Button Container */
 .customize-buttons {
     display: flex;

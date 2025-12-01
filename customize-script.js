@@ -7,6 +7,8 @@
     const uploadArea = document.getElementById('upload-area');
     let initialTemplateToSelect = null;
     let initialTemplateScale = null;
+    let draggingPreviewImageSrc = null;
+    let dropProcessing = false;
     
     // If we're editing an existing custom cart item, keep context here so we can update it on save
     let editingContext = null;
@@ -26,8 +28,13 @@
             }
 
             const customTextInput = document.getElementById('custom-text');
-            if (customTextInput && itemToEdit.name) {
-                customTextInput.value = typeof itemToEdit.name === 'string' ? itemToEdit.name.replace(/ - Size .*$/,'') : itemToEdit.name;
+            if (customTextInput) {
+                    if (itemToEdit.name) {
+                        customTextInput.value = typeof itemToEdit.name === 'string' ? itemToEdit.name.replace(/ - Size .*$/,'') : itemToEdit.name;
+                    } else if (itemToEdit.designData && itemToEdit.designData.name) {
+                        // Pre-fill the input with saved name but DO NOT add it to the canvas as text automatically
+                        customTextInput.value = itemToEdit.designData.name;
+                    }
             }
 
             if (itemToEdit.designData) {
@@ -93,7 +100,8 @@
     // Helper function to update has-content class
     function updateContentClass() {
         const hasImages = shirtDropArea.querySelectorAll('.resizable-image').length > 0;
-        const hasText = shirtDropArea.querySelectorAll('.design-text, .draggable-custom-name').length > 0;
+        // Only consider actual design text elements for content checks; product name input should not count
+        const hasText = shirtDropArea.querySelectorAll('.design-text').length > 0;
         
         if (hasImages || hasText) {
             shirtDropArea.classList.add('has-content');
@@ -112,28 +120,69 @@
             this.setAttribute('draggable', 'true');
         });
 
-        previewImage.addEventListener('dragstart', function(e) {
+    previewImage.addEventListener('dragstart', function(e) {
             // include actual image URL/data on drag so the drop handler can read it
             const src = this.src || '';
             try { e.dataTransfer.setData('text/plain', src); } catch (err) {}
             try { e.dataTransfer.setData('text/uri-list', src); } catch (err) {}
             try { e.dataTransfer.setData('application/x-preview-image', src); } catch (err) {}
+            try { e.dataTransfer.effectAllowed = 'copy'; } catch(err) {}
+            try { e.dataTransfer.setDragImage(this, this.width/2, this.height/2); } catch(err) {}
+            // store a fallback reference in a global variable for browsers that restrict dataTransfer
+            draggingPreviewImageSrc = src;
+            console.log('previewImage dragstart, src length:', src ? src.length : 0, 'types before set:', e.dataTransfer && e.dataTransfer.types);
+        });
+    // fallback: ensure draggingPreviewImageSrc is set on pointer/mouse/touch start
+    previewImage.addEventListener('mousedown', function(e) { draggingPreviewImageSrc = this.src || null; });
+    previewImage.addEventListener('mouseup', function(e) { draggingPreviewImageSrc = null; });
+    previewImage.addEventListener('touchstart', function(e) { draggingPreviewImageSrc = this.src || null; });
+    previewImage.addEventListener('touchend', function(e) { draggingPreviewImageSrc = null; });
+        // toggle choose again visibility based on preview src
+        previewImage.addEventListener('load', function() {
+            const chooseAgainUpload = document.getElementById('choose-again-upload');
+            if (chooseAgainUpload) chooseAgainUpload.style.display = this.src ? 'inline-flex' : 'none';
+        });
+        previewImage.addEventListener('dragend', function(e) {
+            draggingPreviewImageSrc = null;
         });
     }
 
     // Add drag handlers to shirt-drop-area
+    const designCanvas = document.querySelector('.design-canvas');
+    function handleDragEnter(e) {
+        e.preventDefault();
+        shirtDropArea.classList.add('drag-over');
+        try { e.dataTransfer.dropEffect = 'copy'; } catch(e) {}
+    }
+    shirtDropArea.addEventListener('dragenter', handleDragEnter);
     shirtDropArea.addEventListener('dragover', function(e) {
         e.preventDefault();
         this.classList.add('drag-over');
+        try { e.dataTransfer.dropEffect = 'copy'; } catch(e) {}
     });
 
     shirtDropArea.addEventListener('dragleave', function(e) {
         this.classList.remove('drag-over');
     });
+    // mirror dragenter/dragover from the canvas container to shirt. This covers the case where users drag files over the canvas container but outside the shirt element.
+    if (designCanvas) {
+        designCanvas.addEventListener('dragenter', function(e) { e.preventDefault(); shirtDropArea.classList.add('drag-over'); try { e.dataTransfer.dropEffect = 'copy'; } catch (err) {} });
+        designCanvas.addEventListener('dragover', function(e) { e.preventDefault(); shirtDropArea.classList.add('drag-over'); try { e.dataTransfer.dropEffect = 'copy'; } catch (err) {} });
+        designCanvas.addEventListener('dragleave', function(e) { shirtDropArea.classList.remove('drag-over'); });
+    }
+    // Global listener to prevent browser default file opening on dropping over the page
+    document.addEventListener('dragover', function(e){ e.preventDefault(); }, false);
+    document.addEventListener('drop', function(e){ e.preventDefault(); }, false);
 
-    shirtDropArea.addEventListener('drop', function(e) {
+    function handleDrop(e) {
         e.preventDefault();
-        this.classList.remove('drag-over');
+        e.stopPropagation();
+        if (dropProcessing) return;
+        dropProcessing = true;
+        // always clear the class on shirtDropArea
+        shirtDropArea.classList.remove('drag-over');
+        console.log('Drop event:', e.currentTarget && e.currentTarget.className, 'types:', e.dataTransfer ? e.dataTransfer.types : null);
+        console.log('Drop event on shirtDropArea:', e.dataTransfer ? e.dataTransfer.types : null);
         // check for files first (user dragged from OS)
         const files = e.dataTransfer && e.dataTransfer.files ? e.dataTransfer.files : null;
         if (files && files.length) {
@@ -142,6 +191,12 @@
                 const reader = new FileReader();
                 reader.onload = function(evt) {
                     createAndPlaceImage(evt.target.result, e.clientX, e.clientY);
+                    // ensure we release the processing guard after async FileReader finishes
+                    setTimeout(function(){ dropProcessing = false; }, 200);
+                };
+                reader.onerror = function(err) {
+                    console.error('FileReader error on drop', err);
+                    setTimeout(function(){ dropProcessing = false; }, 200);
                 };
                 reader.readAsDataURL(file);
                 return;
@@ -149,13 +204,19 @@
         }
 
         // fallback: check for dataTransfer image data (e.g., from previewImage)
-        let dataSrc = '';
+    let dataSrc = '';
         try { dataSrc = e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain') || e.dataTransfer.getData('application/x-preview-image') || ''; } catch (err) { dataSrc = ''; }
         if (!dataSrc && previewImage && previewImage.src) dataSrc = previewImage.src;
+    console.log('DATA SRC from drop:', dataSrc);
+    if (!dataSrc && draggingPreviewImageSrc) dataSrc = draggingPreviewImageSrc;
         if (dataSrc) {
             createAndPlaceImage(dataSrc, e.clientX, e.clientY);
         }
-    });
+        // release processing lock shortly after placement starts
+        setTimeout(function(){ dropProcessing = false; }, 200);
+    }
+    shirtDropArea.addEventListener('drop', handleDrop);
+    if (designCanvas) designCanvas.addEventListener('drop', handleDrop);
 
     function updateDropArea() {
         console.log('Dropdown value:', dropdown.value);
@@ -171,6 +232,7 @@
 
     // Helper: create an image element for given src and place it relative to client coordinates
     function createAndPlaceImage(src, clientX, clientY) {
+        console.log('createAndPlaceImage called', src, clientX, clientY, 'zoom', currentZoom);
         if (!src) return;
         const designImage = document.createElement('img');
         designImage.src = src;
@@ -185,7 +247,8 @@
         const dropX = Math.round(clientX);
         const dropY = Math.round(clientY);
 
-        function placeImage() {
+            function placeImage() {
+            console.log('placing image, natural size', designImage.naturalWidth, designImage.naturalHeight);
             // compute unscaled image size (we set style.width)
             const iw = parseFloat(designImage.style.width) || designImage.naturalWidth || defaultWidth;
             const ih = Math.round((iw * (designImage.naturalHeight / designImage.naturalWidth || 1)) || (iw));
@@ -196,9 +259,14 @@
             let y = (dropY - rect.top - (ih / 2)) / currentZoom;
             x = Math.max(0, Math.min(x, unscaledRectWidth - iw));
             y = Math.max(0, Math.min(y, unscaledRectHeight - ih));
+
+            // NOTE: duplicate prevention was intentionally disabled to allow repeated drops of the same image.
             designImage.style.transform = `translate(${x}px, ${y}px)`;
             designImage.dataset.x = x;
             designImage.dataset.y = y;
+            // Prevent browser-native dragging on the canvas image to avoid accidental native-drag duplicates
+            try { designImage.setAttribute('draggable', 'false'); } catch (err) {}
+            try { designImage.addEventListener('dragstart', (ev) => ev.preventDefault()); } catch (err) {}
             shirtDropArea.insertBefore(designImage, designArea);
             updateContentClass();
             makeImageInteractive(designImage);
@@ -211,6 +279,8 @@
         } else {
             designImage.onload = placeImage;
         }
+        // clear draggingPreviewImageSrc fallback to avoid persisting it after placement
+        setTimeout(() => { draggingPreviewImageSrc = null; }, 0);
     }
 
     if (dropdown) {
@@ -504,10 +574,12 @@
     }
 
     if (customNameInput) {
+        // Do NOT automatically add the custom-text to the canvas; the input is merely the product name metadata.
+        // This prevents the system from creating a draggable text element unintentionally.
         customNameInput.addEventListener('input', function() {
-            if (this.value.trim()) {
-                addCustomNameToDesignArea(this.value.trim());
-            } else if (customNameText) {
+            // Keep the input value as the product name; do not create a canvas text element.
+            // Optional: remove canvas draggable name when user clears input
+            if (!this.value.trim() && customNameText) {
                 customNameText.remove();
                 customNameText = null;
                 updateContentClass();
@@ -622,6 +694,12 @@
                     templateScaleValue.textContent = currentTemplateScale + '%';
                 }
             }
+        } catch (err) { /* ignore */ }
+
+        // If the design data contains a saved name, restore the custom-text input but DO NOT create canvas text automatically
+        try {
+            const customTextInputEl = document.getElementById('custom-text');
+            if (state.name && customTextInputEl) customTextInputEl.value = state.name;
         } catch (err) { /* ignore */ }
     }
 
@@ -746,10 +824,43 @@
             return;
         }
 
+        img.setAttribute('draggable', 'false'); // prevent native browser drag which can interfere with canvas drag/drop
+        img.addEventListener('dragstart', function(e) { e.preventDefault(); });
         img.addEventListener('click', function(e) {
             e.stopPropagation();
             selectElement(img);
         });
+
+        // Add drag & resize using interact.js where available
+        try {
+            interact(img)
+                .draggable({
+                    inertia: true,
+                    modifiers: [
+                        interact.modifiers.restrictRect({ restriction: shirtDropArea, endOnly: true })
+                    ],
+                    listeners: {
+                        start: function (ev) { selectElement(ev.target); },
+                        move: dragMoveListener,
+                        end: function() { saveState(); }
+                    }
+                })
+                .resizable({
+                    edges: { left: true, right: true, bottom: true, top: true },
+                    preserveAspectRatio: true,
+                    inertia: true,
+                    modifiers: [
+                        interact.modifiers.restrictEdges({ outer: shirtDropArea }),
+                        interact.modifiers.restrictSize({ min: { width: 24, height: 24 } })
+                    ],
+                    listeners: {
+                        move: resizeListener,
+                        end: function() { saveState(); }
+                    }
+                });
+        } catch (err) {
+            // fallback: no interact.js; still allow click selection
+        }
     }
 
     function makeTextInteractive(txt) {
@@ -1266,6 +1377,13 @@
                 redoStack = [];
                 
                 alert('All elements have been cleared!');
+                // Hide choose again button in upload area & clear upload container image state
+                const chooseAgainUpload = document.getElementById('choose-again-upload');
+                if (chooseAgainUpload) chooseAgainUpload.style.display = 'none';
+                const uploadContainerEl = document.querySelector('.upload-container');
+                if (uploadContainerEl) uploadContainerEl.classList.remove('has-image');
+                // Clear preview image if present
+                if (previewImage) { previewImage.src = ''; previewImage.style.display = 'none'; }
             }
         });
     }
@@ -1323,7 +1441,8 @@
 
     function checkDesignContent() {
         const images = shirtDropArea.querySelectorAll('.resizable-image');
-        const texts = shirtDropArea.querySelectorAll('.design-text, .draggable-custom-name');
+    // Only capture actual design text elements, not the special draggable custom-name which is metadata
+    const texts = shirtDropArea.querySelectorAll('.design-text');
         const hasContent = images.length > 0 || texts.length > 0;
         
         if (doneDesignBtn) {
@@ -1371,7 +1490,7 @@
             });
         });
         
-        const texts = shirtDropArea.querySelectorAll('.design-text, .draggable-custom-name');
+    const texts = shirtDropArea.querySelectorAll('.design-text');
         texts.forEach(txt => {
             const transform = txt.style.transform || '';
             const match = transform.match(/translate\(([^,]+),\s*([^)]+)\)/);
@@ -1391,6 +1510,10 @@
                 zIndex: txt.style.zIndex || '10'
             });
         });
+        // Save a simple product name if a custom name input exists or a draggable custom-name element exists
+    const customNameInputEl = document.getElementById('custom-text');
+    const productName = (customNameInputEl && customNameInputEl.value && customNameInputEl.value.trim()) ? customNameInputEl.value.trim() : '';
+    if (productName) designData.name = productName;
         
         return designData;
     }
@@ -1480,13 +1603,35 @@
                             if (el.classList && el.classList.contains('upload-icon')) el.style.display = 'none';
                             if (el.id === 'drop-text') el.style.display = 'none';
                             if (el.classList && el.classList.contains('or-text')) el.style.display = 'none';
-                            if (el.classList && el.classList.contains('browse-btn')) el.style.display = 'none';
+                                if (el.classList && el.classList.contains('browse-btn')) el.style.display = 'none';
                         });
+                            // show choose again button
+                            const chooseAgainUpload = document.getElementById('choose-again-upload');
+                                if (chooseAgainUpload) chooseAgainUpload.style.display = 'inline-flex';
+                        const uploadContainerEl = document.querySelector('.upload-container');
+                        if (uploadContainerEl) uploadContainerEl.classList.add('has-image');
+                            // Do NOT auto place the image on the canvas when selected via choose/browse.
+                            // Instead, allow the user to drag the preview into the canvas to place it.
+                            previewImage.title = 'Drag this preview to the canvas to place it';
                     }
                 };
                 reader.readAsDataURL(file);
             }
         });
+        // attach choose again upload control reset logic
+        const chooseAgainUpload = document.getElementById('choose-again-upload');
+        if (chooseAgainUpload) {
+            chooseAgainUpload.addEventListener('click', function() {
+                // clear previous selection to allow re-selecting same file
+                imageUploadInput.value = '';
+                imageUploadInput.click();
+            });
+        }
+                // Hide choose again on no file or when removed
+                imageUploadInput.addEventListener('reset', function() {
+                    const chooseAgainUpload = document.getElementById('choose-again-upload');
+                    if (chooseAgainUpload) chooseAgainUpload.style.display = 'none';
+                });
 
         uploadArea.addEventListener('dragover', (e) => {
             e.preventDefault();
@@ -1504,6 +1649,10 @@
             if (files[0]) {
                 imageUploadInput.files = files;
                 imageUploadInput.dispatchEvent(new Event('change'));
+                const chooseAgainUpload = document.getElementById('choose-again-upload');
+                if (chooseAgainUpload) chooseAgainUpload.style.display = 'inline-flex';
+                    const uploadContainerEl = document.querySelector('.upload-container');
+                    if (uploadContainerEl) uploadContainerEl.classList.add('has-image');
             }
         });
     }

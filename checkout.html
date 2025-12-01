@@ -237,6 +237,32 @@
         </div>
     </main>
 
+    <!-- Downpayment Popup Modal -->
+    <div id="downpayment-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Downpayment Required</h2>
+                <button type="button" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>A downpayment of <strong id="modal-downpayment-amount">₱0.00</strong> (30% of total) is required to proceed with your order.</p>
+                <div id="modal-gcash-section">
+                    <h3>Payment via GCash</h3>
+                    <img src="https://i.imgur.com/2nCt3Sbl.png" alt="GCash QR" style="width:150px; height:150px; border-radius:12px; border:2px solid #FFD700; margin:1rem 0;">
+                    <p>Scan the QR code or send payment to: <strong>09XXXXXXXXX</strong></p>
+                    <div class="form-group">
+                        <label for="modal-gcash-ref">GCash Reference Number</label>
+                        <input type="text" id="modal-gcash-ref" placeholder="Enter reference number" required>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="modal-cancel-btn">Cancel</button>
+                <button type="button" class="modal-confirm-btn">Confirm Payment & Place Order</button>
+            </div>
+        </div>
+    </div>
+
     <script src="checkout.js"></script>
 
 </body>

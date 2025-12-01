@@ -824,3 +824,43 @@ function fillAddressForm(address) {
     document.getElementById('landmark').value = address.landmark || '';
 }
 
+// Downpayment Modal Functionality
+document.querySelector('.place-order-btn').addEventListener('click', function(e) {
+    e.preventDefault();
+    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+    const downpaymentAmount = document.getElementById('downpayment').textContent;
+    
+    if (paymentMethod === 'gcash') {
+        document.getElementById('modal-downpayment-amount').textContent = downpaymentAmount;
+        document.getElementById('downpayment-modal').style.display = 'flex';
+    } else {
+        // For COD and Cash, proceed directly
+        submitOrder();
+    }
+});
+
+document.querySelector('.modal-close').addEventListener('click', function() {
+    document.getElementById('downpayment-modal').style.display = 'none';
+});
+
+document.querySelector('.modal-cancel-btn').addEventListener('click', function() {
+    document.getElementById('downpayment-modal').style.display = 'none';
+});
+
+document.querySelector('.modal-confirm-btn').addEventListener('click', function() {
+    const gcashRef = document.getElementById('modal-gcash-ref').value.trim();
+    
+    if (!gcashRef) {
+        alert('Please enter your GCash reference number');
+        return;
+    }
+    
+    document.getElementById('downpayment-modal').style.display = 'none';
+    submitOrder();
+});
+
+function submitOrder() {
+    // Add your order submission logic here
+    alert('Order placed successfully!');
+}
+

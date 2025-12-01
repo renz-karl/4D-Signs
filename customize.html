@@ -660,6 +660,9 @@
                             <button type="button" class="browse-btn" onclick="document.getElementById('image-upload').click()">
                                 <i class="fas fa-folder-open"></i> Browse
                             </button>
+                                <button type="button" id="choose-again-upload" class="browse-btn-custom" style="display:none; margin-top: 8px;" onclick="document.getElementById('image-upload').click()">
+                                    <i class="fas fa-folder-open"></i> Choose Again
+                                </button>
                             <input type="file" id="image-upload" accept="image/*" style="display: none;">
                             <img id="preview-image" class="preview-image" style="display: none;">
                         </div>
@@ -787,7 +790,9 @@
             
             // Get product info
             const productType = document.getElementById('product-type')?.value || 'custom';
-            const productName = document.getElementById('custom-text')?.value || 'Custom Product';
+            // Use the custom-text input as the product name; if empty, try any draggable custom-name on the canvas
+            const inputName = document.getElementById('custom-text')?.value?.trim();
+            const productName = inputName || 'Custom Product';
             
             // Get existing cart items
             let cartItems = [];
@@ -797,7 +802,8 @@
                 cartItems = [];
             }
             
-            // Add each color variant as separate cart item
+            // Get current design state and add each color variant as separate cart item
+            const designData = (typeof captureDesignData === 'function') ? captureDesignData() : null;
             items.forEach(variant => {
                 const cartItem = {
                     id: Date.now() + Math.random(),
@@ -810,6 +816,9 @@
                     image: 'BGDS.jpg', // Default image
                     isCustom: true
                 };
+                // Persist current design data (images, texts, template, scale) and ensure name is present
+                cartItem.designData = designData || {};
+                if (!cartItem.designData.name) cartItem.designData.name = productName;
                 
                 cartItems.push(cartItem);
             });
