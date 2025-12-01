@@ -795,12 +795,7 @@
             const productName = inputName || 'Custom Product';
             
             // Get existing cart items
-            let cartItems = [];
-            try {
-                cartItems = JSON.parse(localStorage.getItem('cartItems') || '[]');
-            } catch(e) {
-                cartItems = [];
-            }
+            let cartItems = (window.cartStorage && typeof window.cartStorage.getItems === 'function') ? window.cartStorage.getItems() : [];
             
             // Get current design state and add each color variant as separate cart item
             const designData = (typeof captureDesignData === 'function') ? captureDesignData() : null;
@@ -823,12 +818,19 @@
                 cartItems.push(cartItem);
             });
             
-            // Save to localStorage
-            localStorage.setItem('cartItems', JSON.stringify(cartItems));
+            // Save to per-user cart (fallback to legacy localStorage if not available)
+            try {
+                if (window.cartStorage && typeof window.cartStorage.setItems === 'function') {
+                    window.cartStorage.setItems(cartItems);
+                } else {
+                    localStorage.setItem('cartItems', JSON.stringify(cartItems));
+                    localStorage.setItem('cartCount', String(totalQty));
+                }
+            } catch (e) { console.warn('Failed to save cart', e); }
             
             // Update cart count
             const totalQty = cartItems.reduce((sum, item) => sum + (parseInt(item.qty) || 0), 0);
-            localStorage.setItem('cartCount', String(totalQty));
+            try { if (window.cartStorage && typeof window.cartStorage.setItems === 'function') window.cartStorage.setItems(cartItems); else localStorage.setItem('cartCount', String(totalQty)); } catch(e) {}
             
             // Trigger cart update event
             window.dispatchEvent(new CustomEvent('cart:updated', { 
@@ -878,6 +880,7 @@
         // All event listeners are now handled in customize-script.js to avoid duplication
         // This includes: slider updates, color pickers, template switching, etc.
     </script>
+    <script src="cart-utils.js"></script>
     <script src="customize-script.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {

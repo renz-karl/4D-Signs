@@ -51,7 +51,7 @@ function toggleMessagePopup(event) {
 // Function to handle editing custom items
 function editCustomItem(itemId) {
     // Store current item details before editing
-    const cartItems = JSON.parse(localStorage.getItem('cartItems') || '[]');
+    const cartItems = (window.cartStorage && typeof window.cartStorage.getItems === 'function') ? window.cartStorage.getItems() : JSON.parse(localStorage.getItem('cartItems') || '[]');
     const itemToEdit = cartItems.find(item => item.id === itemId);
     
     if (itemToEdit) {
@@ -299,7 +299,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Fallback to all cart items
         try { 
-            return JSON.parse(localStorage.getItem('cartItems') || '[]'); 
+            return (window.cartStorage && typeof window.cartStorage.getItems === 'function') ? window.cartStorage.getItems() : JSON.parse(localStorage.getItem('cartItems') || '[]'); 
         } catch(e){ 
             return []; 
         }
@@ -605,7 +605,7 @@ function placeOrder() {
         
         if (checkoutItems.length === 0) {
             // Fallback to cart items if no checkout items
-            const cartItems = JSON.parse(localStorage.getItem('cartItems') || '[]');
+            const cartItems = (window.cartStorage && typeof window.cartStorage.getItems === 'function') ? window.cartStorage.getItems() : JSON.parse(localStorage.getItem('cartItems') || '[]');
             if (cartItems.length === 0) {
                 alert('Your cart is empty!');
                 window.location.href = '/4D-Signs/4Dsigns.php';
@@ -660,14 +660,20 @@ function placeOrder() {
         localStorage.setItem('orders', JSON.stringify(orders));
         
         // Remove checked out items from cart
-        const allCartItems = JSON.parse(localStorage.getItem('cartItems') || '[]');
+    const allCartItems = (window.cartStorage && typeof window.cartStorage.getItems === 'function') ? window.cartStorage.getItems() : JSON.parse(localStorage.getItem('cartItems') || '[]');
         const checkoutItemIds = checkoutItems.map(item => String(item.id));
         const remainingItems = allCartItems.filter(item => !checkoutItemIds.includes(String(item.id)));
         
         // Update cart
-        localStorage.setItem('cartItems', JSON.stringify(remainingItems));
-        const cartCount = remainingItems.reduce((sum, item) => sum + (parseInt(item.qty, 10) || 0), 0);
-        localStorage.setItem('cartCount', String(cartCount));
+        try {
+            if (window.cartStorage && typeof window.cartStorage.setItems === 'function') {
+                window.cartStorage.setItems(remainingItems);
+            } else {
+                localStorage.setItem('cartItems', JSON.stringify(remainingItems));
+                const cartCount = remainingItems.reduce((sum, item) => sum + (parseInt(item.qty, 10) || 0), 0);
+                localStorage.setItem('cartCount', String(cartCount));
+            }
+        } catch(e) { console.warn('Failed to update cart after checkout', e); }
         
         // Clear checkout items
         localStorage.removeItem('checkoutItems');
@@ -830,13 +836,10 @@ document.querySelector('.place-order-btn').addEventListener('click', function(e)
     const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
     const downpaymentAmount = document.getElementById('downpayment').textContent;
     
-    if (paymentMethod === 'gcash') {
-        document.getElementById('modal-downpayment-amount').textContent = downpaymentAmount;
-        document.getElementById('downpayment-modal').style.display = 'flex';
-    } else {
-        // For COD and Cash, proceed directly
-        submitOrder();
-    }
+    // Show downpayment modal for all payment methods with GCash payment
+    document.getElementById('modal-downpayment-amount').textContent = downpaymentAmount;
+    document.getElementById('modal-gcash-section').style.display = 'block';
+    document.getElementById('downpayment-modal').style.display = 'flex';
 });
 
 document.querySelector('.modal-close').addEventListener('click', function() {
@@ -856,11 +859,6 @@ document.querySelector('.modal-confirm-btn').addEventListener('click', function(
     }
     
     document.getElementById('downpayment-modal').style.display = 'none';
-    submitOrder();
+    placeOrder();
 });
-
-function submitOrder() {
-    // Add your order submission logic here
-    alert('Order placed successfully!');
-}
 

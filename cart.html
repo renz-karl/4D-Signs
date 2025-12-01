@@ -550,23 +550,14 @@
 
 
 
+  <script src="cart-utils.js"></script>
   <script>
   (function(){
-    const ITEMS_KEY = 'cartItems';
-    const COUNT_KEY = 'cartCount';
     const badgeEl = document.getElementById('cart-count');
 
-    function getItems() {
-      try { return JSON.parse(localStorage.getItem(ITEMS_KEY) || '[]'); } catch(e){ return []; }
-    }
+    function getItems() { return (window.cartStorage && typeof window.cartStorage.getItems === 'function') ? window.cartStorage.getItems() : []; }
     function renderBadge(n){ if (badgeEl) badgeEl.textContent = n; }
-    function setItems(items) {
-      localStorage.setItem(ITEMS_KEY, JSON.stringify(items));
-      const count = items.reduce((s,it)=> s + (parseInt(it.qty,10) || 0), 0);
-      localStorage.setItem(COUNT_KEY, String(count));
-      renderBadge(count);
-      window.dispatchEvent(new CustomEvent('cart:updated', { detail: { count, items } }));
-    }
+    function setItems(items) { if (window.cartStorage && typeof window.cartStorage.setItems === 'function') { window.cartStorage.setItems(items); } else { try { localStorage.setItem('cartItems', JSON.stringify(items)); } catch(e) {} } }
         // addItem now accepts optional color, size and price and stores them on the item
         function addItem(name, qty = 1, color = null, size = null, price = null) {
             if (!name) name = 'Item';
@@ -607,13 +598,13 @@
     window.updateCartItemQty = updateQty;
     window.removeCartItem = removeItem;
 
-    renderBadge(parseInt(localStorage.getItem(COUNT_KEY) || '0', 10));
+  renderBadge((window.cartStorage && typeof window.cartStorage.getCount === 'function') ? window.cartStorage.getCount() : parseInt(localStorage.getItem('cartCount') || '0', 10));
   })();
 
   // Function to handle editing custom items
   function editCustomItem(itemId) {
     // Store current item details before editing
-    const cartItems = JSON.parse(localStorage.getItem('cartItems') || '[]');
+  const cartItems = getItems();
     const itemToEdit = cartItems.find(item => item.id === itemId);
     
     if (itemToEdit) {

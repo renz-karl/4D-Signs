@@ -304,6 +304,14 @@ document.addEventListener('DOMContentLoaded', () => {
         reviews.push(review);
         localStorage.setItem('reviews', JSON.stringify(reviews));
 
+        // Dispatch a custom event and broadcast via storage to notify other pages (e.g., admin dashboard)
+        try {
+            window.dispatchEvent(new CustomEvent('reviews:updated', { detail: { reviews } }));
+        } catch (e) { console.warn('Failed to dispatch reviews:updated event', e); }
+
+        // Also write to localStorage again (triggers storage event in other tabs)
+        try { localStorage.setItem('reviews', JSON.stringify(reviews)); } catch(e) {}
+
         // Update the display
         displayOrders();
         modal.style.display = 'none';

@@ -18,7 +18,7 @@
                 </button>
                 <div class="slider-indicators"></div>
             </div>
-            <div class="modal-product-details">
+                <div class="modal-product-details">
                 <h3 class="modal-product-title"></h3>
                 <div class="modal-product-price"></div>
                 <div class="modal-product-reviews"></div>
@@ -96,19 +96,87 @@
 
 
 <a href="cart.html" class="floating-cart" id="floating-cart" aria-label="View cart">
-  <i class="fas fa-shopping-cart"></i> <span id="floating-cart-count">0</span>
+    <i class="fas fa-shopping-cart"></i> <span id="floating-cart-count">0</span>
 </a>
 <script>
+// Keep product UI in sync with localStorage 'products' and 'promo' state
 (function(){
-  const ITEMS_KEY = 'cartItems';
-  const COUNT_KEY = 'cartCount';
+    function getProducts(){ try { return JSON.parse(localStorage.getItem('products') || '[]'); } catch(e){ return []; } }
+    function getPromo(){ try { return JSON.parse(localStorage.getItem('promo') || '{"active":false,"percent":30}'); } catch(e){ return { active:false, percent:30 }; } }
+    function parsePriceString(priceStr){ if (!priceStr) return null; const match = priceStr.replace(/,/g,'').match(/(\d+(?:\.\d+)?)/); if (match) return Number(match[1]); return null; }
+    function formatCurrency(n){ if (n == null || isNaN(n)) return ''; return '₱' + Number(n).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    function renderPromoBanner(promo){
+        let banner = document.getElementById('promo-banner');
+        if (!banner) {
+            banner = document.createElement('div');
+            banner.id = 'promo-banner';
+            banner.style.cssText = 'background: linear-gradient(90deg,#ffecd2,#fcb69f); padding:12px; text-align:center; font-weight:700; color:#7a2e0f;';
+            banner.setAttribute('aria-live', 'polite');
+            const header = document.querySelector('header.main-header');
+            if (header && header.parentNode) header.parentNode.insertBefore(banner, header.nextSibling);
+        }
+        if (promo && promo.active) { banner.textContent = `SALE: ${promo.percent}% OFF on selected products — Shop now!`; banner.style.display = 'block'; }
+        else { banner.style.display = 'none'; }
+    }
+    function renderStocks(){
+        try {
+            const products = getProducts();
+            const promo = getPromo();
+            document.querySelectorAll('.product-item[data-product-id]').forEach(itemEl => {
+                const pid = itemEl.getAttribute('data-product-id');
+                const product = products.find(p => p.id === pid || p.name === itemEl.querySelector('h3')?.textContent);
+                const countEl = itemEl.querySelector('.stock-count');
+                const priceEl = itemEl.querySelector('.product-price');
+                if (countEl) { if (product && typeof product.stock !== 'undefined') countEl.textContent = product.stock; }
+                if (priceEl) {
+                    if (product && typeof product.price !== 'undefined') {
+                        if (promo && promo.active) {
+                            const unit = parsePriceString(product.price);
+                            if (unit != null) {
+                                const discounted = Math.round(unit * (1 - (promo.percent || 0) / 100) * 100) / 100;
+                                priceEl.textContent = `${formatCurrency(discounted)}  (Promo ${promo.percent}% OFF)`;
+                            } else { priceEl.textContent = product.price; }
+                        } else { priceEl.textContent = product.price; }
+                    }
+                }
+            });
+            renderPromoBanner(getPromo());
+        } catch (e) { console.warn('renderStocks error', e); }
+    }
+    document.addEventListener('DOMContentLoaded', renderStocks);
+    window.addEventListener('products:updated', function(){ renderStocks(); });
+    window.addEventListener('promo:updated', function(){ renderStocks(); });
+    window.addEventListener('storage', function(e){ if (e.key === 'products' || e.key === 'promo') renderStocks(); });
+})();
+</script>
+(function(){
+  // Provide per-user cart storage keys: cartItems_{userId|username|guest}
+  function getUserIdentifier() {
+      try {
+          // serverUser, if present (server-rendered pages)
+          if (typeof window !== 'undefined' && window.serverAuth && window.serverUser && (window.serverUser.id || window.serverUser.username)) {
+              return (window.serverUser.id || window.serverUser.username).toString().replace(/\s+/g, '_');
+          }
+          // loggedInUser from localStorage
+          const lsu = JSON.parse(localStorage.getItem('loggedInUser') || 'null');
+          if (lsu && (lsu.id || lsu.email || lsu.username)) {
+              return (lsu.id || lsu.email || lsu.username).toString().replace(/\s+/g, '_');
+          }
+      } catch (e) { /* ignore */ }
+      return 'guest';
+  }
+  function cartItemsKey() { return 'cartItems_' + getUserIdentifier(); }
+  function cartCountKey() { return 'cartCount_' + getUserIdentifier(); }
   const badgeEls = Array.from(document.querySelectorAll('#cart-count, #floating-cart-count'));
 
         function getItems() {
+            const ITEMS_KEY = cartItemsKey();
             try { return JSON.parse(localStorage.getItem(ITEMS_KEY) || '[]'); } catch(e){ return []; }
         }
         function renderBadge(n){ badgeEls.forEach(el => el && (el.textContent = n)); }
         function setItems(items) {
+            const ITEMS_KEY = cartItemsKey();
+            const COUNT_KEY = cartCountKey();
             localStorage.setItem(ITEMS_KEY, JSON.stringify(items));
             const count = items.reduce((s,it)=> s + (parseInt(it.qty,10) || 0), 0);
             localStorage.setItem(COUNT_KEY, String(count));
@@ -117,7 +185,7 @@
         }
 
         // accept optional color, size, price and store them on the cart item
-        function addItem(name, qty = 1, color = null, size = null, price = null) {
+    function addItem(name, qty = 1, color = null, size = null, price = null) {
             if (!name) name = 'Item';
             qty = Math.max(1, parseInt(qty,10) || 1);
             const id = name.trim().toLowerCase();

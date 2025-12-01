@@ -452,23 +452,14 @@ $profile_pic = isset($_SESSION['profile_pic']) ? htmlspecialchars($_SESSION['pro
 <a href="cart.html" class="floating-cart" id="floating-cart" aria-label="View cart">
   <i class="fas fa-shopping-cart"></i> <span id="floating-cart-count">0</span>
 </a>
+    <script src="cart-utils.js"></script>
     <script>
-    (function(){
-      const ITEMS_KEY = 'cartItems';
-      const COUNT_KEY = 'cartCount';
+        (function(){
       const badgeEls = Array.from(document.querySelectorAll('#cart-count, #floating-cart-count'));
 
-            function getItems() {
-                try { return JSON.parse(localStorage.getItem(ITEMS_KEY) || '[]'); } catch(e){ return []; }
-            }
+            function getItems() { return (window.cartStorage && typeof window.cartStorage.getItems === 'function') ? window.cartStorage.getItems() : JSON.parse(localStorage.getItem('cartItems') || '[]'); }
             function renderBadge(n){ badgeEls.forEach(el => el && (el.textContent = n)); }
-            function setItems(items) {
-                localStorage.setItem(ITEMS_KEY, JSON.stringify(items));
-                const count = items.reduce((s,it)=> s + (parseInt(it.qty,10) || 0), 0);
-                localStorage.setItem(COUNT_KEY, String(count));
-                renderBadge(count);
-                window.dispatchEvent(new CustomEvent('cart:updated', { detail: { count, items } }));
-            }
+            function setItems(items) { if (window.cartStorage && typeof window.cartStorage.setItems === 'function') window.cartStorage.setItems(items); else { try { localStorage.setItem('cartItems', JSON.stringify(items)); localStorage.setItem('cartCount', String(items.reduce((s,it)=> s + (parseInt(it.qty,10) || 0), 0))); } catch(e){} } }
 
             // accept optional color, size, price and store them on the cart item
             function addItem(name, qty = 1, color = null, size = null, price = null) {
@@ -513,7 +504,7 @@ $profile_pic = isset($_SESSION['profile_pic']) ? htmlspecialchars($_SESSION['pro
       window.addToCart = function(qty = 1){ addItem('Item', qty); };
 
 
-      renderBadge(parseInt(localStorage.getItem(COUNT_KEY) || '0', 10));
+    renderBadge((window.cartStorage && typeof window.cartStorage.getCount === 'function') ? window.cartStorage.getCount() : parseInt(localStorage.getItem('cartCount') || '0', 10));
     })();
     </script>
 <script>

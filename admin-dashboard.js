@@ -1,47 +1,79 @@
 // Check authentication
 window.addEventListener('DOMContentLoaded', () => {
-    // Allow admin access if either sessionStorage is set OR server-provided user is admin
-    let isAdmin = false;
-    try {
-        isAdmin = (sessionStorage.getItem('adminLoggedIn') === 'true') || ((typeof window !== 'undefined' && window.serverAuth && window.serverUser && (window.serverUser.is_admin === true || window.serverUser.is_admin === 1)));
-        // Also check localStorage seeded loggedInUser for is_admin flag
-        if (!isAdmin) {
-            const lsu = JSON.parse(localStorage.getItem('loggedInUser') || 'null');
-            if (lsu && (lsu.is_admin === true || lsu.is_admin === 1)) isAdmin = true;
-        }
-    } catch(e) { isAdmin = false; }
-    if (!isAdmin) {
-        // Attempt to query server session via debug endpoint to check if user is admin
-        fetch('debug/session.php', { credentials: 'include' }).then(r => r.json()).then(data => {
-            if (data && data.session_data && (data.session_data.is_admin === '1' || data.session_data.is_admin === 1 || data.session_data.is_admin === true)) {
-                sessionStorage.setItem('adminLoggedIn', 'true');
-                // set adminName from session if present
-                try { if (data.session_data.username) document.getElementById('admin-name').textContent = data.session_data.username; } catch (e) {}
-                // proceed with loading dashboard
-                loadDashboardData(); loadProducts(); loadPromoSettings(); loadOrders(); loadCustomers(); loadReviews(); loadMessages(); updateUnreadBadge();
-            } else {
-                window.location.href = 'admin-login.html';
+    // First consult the server session (if any) to determine admin privileges, then fall back to client-only flags.
+    (async function() {
+        let isAdmin = false;
+        let adminName = null;
+        try {
+            const resp = await fetch('debug/session.php', { credentials: 'include' });
+            if (resp.ok) {
+                const data = await resp.json();
+                if (data && data.session_data) {
+                    const s = data.session_data;
+                    if (s.is_admin === '1' || s.is_admin === 1 || s.is_admin === true) {
+                        isAdmin = true;
+                        adminName = s.username || s.user || s.username || null;
+                    }
+                }
             }
-        }).catch(err => {
-            console.error('Failed to check admin session', err);
+        } catch (err) {
+            // Fall through to client-side checks; network/check errors shouldn't crash the page.
+            console.warn('Failed checking server session for admin privileges:', err);
+        }
+
+        // If server didn't say admin, fall back to serverUser (page-injected) and then to sessionStorage/localStorage
+        if (!isAdmin) {
+            try {
+                if (typeof window !== 'undefined' && window.serverAuth && window.serverUser && (window.serverUser.is_admin === true || window.serverUser.is_admin === 1)) {
+                    isAdmin = true; adminName = window.serverUser.username || adminName;
+                }
+            } catch (e) {}
+        }
+        if (!isAdmin) {
+            try {
+                const lsu = JSON.parse(localStorage.getItem('loggedInUser') || 'null');
+                if (lsu && (lsu.is_admin === true || lsu.is_admin === 1)) { isAdmin = true; adminName = lsu.username || adminName; }
+            } catch (e) {}
+        }
+        if (!isAdmin) {
+            // If a client-only sessionStorage flag exists, treat with warning but allow access to the dashboard UI
+            if (sessionStorage.getItem('adminLoggedIn') === 'true') {
+                console.warn('Admin access granted by client-only sessionStorage. This is less secure. Consider logging in via server.');
+                isAdmin = true; adminName = sessionStorage.getItem('adminUsername') || adminName;
+            }
+        }
+
+        if (!isAdmin) {
             window.location.href = 'admin-login.html';
-        });
-        return;
-    }
+            return;
+        }
 
-    // Set admin name
-    const adminName = sessionStorage.getItem('adminUsername') || 'Admin';
-    document.getElementById('admin-name').textContent = adminName;
+        // Persist admin flag in sessionStorage so other pages can rely on it (prefer server-derived value)
+        try { sessionStorage.setItem('adminLoggedIn', 'true'); if (adminName) sessionStorage.setItem('adminUsername', adminName); } catch (e) { console.warn('Failed to write admin flag to sessionStorage', e); }
 
-    // Load dashboard data
-    loadDashboardData();
-    loadProducts();
-    loadPromoSettings();
-    loadOrders();
-    loadCustomers();
-    loadReviews();
-    loadMessages();
-    updateUnreadBadge();
+        // Set admin name (prefer server-provided name if available)
+        const adminNameFromStorage = sessionStorage.getItem('adminUsername') || 'Admin';
+        try {
+            if (typeof window !== 'undefined' && window.serverAuth && window.serverUser && window.serverUser.username) {
+                document.getElementById('admin-name').textContent = window.serverUser.username;
+            } else {
+                document.getElementById('admin-name').textContent = adminNameFromStorage;
+            }
+        } catch (e) {
+            try { document.getElementById('admin-name').textContent = adminNameFromStorage; } catch(err) { /* ignore */ }
+        }
+
+        // Load dashboard data
+        loadDashboardData();
+        loadProducts();
+        loadPromoSettings();
+        loadOrders();
+        loadCustomers();
+        loadReviews();
+        loadMessages();
+        updateUnreadBadge();
+
+    })();
 });
 
 // Navigation
@@ -70,9 +102,11 @@ navLinks.forEach(link => {
 // Logout
 document.getElementById('logout-btn').addEventListener('click', () => {
     if (confirm('Are you sure you want to logout?')) {
+        // Clear client-side flags first
         sessionStorage.removeItem('adminLoggedIn');
         sessionStorage.removeItem('adminUsername');
-        window.location.href = 'admin-login.html';
+        // Redirect to server-side logout to destroy session cookie and server session
+        window.location.href = 'logout.php';
     }
 });
 
@@ -383,7 +417,7 @@ document.getElementById('settings-form').addEventListener('submit', (e) => {
     
     // In a real application, you would save this to a backend
     // For now, just show a message
-    alert('Password change functionality requires backend implementation.\n\nTo change password:\n1. Open admin-login.js\n2. Find ADMIN_ACCOUNT object\n3. Change the password value\n4. Save the file');
+    alert('Password change functionality requires backend implementation.\n\nTo change password in a production environment:\n1. Update the user record in the database to set a new hashed password, or\n2. Implement a secure password-reset flow in the backend to allow resetting via email.');
     document.getElementById('settings-form').reset();
 });
 
@@ -679,6 +713,21 @@ function loadReviews() {
     }).join('');
 }
 
+// Listen for reviews changes from other pages or tabs
+window.addEventListener('reviews:updated', (e) => {
+    // If the admin dashboard is loaded, refresh reviews list
+    if (typeof loadReviews === 'function') loadReviews();
+    // Also refresh dashboard stats
+    if (typeof loadDashboardData === 'function') loadDashboardData();
+});
+
+window.addEventListener('storage', (e) => {
+    if (e.key === 'reviews') {
+        if (typeof loadReviews === 'function') loadReviews();
+        if (typeof loadDashboardData === 'function') loadDashboardData();
+    }
+});
+
 // Generate star icons
 function generateStars(rating) {
     let stars = '';
@@ -697,9 +746,11 @@ function deleteReview(reviewId) {
     if (confirm('Are you sure you want to delete this review?')) {
         let reviews = JSON.parse(localStorage.getItem('reviews')) || [];
         reviews = reviews.filter(r => r.reviewId !== reviewId);
-        localStorage.setItem('reviews', JSON.stringify(reviews));
-        loadReviews();
-        loadDashboardData();
+    localStorage.setItem('reviews', JSON.stringify(reviews));
+    // notify other pages that reviews changed
+    try { window.dispatchEvent(new CustomEvent('reviews:updated', { detail: { reviews } })); } catch(e) {}
+    loadReviews();
+    loadDashboardData();
         alert('Review deleted successfully!');
     }
 }

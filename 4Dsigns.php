@@ -96,12 +96,9 @@ $userid = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
     <!-- Add-to-cart modal and floating cart -->
     <?php include __DIR__ . '/4Dsigns-modals.html'; ?>
 
-    <script>
-        // Remove localStorage based logout and session checks, as we are now authenticated via server session
-        function logout() {
-            window.location.href = 'logout.php';
-        }
-    </script>
+    <script src="cart-utils.js"></script>
+
+    <!-- logout() defined in 4Dsigns-modals.html -->
     <script>
         // Expose server-side auth state to client-side scripts so UI logic prefers server session
         window.serverAuth = true;

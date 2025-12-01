@@ -16,7 +16,8 @@
                 <h1>Admin Login</h1>
                 <p>4D Signs Administration Portal</p>
             </div>
-            <form id="admin-login-form">
+            <form id="admin-login-form" method="POST" action="login.php">
+                <input type="hidden" name="origin" value="admin">
                 <div class="form-group">
                     <label for="username">
                         <i class="fas fa-user"></i> Username

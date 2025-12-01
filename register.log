@@ -36,3 +36,6 @@
 [REGISTER] Connecting DB: host=localhost db=4d_signs_db user=root
 [REGISTER] Register attempt for: karlledesma2007@gmail.com - username: admin
 [REGISTER] Inserted pending_registrations.id=14 into DB 4d_signs_db
+[REGISTER] Connecting DB: host=localhost db=4d_signs_db user=root
+[REGISTER] Register attempt for: renzledesma2007@gmail.com - username: renz
+[REGISTER] Inserted pending_registrations.id=15 into DB 4d_signs_db

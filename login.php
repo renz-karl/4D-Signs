@@ -12,12 +12,14 @@ error_log("[LOGIN] DB: host={$servername} db={$dbname} user={$db_username}\n", 3
 
 // Check if form is submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $origin = isset($_POST['origin']) ? trim($_POST['origin']) : '';
     $input = isset($_POST['username']) ? trim($_POST['username']) : '' ; // Can be username or email
     $password = $_POST['password'];
 
     // Validate inputs
     if (empty($input) || empty($password)) {
-    header("Location: login.html?error=" . urlencode("Username/email and password are required."));
+        $redirectTarget = ($origin === 'admin') ? 'admin-login.html' : 'login.html';
+        header("Location: " . $redirectTarget . "?error=" . urlencode("Username/email and password are required."));
         exit();
     }
 
@@ -108,7 +110,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $stmt->close();
 
     if (isset($error)) {
-            header("Location: login.html?error=" . urlencode($error));
+            $redirectTarget = ($origin === 'admin') ? 'admin-login.html' : 'login.html';
+            header("Location: " . $redirectTarget . "?error=" . urlencode($error));
         exit();
     }
 }
