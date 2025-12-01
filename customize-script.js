@@ -113,7 +113,11 @@
         });
 
         previewImage.addEventListener('dragstart', function(e) {
-            e.dataTransfer.setData('text/plain', 'dragged-image');
+            // include actual image URL/data on drag so the drop handler can read it
+            const src = this.src || '';
+            try { e.dataTransfer.setData('text/plain', src); } catch (err) {}
+            try { e.dataTransfer.setData('text/uri-list', src); } catch (err) {}
+            try { e.dataTransfer.setData('application/x-preview-image', src); } catch (err) {}
         });
     }
 
@@ -130,44 +134,26 @@
     shirtDropArea.addEventListener('drop', function(e) {
         e.preventDefault();
         this.classList.remove('drag-over');
-        if (previewImage && previewImage.src) {
-            const designImage = document.createElement('img');
-            designImage.src = previewImage.src;
-            designImage.className = 'resizable-image';
-            designImage.style.position = 'absolute';
-            designImage.style.width = '150px';
-            designImage.style.height = 'auto';
-
-            const rect = shirtDropArea.getBoundingClientRect();
-            const dropX = e.clientX;
-            const dropY = e.clientY;
-
-            function placeImage() {
-                const iw = designImage.getBoundingClientRect().width || 150;
-                const ih = designImage.getBoundingClientRect().height || (iw * (designImage.naturalHeight / designImage.naturalWidth || 1));
-
-                let x = dropX - rect.left - (iw / 2);
-                let y = dropY - rect.top - (ih / 2);
-
-                x = Math.max(0, Math.min(x, rect.width - iw));
-                y = Math.max(0, Math.min(y, rect.height - ih));
-
-                designImage.style.transform = `translate(${x}px, ${y}px)`;
-                designImage.dataset.x = x;
-                designImage.dataset.y = y;
-
-                shirtDropArea.insertBefore(designImage, designArea);
-                updateContentClass();
-                makeImageInteractive(designImage);
-                selectElement(designImage);
-                saveState();
+        // check for files first (user dragged from OS)
+        const files = e.dataTransfer && e.dataTransfer.files ? e.dataTransfer.files : null;
+        if (files && files.length) {
+            const file = files[0];
+            if (file && file.type && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    createAndPlaceImage(evt.target.result, e.clientX, e.clientY);
+                };
+                reader.readAsDataURL(file);
+                return;
             }
+        }
 
-            if (designImage.complete) {
-                placeImage();
-            } else {
-                designImage.onload = placeImage;
-            }
+        // fallback: check for dataTransfer image data (e.g., from previewImage)
+        let dataSrc = '';
+        try { dataSrc = e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain') || e.dataTransfer.getData('application/x-preview-image') || ''; } catch (err) { dataSrc = ''; }
+        if (!dataSrc && previewImage && previewImage.src) dataSrc = previewImage.src;
+        if (dataSrc) {
+            createAndPlaceImage(dataSrc, e.clientX, e.clientY);
         }
     });
 
@@ -181,6 +167,50 @@
         
         const existingDynamicImages = shirtDropArea.querySelectorAll('.shirt-img, .mug-img, .ecobag-img, .sign-img');
         existingDynamicImages.forEach(img => img.remove());
+    }
+
+    // Helper: create an image element for given src and place it relative to client coordinates
+    function createAndPlaceImage(src, clientX, clientY) {
+        if (!src) return;
+        const designImage = document.createElement('img');
+        designImage.src = src;
+        designImage.className = 'resizable-image';
+        designImage.style.position = 'absolute';
+        // initial width will be proportional to the drop area's size
+    const rect = shirtDropArea.getBoundingClientRect();
+    const defaultWidth = Math.min(420, Math.round((rect.width / currentZoom) * 0.32));
+        designImage.style.width = defaultWidth + 'px';
+        designImage.style.height = 'auto';
+
+        const dropX = Math.round(clientX);
+        const dropY = Math.round(clientY);
+
+        function placeImage() {
+            // compute unscaled image size (we set style.width)
+            const iw = parseFloat(designImage.style.width) || designImage.naturalWidth || defaultWidth;
+            const ih = Math.round((iw * (designImage.naturalHeight / designImage.naturalWidth || 1)) || (iw));
+            // compute unscaled canvas rect
+            const unscaledRectWidth = rect.width / currentZoom;
+            const unscaledRectHeight = rect.height / currentZoom;
+            let x = (dropX - rect.left - (iw / 2)) / currentZoom;
+            let y = (dropY - rect.top - (ih / 2)) / currentZoom;
+            x = Math.max(0, Math.min(x, unscaledRectWidth - iw));
+            y = Math.max(0, Math.min(y, unscaledRectHeight - ih));
+            designImage.style.transform = `translate(${x}px, ${y}px)`;
+            designImage.dataset.x = x;
+            designImage.dataset.y = y;
+            shirtDropArea.insertBefore(designImage, designArea);
+            updateContentClass();
+            makeImageInteractive(designImage);
+            selectElement(designImage);
+            saveState();
+        }
+
+        if (designImage.complete) {
+            placeImage();
+        } else {
+            designImage.onload = placeImage;
+        }
     }
 
     if (dropdown) {
@@ -365,6 +395,15 @@
     let currentTemplateScale = 100; // default 100%
     let templateScaleSlider = null;
     let templateScaleValue = null;
+    // Canvas zoom (1.0 = 100%)
+    let currentZoom = 1.0;
+    const ZOOM_STEP = 0.1; // 10% steps
+    const ZOOM_MIN = 0.5; // 50%
+    const ZOOM_MAX = 2.0; // 200%
+    let zoomInBtn = null;
+    let zoomOutBtn = null;
+    let zoomResetBtn = null;
+    let zoomLevelLabel = null;
 
     function getSelectedOverlay() {
         const id = (typeof templateManager !== 'undefined' && templateManager.getSelected) ? templateManager.getSelected() : '';
@@ -384,6 +423,24 @@
         const m = t.match(/scale\(([^)]+)\)/);
         return m ? parseFloat(m[1]) * 100 : 100;
     }
+
+    function setZoom(percent) {
+        const z = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, percent / 100));
+        currentZoom = z;
+        // apply scale on the drop area wrapper
+        if (shirtDropArea) {
+            shirtDropArea.style.transformOrigin = 'center center';
+            shirtDropArea.style.transform = `scale(${currentZoom})`;
+        }
+        if (zoomLevelLabel) zoomLevelLabel.textContent = Math.round(currentZoom * 100) + '%';
+        // enable/disable zoom buttons
+        if (zoomInBtn) zoomInBtn.disabled = currentZoom >= ZOOM_MAX;
+        if (zoomOutBtn) zoomOutBtn.disabled = currentZoom <= ZOOM_MIN;
+    }
+
+    function zoomIn() { setZoom(Math.round((currentZoom + ZOOM_STEP) * 100)); }
+    function zoomOut() { setZoom(Math.round((currentZoom - ZOOM_STEP) * 100)); }
+    function zoomReset() { setZoom(100); }
 
     function registerTemplateScaleControls() {
         templateScaleSlider = document.getElementById('template-scale');
@@ -406,6 +463,16 @@
             // Persist change in undo stack
             saveState();
         });
+
+        // zoom controls
+        zoomInBtn = document.getElementById('zoom-in');
+        zoomOutBtn = document.getElementById('zoom-out');
+        zoomResetBtn = document.getElementById('zoom-reset');
+        zoomLevelLabel = document.getElementById('zoom-level');
+        if (zoomLevelLabel) zoomLevelLabel.textContent = Math.round(currentZoom * 100) + '%';
+        if (zoomInBtn) zoomInBtn.addEventListener('click', zoomIn);
+        if (zoomOutBtn) zoomOutBtn.addEventListener('click', zoomOut);
+        if (zoomResetBtn) zoomResetBtn.addEventListener('click', zoomReset);
     }
 
     if (customNameInput) {
@@ -726,8 +793,8 @@
 
     function dragMoveListener(event) {
         const target = event.target;
-        let x = parseFloat(target.dataset.x || 0) + event.dx;
-        let y = parseFloat(target.dataset.y || 0) + event.dy;
+        let x = parseFloat(target.dataset.x || 0) + (event.dx / currentZoom);
+        let y = parseFloat(target.dataset.y || 0) + (event.dy / currentZoom);
         target.dataset.x = x;
         target.dataset.y = y;
         const rotation = (function() {
@@ -742,8 +809,8 @@
 
     function resizeListener(event) {
         const target = event.target;
-        let x = parseFloat(target.dataset.x || 0) + event.deltaRect.left;
-        let y = parseFloat(target.dataset.y || 0) + event.deltaRect.top;
+        let x = parseFloat(target.dataset.x || 0) + (event.deltaRect ? event.deltaRect.left / currentZoom : 0);
+        let y = parseFloat(target.dataset.y || 0) + (event.deltaRect ? event.deltaRect.top / currentZoom : 0);
         target.style.width = `${event.rect.width}px`;
         target.style.height = `${event.rect.height}px`;
         target.dataset.x = x;
@@ -760,8 +827,8 @@
 
     function resizeTextListener(event) {
         const target = event.target;
-        let x = parseFloat(target.dataset.x || 0) + (event.deltaRect ? event.deltaRect.left : 0);
-        let y = parseFloat(target.dataset.y || 0) + (event.deltaRect ? event.deltaRect.top : 0);
+        let x = parseFloat(target.dataset.x || 0) + (event.deltaRect ? (event.deltaRect.left / currentZoom) : 0);
+        let y = parseFloat(target.dataset.y || 0) + (event.deltaRect ? (event.deltaRect.top / currentZoom) : 0);
 
         // Set font size based on rect height (ensure a minimum)
         const newHeight = event.rect ? event.rect.height : null;
@@ -837,7 +904,7 @@
                 saveState();
             }
         }
-        else if (selectedElement && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+    else if (selectedElement && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
             e.preventDefault();
             const shift = e.shiftKey ? 10 : 1;
             const x = parseFloat(selectedElement.dataset.x || 0);
@@ -845,16 +912,16 @@
             
             switch(e.key) {
                 case 'ArrowUp':
-                    selectedElement.dataset.y = y - shift;
+                    selectedElement.dataset.y = y - (shift / currentZoom);
                     break;
                 case 'ArrowDown':
-                    selectedElement.dataset.y = y + shift;
+                    selectedElement.dataset.y = y + (shift / currentZoom);
                     break;
                 case 'ArrowLeft':
-                    selectedElement.dataset.x = x - shift;
+                    selectedElement.dataset.x = x - (shift / currentZoom);
                     break;
                 case 'ArrowRight':
-                    selectedElement.dataset.x = x + shift;
+                    selectedElement.dataset.x = x + (shift / currentZoom);
                     break;
             }
             

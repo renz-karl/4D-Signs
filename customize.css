@@ -945,6 +945,22 @@ body {
 #template-scale { width: 100%; }
 #template-scale-value { min-width: 48px; text-align: right; }
 
+/* Zoom controls */
+.zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.zoom-controls .mini-btn {
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 14px;
+}
+.zoom-controls #zoom-level {
+    min-width: 44px;
+    text-align: center;
+}
+
 /* Custom Input Styles */
 .custom-input {
     width: 100%;
